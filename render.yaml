@@ -1,0 +1,67 @@
+# Infraestrutura como código para o Render.
+#
+# Com este arquivo no repositório você não configura nada a mão no painel:
+# em Render > New > Blueprint, aponte para o repo e ele cria o serviço web e o
+# banco já vinculados. A vantagem prática é que a configuração fica versionada
+# junto com o código — quem entrar no projeto depois vê o ambiente inteiro.
+#
+# ⚠️ Segredos NÃO entram aqui. As chaves marcadas com `sync: false` são criadas
+#    vazias e você preenche o valor UMA vez no painel do Render. O arquivo é
+#    versionado; senha em arquivo versionado é vazamento.
+
+services:
+  - type: web
+    name: mercabiliza
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter            # free = 512 MB e hiberna em 15 min de inatividade;
+                             # starter ($7/mês) = 512 MB sem hibernar.
+                             # Streamlit + pandas + reportlab fica apertado em
+                             # 512 MB: se vir "Out of memory", suba para
+                             # standard (2 GB).
+    region: oregon           # Render não tem região no Brasil. Oregon é a que
+                             # tem menor latência média para SP entre as opções
+                             # gratuitas. Para latência menor, ver DEPLOY.md.
+    branch: main
+    autoDeploy: true         # cada push na main redeploya (CD).
+
+    healthCheckPath: /_stcore/health
+
+    envVars:
+      # --- Injetadas automaticamente pelo Render -------------------------- #
+      # PORT é definida pela plataforma; o Dockerfile já a consome.
+
+      # --- Banco: vinculado ao Postgres declarado abaixo ------------------ #
+      # O Render substitui isto pela connection string real. Sem esta linha o
+      # app cai no SQLite e PERDE a base a cada deploy.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mercabiliza-db
+          property: connectionString
+
+      # --- Comportamento ------------------------------------------------- #
+      - key: MERCABILIZA_AMBIENTE
+        value: producao
+      - key: MERCABILIZA_LOG_LEVEL
+        value: WARNING
+
+      # --- Segredos: preencher no painel, uma vez ------------------------- #
+      # sync: false = o Render cria a variável VAZIA e não a versiona. Você
+      # digita o valor no painel (Environment) e ele fica só lá.
+      #
+      # Formato JSON, um par por pessoa — permite saber quem entrou:
+      #   {"luisfelipe":"senha-longa","iago":"outra-senha-longa"}
+      # Gere cada senha com:
+      #   python -c "import secrets; print(secrets.token_urlsafe(24))"
+      - key: MERCABILIZA_SENHAS
+        sync: false
+
+databases:
+  - name: mercabiliza-db
+    databaseName: mercabiliza
+    user: mercabiliza
+    plan: basic-256mb        # o plano free do Postgres no Render EXPIRA em 30
+                             # dias e o banco é apagado. Para um CRM real,
+                             # basic-256mb ($6/mês) é o piso viável.
+    region: oregon           # tem de ser a MESMA região do serviço web, senão
+                             # cada consulta atravessa a internet pública.

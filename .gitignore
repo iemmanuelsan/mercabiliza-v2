@@ -1,0 +1,76 @@
+# --- Segredos e credenciais (NUNCA versionar) ---
+.streamlit/secrets.toml
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+client_secret*.json
+service_account*.json
+*serviceaccount*.json
+.netrc
+.pgpass
+# Chaves SSH que às vezes aparecem em pasta de projeto por descuido
+id_rsa
+id_ed25519
+id_*.pub
+
+# Exceções: arquivos-MODELO, sem valor nenhum dentro, versionados de propósito
+# para documentar QUAIS variáveis existem. A negação precisa vir depois da
+# regra que ignora, senão o Git não a considera.
+!.env.example
+!.streamlit/secrets.toml.example
+
+# --- Dados de clientes / LGPD ---
+# O CRM guarda CNPJ, e-mail, telefone e nomes de sócios: dado pessoal.
+data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+leads_contabeis.db
+
+# --- Saídas geradas ---
+*.xlsx
+*.xls
+*.pdf
+!docs/**/*.pdf
+exports/
+output/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+ENV/
+
+# --- Testes e qualidade ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# --- Editores e SO ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Jupyter ---
+.ipynb_checkpoints/

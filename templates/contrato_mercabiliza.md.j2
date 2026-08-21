@@ -1,0 +1,179 @@
+{#
+  CONTRATO DE PRESTAÇÃO DE SERVIÇOS CONTÁBEIS E DE SOFTWARE — MERCABILIZA
+  ======================================================================
+
+  Portado do contrato em uso (modelo M.C. DE SOUSA, jul/2026). A estrutura,
+  a numeração e a redação das cláusulas seguem o original; só os dados das
+  partes, valores e datas são dinâmicos.
+
+  CONVENÇÕES LIDAS PELO GERADOR DE PDF
+    ## TÍTULO           título de cláusula (negrito, centralizado)
+    ### SUBTÍTULO       subtítulo de seção dentro da cláusula (alinhado à esq.)
+    linha comum         parágrafo justificado
+    - item              item de lista com marcador
+    a) item             item de lista alfabética (vai como parágrafo recuado)
+    [[ASSINATURAS]]     insere os blocos de assinatura
+    [[QUEBRA]]          força quebra de página
+
+  VARIÁVEIS
+    contratada_fixa                bloco literal das duas empresas
+    contratante.qualificacao_contratual
+    p.*                            ver ParametrosContrato.como_dict_template()
+    nota_rodape
+#}
+## CONTRATO DE PRESTAÇÃO DE SERVIÇOS CONTÁBEIS E DE SOFTWARE
+
+### CONTRATADA:
+
+{{ contratada_fixa }}
+
+### CONTRATANTE:
+
+{{ contratante.qualificacao_contratual }}.
+
+Pelo presente instrumento particular, as partes acima devidamente qualificadas, doravante denominadas simplesmente CONTRATADA e CONTRATANTE, na melhor forma de direito, ajustam e contratam a prestação de serviços profissionais de contabilidade, segundo as cláusulas e condições adiante arroladas.
+
+## CLÁUSULA 1 - DO OBJETO
+
+1.1 - O objeto do presente consiste na prestação pela CONTRATADA à CONTRATANTE, dos serviços profissionais de contabilidade abaixo descritos:
+
+### ÁREA CONTÁBIL
+
+a) Classificação e escrituração da contabilidade de acordo com as normas e princípios contábeis;
+b) Apuração de balancetes;
+c) Elaboração do balanço anual de demonstrativo de resultados;
+d) Elaboração e entrega das obrigações acessórias pertinentes.
+
+### ÁREA FISCAL
+
+a) Escrituração dos livros fiscais municipais, estaduais e federais;
+b) Elaboração e entrega de obrigações acessórias pertinentes;
+c) Apuração dos tributos vigentes e confecção das guias de pagamento, de acordo com as atuais obrigações fiscais da empresa "CONTRATANTE".
+{% if p.incluir_dp %}
+### ÁREA TRABALHISTA E PREVIDENCIÁRIA
+
+a) Manutenção dos Registros de Empregados;
+b) Elaboração da Folha de Pagamento dos empregados e de Pró-Labore, bem como das guias dos encargos sociais e tributos afins a serem recolhidos pela empresa;
+c) Elaboração e entrega das obrigações acessórias pertinentes.
+{% endif %}
+{% if p.incluir_monofasico %}
+### SEGREGAÇÃO DE RECEITAS — MINIMERCADO
+
+a) Segregação das receitas com tributação monofásica de PIS/COFINS e das mercadorias sujeitas à substituição tributária do ICMS, na apuração do Simples Nacional;
+b) Conferência do relatório de vendas por NCM/EAN emitido pelo sistema de autoatendimento da CONTRATANTE, base indispensável para a segregação.
+{% endif %}
+## CLÁUSULA 2 – DOS VALORES E CONDIÇÕES DE EXECUÇÃO DOS SERVIÇOS
+
+### VALORES
+
+2.1. Para a execução dos serviços constantes na cláusula 1ª, a CONTRATANTE pagará a CONTRATADA os honorários profissionais correspondentes a {{ p.valor_mensal_fmt }} ({{ p.honorarios_extenso }}) mensais a partir de {{ p.data_inicio_curta }} via {{ p.forma_pagamento }}, cujo pagamento deverá se dar até o dia {{ p.dia_vencimento }} do mês seguinte ao de referência.
+{% if p.valor_implantacao_fmt %}
+2.1.1. A título de implantação e serviços pontuais de início de relacionamento, a CONTRATANTE pagará ainda a quantia de {{ p.valor_implantacao_fmt }}, em parcela única, devida na assinatura deste instrumento.
+{% endif %}
+2.1.3. No caso de início ou rescisão do contrato no decorrer do exercício, a parcela adicional será devida proporcionalmente aos meses de vigência da avença, considerando-se como mês a fração igual ou superior a 15 (quinze) dias.
+
+2.1.4. Os honorários pagos após a data avençada no item 2.1 acarretarão à CONTRATANTE o acréscimo de multa de {{ p.multa_atraso_pct }}% ({{ p.multa_atraso_extenso }} por cento), sem prejuízo de juros moratórios de {{ p.juros_mora_mes_pct }}% ({{ p.juros_mora_extenso }} por cento) ao mês ou fração e correção monetária.
+
+### CONDIÇÕES PARA A PRESTAÇÃO DOS SERVIÇOS
+
+2.2. Os serviços serão executados nas dependências da CONTRATADA, em obediência às seguintes condições. A documentação indispensável para o desenvolvimento dos serviços arrolados na cláusula 1 será fornecida pela CONTRATANTE, consistindo basicamente em:
+
+a) Boletim de caixa, consistente em um relatório com todos os pagamentos e recebimentos em dinheiro físico;
+b) Extratos de todas as contas bancárias, inclusive aplicações e documentos relativos aos lançamentos, tais como: relatórios de sistema financeiro com as classificações dos pagamentos e recebimentos bancários;
+c) Relatório de inventário periódico;
+d) Contratos celebrados da CONTRATANTE, como por exemplo, contratos de empréstimos bancários, seguros, entre outros;
+e) Notas Fiscais de compras de mercadorias (entradas) e venda (saídas), bem como comunicação de eventual cancelamento das mesmas. Sendo este item substituído pelo envio do certificado digital A1 da empresa;
+f) Notas Fiscais de serviços tomados.
+
+2.3. A documentação deverá ser enviada pela CONTRATANTE de forma completa e em boa ordem nos prazos solicitados pela CONTRATADA.
+
+2.4. A CONTRATADA compromete-se a cumprir todos os prazos estabelecidos na legislação de regência quanto aos serviços contratados.
+
+2.5. Havendo o envio de documentos físicos, a remessa de documentos entre os contratantes será feita mediante protocolo.
+
+## CLÁUSULA 3 - DOS DEVERES DA CONTRATADA
+
+3.1. A CONTRATADA desempenhará os serviços enumerados na cláusula 1ª com todo o zelo, diligência e honestidade, observada a legislação vigente, resguardando os interesses da CONTRATANTE, sem prejuízo da dignidade e independência profissional, sujeitando-se ainda às normas do Código de Ética do Contabilista, aprovado pela Resolução n. 803/96 do Conselho Federal de Contabilidade.
+
+3.2. Caso haja erros ou atrasos no cumprimento dos serviços contratados por parte da CONTRATADA ocasionando prejuízo financeiro à CONTRATANTE, a CONTRATADA se responsabilizará pela restituição dos devidos valores. Os valores serão restituídos nas hipóteses em que forem confirmados erros exclusivos da CONTRATADA, tendo a CONTRATANTE disponibilizado tempestivamente todas as informações necessárias para o cumprimento correto da devida atividade.
+
+3.3. Obriga-se a CONTRATADA a fornecer à CONTRATANTE todas as informações relativas ao andamento dos serviços ora contratados nos prazos já estabelecidos anteriormente.
+
+3.4. Responsabilizar-se-á a CONTRATADA por todos os documentos a ela entregues pela CONTRATANTE, enquanto permanecerem sob sua guarda para a consecução dos serviços pactuados, se tal ocorrer por ação ou omissão de seus prepostos ou quaisquer pessoas que a eles tenham acesso, respondendo pelo mau uso, perda, extravio ou inutilização, salvo comprovado caso fortuito ou força maior.
+
+3.5. As responsabilidades referentes às cláusulas acima limitam-se ao valor do contrato.
+
+## CLÁUSULA 4 - DOS DEVERES DA CONTRATANTE
+
+4.1. Obriga-se a CONTRATANTE a fornecer à CONTRATADA todos os dados, documentos e informações que se façam necessários ao bom desempenho dos serviços ora contratados, em tempo hábil, não cabendo à CONTRATADA nenhuma responsabilidade acaso recebidos intempestivamente.
+
+4.2. A CONTRATANTE tem ciência de que os honorários serão reajustados anualmente e automaticamente a cada 12 meses, segundo a variação do índice {{ p.indice_reajuste }}.
+
+4.3. O valor dos honorários previstos no contrato foi estipulado mediante a realidade de faturamento e funcionários contratados da empresa no momento da celebração deste instrumento. Caso haja aumento significativo no volume de faturamento ou funcionários contratados, a CONTRATADA poderá propor nova base de honorários, de acordo com a nova realidade da CONTRATANTE.
+
+4.4. Em caso de aceite da repactuação dos honorários mencionados no item anterior, será elaborado um aditivo de contrato. Caso haja recusa da repactuação, as partes encerrarão o contrato sem prejuízo entre elas.
+
+4.5. Os serviços solicitados pela CONTRATANTE não especificados na cláusula 1ª serão cobrados pela CONTRATADA em separado, como extraordinários, segundo valor específico constante de orçamento previamente aprovado pela CONTRATANTE, englobando nessa previsão toda e qualquer inovação de legislação relativamente ao regime tributário, trabalhista ou previdenciário.
+
+4.6. Serão considerados serviços extraordinários:
+
+a) Alteração contratual;
+b) Abertura e baixa de empresa;
+c) Declaração de Imposto de Renda Pessoa Física;
+d) Abertura de inscrições estaduais de DIFAL/ST;
+e) Apuração de DIFAL/ST para inscrições em outras UF;
+f) Alvará de funcionamento;
+g) Retificações em obrigações fiscais, contábeis e de departamento pessoal anteriores à vigência contratual;
+h) Recuperações fiscais de períodos anteriores ao contrato;
+i) eSocial doméstica pessoa física;
+j) Defesas fiscais;
+k) Levantamento e apurações de débitos dos sócios pessoa física;
+l) Emissão de Notas Fiscais da CONTRATANTE;
+m) Retificações em obrigações acessórias já entregues, por informações enviadas pela CONTRATANTE fora do prazo do período de entrega das mesmas.
+
+## CLÁUSULA 5 - DA VIGÊNCIA E RESCISÃO
+
+5.1. O presente contrato vigorará por {{ p.vigencia_meses }} ({{ p.vigencia_meses_extenso }}) meses a partir da sua assinatura, podendo a qualquer tempo ser rescindido mediante pré-aviso de {{ p.prazo_rescisao_dias }} ({{ p.prazo_rescisao_extenso }}) dias e por escrito.
+
+5.2. A parte que não comunicar por escrito a rescisão ou efetuá-la de forma sumária desrespeitando o pré-aviso previsto ficará obrigada ao pagamento de multa compensatória no valor de 3 (três) parcelas mensais de honorários vigentes à época.
+
+5.3. No caso de rescisão e durante o prazo do pré-aviso, a CONTRATANTE não fica desobrigada ao pagamento dos honorários integrais até o termo final do período.
+
+5.4. Em todas as transferências de serviços à outra empresa contábil, a CONTRATANTE deverá informar à CONTRATADA, por escrito, o nome, endereço, responsável técnico e número do CRC, sem o que não será possível à CONTRATADA cumprir as formalidades ético-profissionais, inclusive a transmissão de dados e informações necessárias à continuidade dos serviços, em relação às quais, diante da eventual inércia da CONTRATANTE, estará desobrigada de cumprimento.
+
+5.5. Entre as informações a serem fornecidas não se incluem detalhes técnicos dos sistemas de informática da CONTRATADA, os quais são de sua exclusiva propriedade.
+
+5.6. A falta de pagamento de qualquer parcela de honorários facultará à CONTRATADA suspender imediatamente a execução dos serviços ora pactuados, bem como considerar rescindido o presente, independentemente de notificação judicial ou extrajudicial.
+
+5.7. A falência ou recuperação judicial da CONTRATANTE facultará a rescisão do presente pela CONTRATADA, independentemente de notificação judicial ou extrajudicial, não estando incluídos nos serviços ora pactuados a elaboração das peças contábeis para tal ato.
+
+5.8. Considerar-se-á rescindido o presente contrato, independentemente de notificação judicial ou extrajudicial, caso qualquer das partes contratantes venha a infringir cláusula ora convencionada.
+
+5.9. Os sócios da CONTRATANTE, ou seu titular, no caso de firma individual, assinam o presente na condição de fiadores solidários e principais pagadores em relação a todas as obrigações contratuais decorrentes.
+
+## CLÁUSULA 6 - DA PROTEÇÃO DE DADOS PESSOAIS
+
+6.1. As partes obrigam-se a observar a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados Pessoais) no tratamento de dados pessoais decorrente deste contrato.
+
+6.2. A CONTRATADA atuará como operadora dos dados pessoais fornecidos pela CONTRATANTE, tratando-os exclusivamente para as finalidades de execução deste contrato e de cumprimento de obrigações legais e regulatórias, adotando medidas técnicas e administrativas aptas a protegê-los de acessos não autorizados.
+
+6.3. Encerrado o contrato, a CONTRATADA conservará os dados e documentos apenas pelo prazo exigido pela legislação fiscal, contábil e trabalhista.
+{% if p.clausulas_particulares %}
+## CLÁUSULA 7 - DAS DISPOSIÇÕES PARTICULARES
+
+7.1. As partes ajustam ainda as seguintes condições específicas, que prevalecem sobre as disposições gerais deste instrumento em caso de conflito:
+{% for clausula in p.clausulas_particulares %}
+- {{ clausula }}
+{% endfor %}
+{% endif %}
+## CLÁUSULA {% if p.clausulas_particulares %}8{% else %}7{% endif %} - DO FORO
+
+{% if p.clausulas_particulares %}8.1{% else %}7.1{% endif %} - Fica eleito o foro de {{ p.foro }}, com expressa renúncia a qualquer outro, por mais privilegiado que seja, para dirimir questões oriundas da interpretação e execução do presente contrato.
+
+E, por estarem justos e contratados, assinam o presente em 2 (duas) vias de igual teor e para um só efeito na presença de 2 (duas) testemunhas instrumentais.
+
+{{ p.local_data }}
+
+[[ASSINATURAS]]
+
+{{ nota_rodape }}

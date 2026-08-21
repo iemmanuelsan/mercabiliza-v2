@@ -1,0 +1,18 @@
+[theme]
+base = "light"
+primaryColor = "#DC3250"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F6F8"
+textColor = "#1A1D23"
+font = "sans serif"
+
+[server]
+maxUploadSize = 10          # MB — planilha de CNPJs não precisa de mais
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+showErrorDetails = false    # não expor stack trace ao usuário final
+toolbarMode = "minimal"

@@ -1,0 +1,28 @@
+# Driver do PostgreSQL — instalado SÓ onde há Postgres.
+#
+# Por que num arquivo separado, e não no requirements.txt:
+#
+# O Streamlit Community Cloud não usa Postgres (roda com SQLite) e não tem como
+# desligar uma linha do requirements.txt. Se este pacote estivesse lá, o deploy
+# do Cloud dependeria de existir uma wheel dele para a versão de Python que a
+# plataforma estiver usando naquele dia — e o Cloud sobe de versão sem aviso.
+# Quando falta wheel, o pip tenta compilar do fonte, falha, e ABORTA A LISTA
+# INTEIRA: pacotes que vêm depois simplesmente não são instalados, e o app cai
+# com ModuleNotFoundError numa dependência que está no arquivo.
+#
+# Ou seja: manter o driver aqui fora não é organização, é remover um ponto de
+# falha de um deploy que nem usa o recurso.
+#
+# Quem instala:
+#   * o Dockerfile (Render, Railway, Fly — onde o Postgres existe)
+#   * você, localmente, se for testar contra um Postgres:
+#       pip install -r requirements-pg.txt
+#
+# O código já é tolerante: src/services/repository_pg.py importa psycopg dentro
+# da função de conexão, e só é carregado quando DATABASE_URL está definida. Sem
+# a variável, este pacote nunca é tocado. Com a variável e sem o pacote, o erro
+# é explícito (PsycopgAusenteError) em vez de um traceback obscuro.
+#
+# [binary] traz a libpq compilada: dispensa libpq-dev e compilador C na imagem.
+
+psycopg[binary]>=3.1
