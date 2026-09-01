@@ -1,0 +1,57 @@
+# Imagem da API de documentos (api.py).
+#
+# Separada do Dockerfile do Streamlit porque os dois processos são diferentes:
+# um serve interface, o outro serve JSON. Compartilham o mesmo `src/`, então o
+# código de geração de documento é literalmente o mesmo — não há como as duas
+# pontas divergirem.
+#
+# Build local:
+#   docker build -f Dockerfile.api -t mercabiliza-api .
+#   docker run --rm -p 8000:8000 -e DOCUMENTOS_API_KEY=teste mercabiliza-api
+
+FROM python:3.12-slim-bookworm
+
+# fonts-dejavu-core é o motivo de este serviço existir em Docker e não em
+# buildpack: é pacote de SISTEMA, e sem ele o ReportLab não tem glyph para
+# acento. O sintoma é cruel porque não dá erro — o PDF sai com "Jundia" em vez
+# de "Jundiaí", e só se descobre quando o cliente reclama do contrato.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        fonts-dejavu-core \
+        ca-certificates \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    MERCABILIZA_AMBIENTE=producao
+
+WORKDIR /app
+
+# Camada de dependências antes do código: mudar uma linha de Python não
+# reinstala tudo.
+COPY requirements.txt requirements-api.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-api.txt
+
+# Só o que a API precisa. `app.py` (Streamlit) fica fora de propósito: este
+# container não serve interface, e copiar menos reduz superfície.
+COPY api.py ./
+COPY src/ ./src/
+COPY templates/ ./templates/
+COPY assets/ ./assets/
+
+RUN useradd --create-home --shell /usr/sbin/nologin app && chown -R app:app /app
+USER app
+
+ENV PORT=8000
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -fsS "http://localhost:${PORT}/health" || exit 1
+
+# --workers 2: gerar PDF é CPU-bound e bloqueia o processo. Com um worker só,
+# duas pessoas pedindo contrato ao mesmo tempo esperam em fila. Dois cabem
+# folgados nos 512 MB do plano Starter do Render.
+# Forma shell para o ${PORT} ser expandido em tempo de execução.
+CMD uvicorn api:app --host 0.0.0.0 --port ${PORT} --workers 2

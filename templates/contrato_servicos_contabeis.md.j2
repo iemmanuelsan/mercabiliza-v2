@@ -1,0 +1,164 @@
+{#
+  MINUTA — CONTRATO DE PRESTAÇÃO DE SERVIÇOS CONTÁBEIS
+  ====================================================
+
+  ⚠️  ESTE TEXTO PRECISA DE REVISÃO POR ADVOGADO ANTES DO PRIMEIRO USO REAL.
+      Foi redigido como ponto de partida técnico, seguindo a estrutura usual
+      de contratos de prestação de serviços contábeis, mas não substitui
+      parecer jurídico sobre as regras da sua operação.
+
+  COMO EDITAR
+  -----------
+  Este é um template Jinja2. Texto normal é literal; o que está entre chaves
+  duplas é substituído na geração. Você pode reescrever livremente as
+  cláusulas sem tocar em código Python.
+
+  CONVENÇÕES DE FORMATAÇÃO (lidas pelo gerador de PDF):
+    ## TÍTULO          -> título de cláusula (negrito, centralizado)
+    linha comum        -> parágrafo justificado
+    - item             -> item de lista
+    §                  -> parágrafo iniciado com recuo (parágrafo único etc.)
+    [[ASSINATURAS]]    -> marcador: insere os blocos de assinatura
+    [[QUEBRA]]         -> marcador: força quebra de página
+
+  VARIÁVEIS DISPONÍVEIS
+  ---------------------
+    contratante.qualificacao_contratual   contratada.qualificacao_contratual
+    contratante.nome_exibicao             contratada.razao_social
+    p.objeto            p.vigencia_meses      p.data_inicio_fmt
+    p.valor_mensal_fmt  p.dia_vencimento      p.forma_pagamento
+    p.valor_implantacao_fmt (pode ser vazio) p.indice_reajuste
+    p.prazo_rescisao_dias                    p.foro
+    p.multa_atraso_pct  p.juros_mora_mes_pct  p.honorarios_extenso
+    p.clausulas_particulares (lista de strings)
+    p.local_data
+#}
+## CONTRATO DE PRESTAÇÃO DE SERVIÇOS CONTÁBEIS
+
+Pelo presente instrumento particular, de um lado:
+
+{{ contratante.qualificacao_contratual }}.
+
+E, de outro lado:
+
+{{ contratada.qualificacao_contratual }}.
+
+As partes acima qualificadas têm entre si justo e contratado o presente Contrato de Prestação de Serviços Contábeis, que se regerá pelas cláusulas e condições seguintes, bem como pelo disposto nos artigos 593 e seguintes do Código Civil e na Resolução CFC nº 1.590/2020 e alterações posteriores.
+
+## CLÁUSULA PRIMEIRA — DO OBJETO
+
+O objeto do presente contrato é a prestação, pela CONTRATADA à CONTRATANTE, dos serviços de {{ p.objeto }}.
+
+Os serviços compreendem, conforme aplicável ao regime tributário e à atividade da CONTRATANTE:
+
+- escrituração contábil das operações financeiras e patrimoniais, com elaboração de Balanço Patrimonial e Demonstração do Resultado do Exercício;
+- escrituração fiscal e apuração dos tributos devidos, incluindo, no caso de optantes do Simples Nacional, a segregação de receitas com tributação monofásica de PIS/COFINS e de mercadorias sujeitas à substituição tributária do ICMS;
+- elaboração e transmissão das obrigações acessórias exigíveis, tais como SPED, DCTF, EFD-Reinf, DAS, DASN, ECD e ECF, nos limites da legislação aplicável;
+- administração de pessoal, quando contratada, abrangendo admissões, rescisões, folha de pagamento, guias de encargos sociais e transmissões do eSocial e da DCTFWeb;
+- atendimento consultivo em matéria contábil, fiscal e trabalhista relacionada à atividade da CONTRATANTE.
+
+§ Serviços não previstos nesta cláusula, tais como declaração de imposto de renda de pessoa física, alterações contratuais, abertura ou encerramento de filiais, obtenção de licenças específicas, perícias, defesas em processos administrativos e representação em fiscalizações, serão orçados e contratados separadamente.
+
+## CLÁUSULA SEGUNDA — DAS OBRIGAÇÕES DA CONTRATADA
+
+Obriga-se a CONTRATADA a:
+
+- executar os serviços contratados com zelo, diligência e observância das normas brasileiras de contabilidade e da legislação tributária e trabalhista vigente;
+- manter sigilo absoluto sobre todas as informações, documentos e dados da CONTRATANTE a que tiver acesso, ainda que após o término deste contrato;
+- informar a CONTRATANTE, com antecedência razoável, sobre os documentos e informações necessários ao cumprimento das obrigações legais e sobre os respectivos prazos;
+- comunicar tempestivamente a CONTRATANTE sobre exigências, notificações e alterações legislativas que impactem sua operação, desde que delas tenha conhecimento;
+- devolver a documentação contábil e fiscal da CONTRATANTE ao término do contrato, na forma da Cláusula Nona;
+- manter seus profissionais regularmente registrados no Conselho Regional de Contabilidade.
+
+## CLÁUSULA TERCEIRA — DAS OBRIGAÇÕES DA CONTRATANTE
+
+Obriga-se a CONTRATANTE a:
+
+- fornecer à CONTRATADA, até o 5º (quinto) dia útil de cada mês, a integralidade da documentação e das informações relativas ao mês anterior, em especial notas fiscais de entrada e saída, extratos bancários, relatórios de vendas por NCM ou EAN emitidos pelos sistemas de autoatendimento, comprovantes de despesas e informações de pessoal;
+- responder pela veracidade, integridade e exatidão dos documentos e informações entregues, respondendo isoladamente pelas consequências de informações falsas, incompletas ou intempestivas;
+- efetuar o pagamento dos honorários nas datas e condições pactuadas;
+- recolher, nos prazos legais, os tributos e as contribuições apurados pela CONTRATADA, cabendo exclusivamente à CONTRATANTE a responsabilidade pelo pagamento;
+- comunicar previamente à CONTRATADA qualquer alteração societária, de endereço, de atividade econômica, de regime tributário ou de quadro de pessoal;
+- manter o certificado digital válido e disponibilizar as procurações eletrônicas necessárias ao cumprimento das obrigações acessórias.
+
+§ A CONTRATADA não responde por multas, juros ou penalidades decorrentes de atraso na entrega de documentos pela CONTRATANTE, de informações inexatas por ela prestadas ou de recolhimento de tributos fora do prazo por sua conta.
+
+## CLÁUSULA QUARTA — DOS HONORÁRIOS
+
+Pela prestação dos serviços descritos na Cláusula Primeira, a CONTRATANTE pagará à CONTRATADA honorários mensais de {{ p.valor_mensal_fmt }}{% if p.honorarios_extenso %} ({{ p.honorarios_extenso }}){% endif %}, com vencimento no dia {{ p.dia_vencimento }} de cada mês, mediante {{ p.forma_pagamento }}.
+{% if p.valor_implantacao_fmt %}
+§ A título de implantação e serviços pontuais de início de relacionamento, a CONTRATANTE pagará ainda a quantia de {{ p.valor_implantacao_fmt }}, em parcela única, devida na assinatura deste instrumento.
+{% endif %}
+§ Os honorários mensais compreendem 12 (doze) parcelas anuais, sendo devida a parcela do mês de dezembro independentemente do volume de movimentação, em razão do encerramento do exercício e da elaboração das demonstrações contábeis.
+
+§ Os honorários serão reajustados anualmente, a contar da data de início da vigência, pela variação acumulada do {{ p.indice_reajuste }} no período, ou por outro índice que legalmente o substitua.
+
+§ Alterações relevantes no volume de operações, no número de estabelecimentos, no quadro de empregados ou no regime tributário da CONTRATANTE autorizam a revisão dos honorários, mediante prévia comunicação e acordo entre as partes.
+
+## CLÁUSULA QUINTA — DO ATRASO NO PAGAMENTO
+
+O atraso no pagamento dos honorários sujeitará a CONTRATANTE a multa de {{ p.multa_atraso_pct }}% sobre o valor em aberto, acrescida de juros de mora de {{ p.juros_mora_mes_pct }}% ao mês, calculados pro rata die, além de correção monetária pelo índice previsto na Cláusula Quarta.
+
+§ O atraso superior a 60 (sessenta) dias faculta à CONTRATADA suspender a execução dos serviços, sem prejuízo da cobrança dos valores devidos, mediante notificação prévia à CONTRATANTE.
+
+## CLÁUSULA SEXTA — DA VIGÊNCIA
+
+O presente contrato vigorará por prazo {% if p.vigencia_meses %}determinado de {{ p.vigencia_meses }} ({{ p.vigencia_meses_extenso }}) meses{% else %}indeterminado{% endif %}, com início em {{ p.data_inicio_fmt }}{% if p.vigencia_meses %}, prorrogando-se automaticamente por prazo indeterminado caso nenhuma das partes manifeste intenção contrária até 30 (trinta) dias antes do termo final{% endif %}.
+
+## CLÁUSULA SÉTIMA — DA RESCISÃO
+
+O contrato poderá ser rescindido:
+
+- por qualquer das partes, imotivadamente, mediante aviso prévio escrito de {{ p.prazo_rescisao_dias }} ({{ p.prazo_rescisao_extenso }}) dias;
+- de imediato, por qualquer das partes, em caso de descumprimento de obrigação contratual não sanada no prazo de 15 (quinze) dias contados da notificação;
+- de imediato, pela CONTRATADA, caso a CONTRATANTE solicite a prática de ato contrário à legislação, às normas profissionais ou ao Código de Ética Profissional do Contador;
+- de pleno direito, em caso de falência, recuperação judicial, insolvência ou encerramento das atividades de qualquer das partes.
+
+§ A rescisão não exonera a CONTRATANTE do pagamento dos honorários referentes aos serviços já prestados, nem das parcelas vencidas até a data da efetiva rescisão.
+
+§ Durante o prazo de aviso prévio, permanecem íntegras as obrigações de ambas as partes.
+
+## CLÁUSULA OITAVA — DA PROTEÇÃO DE DADOS PESSOAIS
+
+As partes obrigam-se a observar a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados Pessoais) no tratamento de dados pessoais decorrente deste contrato.
+
+§ A CONTRATADA atuará como operadora dos dados pessoais fornecidos pela CONTRATANTE, tratando-os exclusivamente para as finalidades de execução deste contrato e de cumprimento de obrigações legais e regulatórias.
+
+§ A CONTRATADA adotará medidas técnicas e administrativas aptas a proteger os dados pessoais de acessos não autorizados e de situações acidentais ou ilícitas de destruição, perda, alteração, comunicação ou difusão.
+
+§ Encerrado o contrato, a CONTRATADA conservará os dados e documentos apenas pelo prazo exigido pela legislação fiscal, contábil e trabalhista, eliminando-os ao término desse período, salvo obrigação legal de guarda por prazo superior.
+
+## CLÁUSULA NONA — DA GUARDA E DEVOLUÇÃO DE DOCUMENTOS
+
+A guarda dos livros, documentos fiscais e demais papéis da CONTRATANTE é de sua exclusiva responsabilidade, nos termos do art. 1.194 do Código Civil.
+
+§ A CONTRATADA manterá em seu poder apenas a documentação necessária à execução dos serviços do período corrente, restituindo-a à CONTRATANTE ao término de cada exercício ou quando solicitado.
+
+§ Ao término do contrato, a CONTRATADA restituirá toda a documentação em seu poder no prazo de 30 (trinta) dias, mediante recibo, condicionada a entrega à quitação dos honorários devidos, na forma do art. 1.199 do Código Civil e do Código de Ética Profissional do Contador.
+
+## CLÁUSULA DÉCIMA — DA NATUREZA DA RELAÇÃO
+
+O presente contrato não estabelece vínculo empregatício, societário ou de subordinação entre as partes, seus sócios, prepostos ou empregados, sendo cada parte exclusivamente responsável pelos encargos trabalhistas, previdenciários, fiscais e comerciais de seu pessoal.
+
+## CLÁUSULA DÉCIMA PRIMEIRA — DA COMUNICAÇÃO ENTRE AS PARTES
+
+As comunicações entre as partes serão feitas por escrito, por meio dos endereços de correio eletrônico e telefones informados na ficha cadastral que integra este contrato, presumindo-se recebidas as mensagens enviadas a esses endereços.
+
+§ Compete a cada parte manter seus dados de contato atualizados, respondendo pelas consequências da desatualização.
+{% if p.clausulas_particulares %}
+## CLÁUSULA DÉCIMA SEGUNDA — DAS DISPOSIÇÕES PARTICULARES
+
+As partes ajustam ainda as seguintes condições específicas, que prevalecem sobre as disposições gerais deste instrumento em caso de conflito:
+{% for clausula in p.clausulas_particulares %}
+- {{ clausula }}
+{% endfor %}
+{% endif %}
+## CLÁUSULA {% if p.clausulas_particulares %}DÉCIMA TERCEIRA{% else %}DÉCIMA SEGUNDA{% endif %} — DO FORO
+
+Fica eleito o foro da Comarca de {{ p.foro }} para dirimir quaisquer dúvidas ou controvérsias oriundas do presente contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
+
+E, por estarem assim justas e contratadas, as partes firmam o presente instrumento em 2 (duas) vias de igual teor e forma, na presença das testemunhas abaixo.
+
+{{ p.local_data }}
+
+[[ASSINATURAS]]

@@ -1,0 +1,12 @@
+# Dependências APENAS da API de documentos (api.py).
+#
+# Ficam separadas do requirements.txt pelo mesmo motivo do requirements-pg.txt:
+# o Streamlit Community Cloud lê só o requirements.txt e não precisa de nada
+# disto. Carregar FastAPI e uvicorn lá seria adicionar duas dependências (e
+# dois pontos de falha de wheel) num deploy que não usa nenhuma delas.
+#
+# Quem instala: o Dockerfile.api, usado no Render.
+
+fastapi>=0.115
+uvicorn[standard]>=0.32
+pydantic>=2.9

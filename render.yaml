@@ -1,0 +1,45 @@
+# Infraestrutura como código para o Render — API de documentos.
+#
+# Em Render > New > Blueprint, aponte para ESTE repositório (o Python) e ele
+# cria o serviço já configurado. A vantagem é não depender de você lembrar de
+# marcar "Docker" e digitar o caminho do Dockerfile certo.
+#
+# ⚠️ A chave da API NÃO está aqui. `sync: false` faz o Render criar a variável
+#    vazia para você preencher no painel. Este arquivo é versionado; chave em
+#    arquivo versionado é vazamento.
+#
+# Só a API está declarada, de propósito. O app Streamlit continua no Streamlit
+# Community Cloud (grátis), e declará-lo aqui criaria um segundo serviço pago
+# sem necessidade. O `Dockerfile` (sem o `.api`) segue no repositório para o
+# dia em que você quiser mover o Streamlit para cá também — nesse caso é
+# acrescentar um segundo bloco em `services` e um `databases` para o Postgres.
+# O guia completo está em DEPLOY.md.
+
+services:
+  - type: web
+    name: mercabiliza-documentos
+    runtime: docker
+    # Não é o Dockerfile padrão: este repositório tem dois, um para o
+    # Streamlit e um para a API.
+    dockerfilePath: ./Dockerfile.api
+    plan: starter        # free hiberna após 15 min e o primeiro pedido depois
+                         # disso demora ~50s — ruim para gerar contrato na
+                         # frente de um cliente. starter ($7/mês) não hiberna.
+    region: oregon
+    branch: main
+    autoDeploy: true     # push no template do contrato = API atualizada
+
+    healthCheckPath: /health
+
+    envVars:
+      # Preencha no painel (Environment). A MESMA chave vai na Netlify, em
+      # DOCUMENTOS_API_KEY. Gere com:
+      #   python -c "import secrets; print(secrets.token_urlsafe(32))"
+      - key: DOCUMENTOS_API_KEY
+        sync: false
+
+      - key: MERCABILIZA_AMBIENTE
+        value: producao
+      - key: MERCABILIZA_LOG_LEVEL
+        value: INFO      # INFO de propósito: o log de "contrato gerado para X"
+                         # é trilha de auditoria útil, não ruído.

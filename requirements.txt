@@ -1,0 +1,39 @@
+# Produção — pisos mínimos, não pins exatos.
+#
+# Por que floors (>=) e não pins (==): o Streamlit Community Cloud atualiza a
+# versão do Python do runtime sem aviso. Um pin exato feito hoje vira, meses
+# depois, uma versão sem wheel para o Python novo — o pip tenta compilar do
+# fonte, falha, e ABORTA a instalação inteira. O sintoma é cruel: pacotes que
+# vêm depois na lista simplesmente não são instalados, e o app quebra com
+# ModuleNotFoundError numa dependência que está no arquivo.
+#
+# Os pisos abaixo garantem as APIs que o código usa; o resolvedor escolhe a
+# versão mais nova compatível com o Python do runtime.
+#
+# Verificado em Python 3.11 e 3.14 com: streamlit 1.61.1, pandas 3.0.5,
+# openpyxl 3.1.5, fpdf2 2.8.8, reportlab 4.4.10, jinja2 3.1.6,
+# requests 2.34.2 — 173 testes passando.
+
+streamlit>=1.49          # width="stretch"; use_container_width foi removido
+requests>=2.32
+urllib3>=2.2
+pandas>=2.2              # resolve para 3.x quando houver wheel
+openpyxl>=3.1
+fpdf2>=2.8               # dossiê e proposta (layout fixo)
+reportlab>=4.0           # ficha e contrato (texto corrido, Página X de Y)
+jinja2>=3.1              # minuta contratual em template externo
+python-docx>=1.1         # formulário de abertura/desenquadramento (DOCX)
+pillow>=10.0             # papel timbrado (leitura do PNG pelo ReportLab)
+
+# O driver do Postgres NÃO está aqui de propósito — ver requirements-pg.txt.
+# Resumo: ele só é necessário quando DATABASE_URL existe, e mantê-lo nesta
+# lista colocaria o deploy do Streamlit Cloud (que não usa Postgres) refém de
+# um pacote que ele nem chama. O app importa psycopg de forma preguiçosa; sem
+# DATABASE_URL, ele nunca é tocado.
+
+# Se algum dia precisar travar tudo para reproduzir um build exato, gere um
+# lock a partir daqui em vez de editar à mão:
+#   pip install pip-tools
+#   pip-compile requirements.txt -o requirements.lock
+# E fixe também a versão do Python (arquivo .python-version) para que o lock
+# continue válido.

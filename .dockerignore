@@ -1,0 +1,51 @@
+# Fora da imagem: reduz tamanho, acelera build e — o mais importante — evita
+# que segredo ou dado de cliente entre por acidente numa camada Docker.
+# Camada de imagem é imutável: se um .env entrar, ele fica lá para sempre,
+# mesmo que você "apague" o arquivo num RUN depois.
+
+# --- Segredos e dados de cliente ---
+.env
+.env.*
+.streamlit/secrets.toml
+data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite*
+
+# --- Saídas geradas ---
+*.xlsx
+*.pdf
+*.docx
+exports/
+output/
+
+# --- Git e CI ---
+.git/
+.github/
+.gitignore
+
+# --- Desenvolvimento e testes ---
+tests/
+scripts/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+requirements-dev.txt
+
+# --- Documentação (não afeta runtime) ---
+*.md
+!templates/*.md.j2
+LICENSE
+
+# --- Editores e SO ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
