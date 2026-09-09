@@ -139,7 +139,10 @@ def _empresa() -> Empresa:
         nome_fantasia="Mercadinho", endereco=END,
         emails=("financeiro@saojoao.com.br",),
         telefones=("(19) 3333-4444", "(19) 99999-8888"),
-        optante_simples=True,
+        # `optante_mei=False` explícito: a empresa é comprovadamente NÃO-MEI.
+        # Antes o padrão do campo era `False` e bastava omitir; agora o padrão
+        # é `None` (ninguém informou), e omitir aqui significaria outra coisa.
+        optante_simples=True, optante_mei=False,
         situacao=SituacaoCadastral("ATIVA"),
         atividade_principal=AtividadeCNAE("4712100", "Minimercados",
                                           classificar_cnae("4712100")),
@@ -422,3 +425,45 @@ def test_complemento_sujo_nao_chega_ao_contrato():
     assert "CASA CASA" not in linha
     assert "CASA TERREO" in linha
     assert "**Barueri/SP**" in linha
+
+
+# --------------------------------------------------------------------------- #
+# Regime tributário — ausência de informação não é negativa                    #
+# --------------------------------------------------------------------------- #
+def test_mei_confirmado_e_mei():
+    e = Empresa(cnpj="11222333000181", razao_social="X",
+                optante_simples=True, optante_mei=True)
+    assert e.regime == "MEI"
+    assert e.mei_confirmado
+
+
+def test_simples_sim_e_mei_desconhecido_nao_vira_simples_puro():
+    """O caso real: um MEI apareceu como "Simples Nacional / Anexo I / 4%".
+
+    Todo MEI é optante do Simples. Então "Simples = sim, MEI = ?" é exatamente
+    o formato que um MEI assume quando a base do provedor está desatualizada —
+    comum em CNPJ aberto há pouco. Afirmar "Simples Nacional" aí é escolher no
+    chute a resposta que erra por ordem de grandeza: 4% da receita contra DAS
+    fixo de pouco mais de R$ 80 por mês.
+    """
+    e = Empresa(cnpj="11222333000181", razao_social="X",
+                optante_simples=True, optante_mei=None)
+    assert e.regime == "Simples Nacional (confirmar se é MEI)"
+    assert e.regime_incerto
+    assert not e.mei_confirmado
+
+
+def test_nada_informado_nao_vira_lucro_presumido():
+    """Era o comportamento antigo: os dois flags falsos caíam no último ramo
+    do encadeamento, inclusive quando a razão era ausência de dado."""
+    e = Empresa(cnpj="11222333000181", razao_social="X")
+    assert e.regime == "Regime não informado pelos provedores"
+    assert "Lucro" not in e.regime
+    assert e.regime_incerto
+
+
+def test_negativa_afirmativa_continua_valendo():
+    e = Empresa(cnpj="11222333000181", razao_social="X",
+                optante_simples=False, optante_mei=False)
+    assert e.regime == "Lucro Presumido / Real"
+    assert not e.regime_incerto

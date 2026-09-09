@@ -53,10 +53,38 @@ def painel_tributario(empresa: Empresa) -> None:
         return
 
     diag = empresa.atividade_principal.diagnostico
+
+    # ⚠️ O anexo e a alíquota do Simples NÃO se aplicam a MEI: ele recolhe DAS
+    # fixo de pouco mais de R$ 80/mês, não percentual sobre a receita. Num
+    # faturamento de R$ 6.000/mês são ~R$ 80 contra R$ 240 — e o número saía
+    # aqui em `st.success` (verde, cara de conferido), pronto para virar
+    # proposta. O aviso vem ANTES dos números, não depois.
+    if empresa.mei_confirmado:
+        st.warning(
+            "**Esta empresa é MEI — o enquadramento abaixo não se aplica a "
+            "ela.** O MEI paga DAS fixo mensal, não percentual sobre a "
+            "receita. O anexo e a alíquota valem apenas como cenário de "
+            "desenquadramento; use a aba MEI para a análise correta.",
+            icon="⚠️",
+        )
+    elif empresa.regime_incerto:
+        st.error(
+            "**Não dá para afirmar se esta empresa é MEI.** Nenhum provedor "
+            "informou a marcação, e todo MEI é optante do Simples — este é "
+            "exatamente o formato que um MEI assume quando a base do provedor "
+            "está desatualizada (comum em CNPJ aberto há pouco). Confirme no "
+            "Portal do Simples Nacional antes de usar a alíquota abaixo em "
+            "proposta.",
+            icon="🚨",
+        )
+
     esq, dir_ = st.columns([1, 2])
     with esq:
         st.markdown(f"**CNAE principal**\n\n`{empresa.cnae_principal_str}`")
-        st.success(f"**Enquadramento:** {diag.anexo}")
+        rotulo = ("Enquadramento SE deixar de ser MEI"
+                  if (empresa.mei_confirmado or empresa.regime_incerto)
+                  else "Enquadramento")
+        st.success(f"**{rotulo}:** {diag.anexo}")
         st.caption(f"Alíquota: {diag.aliquota_inicial}")
         if diag.is_minimercado:
             st.info("🛒 Minimercado / varejo alimentício — perfil-alvo Mercabiliza.")

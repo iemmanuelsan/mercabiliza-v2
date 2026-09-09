@@ -85,6 +85,31 @@ def _dedup_telefones(telefones: list[str]) -> list[str]:
 # --------------------------------------------------------------------------- #
 # Adapters                                                                     #
 # --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
+# Status do Simples — tri-estado                                              #
+# --------------------------------------------------------------------------- #
+def _booleano_ou_nulo(valor: object) -> bool | None:
+    """``True`` / ``False`` / ``None``, nesta ordem de honestidade.
+
+    ⚠️ Existe porque ``bool(None)`` é ``False``, e usar isso para o status do
+    Simples faz "o provedor não informou" virar "a empresa não é optante".
+
+    O efeito real: um MEI foi classificado como Simples Nacional / Anexo I /
+    4% da receita, quando o certo é DAS fixo de pouco mais de R$ 80 por mês.
+    Erro de ordem de grandeza, apresentado com a mesma cara de dado conferido.
+    """
+    if isinstance(valor, bool):
+        return valor
+    if valor is None:
+        return None
+    texto = str(valor).strip().lower()
+    if texto in {"true", "sim", "s"}:
+        return True
+    if texto in {"false", "nao", "não", "n"}:
+        return False
+    return None
+
+
 def _de_brasilapi(d: Canonico) -> Canonico:
     return {
         "fonte": "BrasilAPI",
@@ -99,8 +124,10 @@ def _de_brasilapi(d: Canonico) -> Canonico:
         "matriz": d.get("identificador_matriz_filial") == 1,
         "emails": [_limpo(d.get("email")).lower()],
         "telefones": [_limpo(d.get("ddd_telefone_1")), _limpo(d.get("ddd_telefone_2"))],
-        "optante_simples": bool(d.get("opcao_pelo_simples")),
-        "optante_mei": bool(d.get("opcao_pelo_mei")),
+        # A BrasilAPI devolve `null` enquanto o dump mensal da Receita não
+        # traz a marcação do Simples — CNPJ aberto neste mês cai nisso.
+        "optante_simples": _booleano_ou_nulo(d.get("opcao_pelo_simples")),
+        "optante_mei": _booleano_ou_nulo(d.get("opcao_pelo_mei")),
         "cnae_codigo": _limpo(d.get("cnae_fiscal")),
         "cnae_descricao": _limpo(d.get("cnae_fiscal_descricao")),
         "cnaes_secundarios": [
@@ -151,8 +178,11 @@ def _de_cnpjws(d: Canonico) -> Canonico:
         "matriz": _limpo(estab.get("tipo")).upper().startswith("MATRIZ"),
         "emails": [_limpo(estab.get("email")).lower()],
         "telefones": [f"({ddd}) {fone}".strip() if (ddd or fone) else ""],
-        "optante_simples": (d.get("simples") or {}).get("simples") == "Sim",
-        "optante_mei": (d.get("simples") or {}).get("mei") == "Sim",
+        # `(d.get("simples") or {})` transformava `"simples": null` — retorno
+        # comum e documentado da CNPJ.ws — em dicionário vazio, e o `== "Sim"`
+        # devolvia False. Ausência virava negativa.
+        "optante_simples": _booleano_ou_nulo((d.get("simples") or {}).get("simples")),
+        "optante_mei": _booleano_ou_nulo((d.get("simples") or {}).get("mei")),
         "cnae_codigo": _limpo(atividade.get("subclasse")),
         "cnae_descricao": _limpo(atividade.get("descricao")),
         "cnaes_secundarios": [
@@ -190,8 +220,8 @@ def _de_receitaws(d: Canonico) -> Canonico:
         "matriz": _limpo(d.get("tipo")).upper().startswith("MATRIZ"),
         "emails": [_limpo(d.get("email")).lower()],
         "telefones": [t.strip() for t in _limpo(d.get("telefone")).split("/") if t.strip()],
-        "optante_simples": bool((d.get("simples") or {}).get("optante")),
-        "optante_mei": bool((d.get("simei") or {}).get("optante")),
+        "optante_simples": _booleano_ou_nulo((d.get("simples") or {}).get("optante")),
+        "optante_mei": _booleano_ou_nulo((d.get("simei") or {}).get("optante")),
         "cnae_codigo": _limpo(principais[0].get("code")),
         "cnae_descricao": _limpo(principais[0].get("text")),
         "cnaes_secundarios": [
@@ -223,6 +253,22 @@ PROVEDORES: tuple[tuple[str, str, Callable[[Canonico], Canonico]], ...] = (
 # --------------------------------------------------------------------------- #
 # Consolidação                                                                 #
 # --------------------------------------------------------------------------- #
+def _consolidar(fontes: list[dict], chave: str) -> bool | None:
+    """Um "sim" afirmativo vence; na falta dele, um "não" afirmativo; senão
+    ``None``.
+
+    O ``any()`` anterior devolvia ``False`` tanto para "todos disseram não"
+    quanto para "ninguém disse nada" — e as duas situações levam a
+    recomendações diferentes para o cliente.
+    """
+    valores = [f.get(chave) for f in fontes]
+    if any(v is True for v in valores):
+        return True
+    if any(v is False for v in valores):
+        return False
+    return None
+
+
 def _primeiro_preenchido(fontes: list[Canonico], chave: str, padrao: Any = "") -> Any:
     """Pega o primeiro valor não-vazio na ordem de prioridade dos provedores.
 
@@ -286,8 +332,8 @@ def consolidar(cnpj: str, fontes: list[Canonico], rbt12: float = 0.0) -> Empresa
         porte=_primeiro_preenchido(fontes, "porte", "Não informado"),
         capital_social=_float(_primeiro_preenchido(fontes, "capital_social", 0.0)),
         emails=tuple(emails), telefones=tuple(telefones),
-        optante_simples=any(f.get("optante_simples") for f in fontes),
-        optante_mei=any(f.get("optante_mei") for f in fontes),
+        optante_simples=_consolidar(fontes, "optante_simples"),
+        optante_mei=_consolidar(fontes, "optante_mei"),
         endereco=endereco,
         situacao=SituacaoCadastral(
             situacao_receita=_primeiro_preenchido(fontes, "situacao", "DESCONHECIDA").upper(),

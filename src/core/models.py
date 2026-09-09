@@ -216,8 +216,14 @@ class Empresa:
     capital_social: float = 0.0
     emails: tuple[str, ...] = ()
     telefones: tuple[str, ...] = ()
-    optante_simples: bool = False
-    optante_mei: bool = False
+    # ⚠️ Tri-estado: ``None`` significa "nenhum provedor informou".
+    #
+    # Como ``bool`` puro, a ausência de informação virava ``False`` e um MEI
+    # saía classificado como Simples Nacional / Anexo I / 4% da receita — o
+    # correto para MEI é DAS fixo de pouco mais de R$ 80 por mês. Ver
+    # ``_booleano_ou_nulo`` em services/cnpj_providers.py.
+    optante_simples: bool | None = None
+    optante_mei: bool | None = None
     endereco: Endereco = field(default_factory=Endereco)
     situacao: SituacaoCadastral = field(default_factory=SituacaoCadastral)
     atividade_principal: AtividadeCNAE | None = None
@@ -231,11 +237,34 @@ class Empresa:
     # ---------------------------------------------------------------- #
     @property
     def regime(self) -> str:
-        if self.optante_mei:
+        """Regime tributário — nunca afirma o que não se sabe.
+
+        Todo MEI é optante do Simples. Então "Simples = sim, MEI = ?" é
+        exatamente o formato que um MEI assume quando a base do provedor está
+        desatualizada, e devolver "Simples Nacional" nesse caso é escolher no
+        chute a resposta que erra por ordem de grandeza.
+        """
+        if self.optante_mei is True:
             return "MEI"
-        if self.optante_simples:
-            return "Simples Nacional"
-        return "Lucro Presumido / Real"
+        if self.optante_simples is True:
+            return ("Simples Nacional" if self.optante_mei is False
+                    else "Simples Nacional (confirmar se é MEI)")
+        if self.optante_simples is False:
+            return "Lucro Presumido / Real"
+        return "Regime não informado pelos provedores"
+
+    @property
+    def mei_confirmado(self) -> bool:
+        return self.optante_mei is True
+
+    @property
+    def regime_incerto(self) -> bool:
+        """Verdadeiro quando não dá para afirmar se a empresa é MEI.
+
+        Quem consome isto deve evitar apresentar anexo e alíquota do Simples
+        como se fossem os números desta empresa.
+        """
+        return self.optante_mei is not False and not self.mei_confirmado
 
     @property
     def email_str(self) -> str:

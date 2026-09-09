@@ -76,3 +76,53 @@ def test_regressao_bug_original_perdia_letras():
     assert antigo == "123450135"          # letras sumiram
     assert len(antigo) != 14              # logo, era rejeitado como inválido
     assert validar("12ABC34501DE35") == "12ABC34501DE35"
+
+
+# --------------------------------------------------------------------------- #
+# Detecção de MEI — ausente não é o mesmo que negativo                         #
+# --------------------------------------------------------------------------- #
+# O defeito real: um MEI foi classificado como Simples Nacional / Anexo I / 4%
+# da receita. A causa foi `bool(None) is False` — o código lia a AUSÊNCIA de
+# informação como NEGATIVA. É a mesma família do bug da inscrição estadual.
+from src.services.cnpj_providers import _booleano_ou_nulo, _consolidar
+
+
+def test_none_nao_vira_false():
+    assert _booleano_ou_nulo(None) is None
+
+
+def test_ausencia_de_chave_e_desconhecida():
+    assert _booleano_ou_nulo({}.get("opcao_pelo_mei")) is None
+
+
+def test_sim_e_nao_da_cnpjws():
+    assert _booleano_ou_nulo("Sim") is True
+    assert _booleano_ou_nulo("Não") is False
+    assert _booleano_ou_nulo("nao") is False
+
+
+def test_booleano_puro_continua_funcionando():
+    assert _booleano_ou_nulo(True) is True
+    assert _booleano_ou_nulo(False) is False
+
+
+def test_valor_inesperado_e_desconhecido_e_nao_false():
+    assert _booleano_ou_nulo("talvez") is None
+
+
+def test_consolidar_um_sim_vence():
+    fontes = [{"optante_mei": None}, {"optante_mei": True}, {"optante_mei": False}]
+    assert _consolidar(fontes, "optante_mei") is True
+
+
+def test_consolidar_nao_afirmativo_vence_o_desconhecido():
+    assert _consolidar([{"optante_mei": None}, {"optante_mei": False}],
+                       "optante_mei") is False
+
+
+def test_consolidar_ninguem_informou_devolve_none():
+    """O `any()` anterior devolvia False aqui — indistinguível de "todos
+    disseram que não"."""
+    assert _consolidar([{"optante_mei": None}, {"optante_mei": None}],
+                       "optante_mei") is None
+    assert _consolidar([{}, {}], "optante_mei") is None

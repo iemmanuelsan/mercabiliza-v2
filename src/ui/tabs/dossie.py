@@ -134,7 +134,9 @@ def _bloco_proposta(empresa) -> None:
         st.markdown("**Serviços pontuais**")
         inc_desenq = st.checkbox(
             f"Desenquadramento de MEI ({moeda(precos.desenquadramento_mei)})",
-            value=empresa.optante_mei)
+            #  em vez de : o campo agora é
+            # tri-estado e o checkbox do Streamlit não aceita None.
+            value=empresa.mei_confirmado)
         inc_abertura = st.checkbox(
             f"Constituição / abertura ({moeda(precos.abertura_empresa)})")
     with col_b:
