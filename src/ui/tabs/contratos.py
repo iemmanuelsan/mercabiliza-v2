@@ -77,6 +77,7 @@ K_FICHA_PDF = "ct_ficha_pdf"
 K_CONTRATO_PDF = "ct_contrato_pdf"
 K_NOME_ARQ = "ct_nome_arquivo"
 K_DOCX = "ct_docx_formulario"
+K_DOCX_TRANSICAO = "ct_docx_transicao"
 
 CAMPOS_PJ = {
     "ct_pj_cnpj": "", "ct_pj_razao": "", "ct_pj_fantasia": "", "ct_pj_cnae": "",
@@ -680,6 +681,147 @@ def _bloco_ficha_branco() -> None:
 
 
 # --------------------------------------------------------------------------- #
+# Transição contábil — substitui a planilha de entrada de novos clientes       #
+# --------------------------------------------------------------------------- #
+# Perguntas de sim/não com "" na frente de propósito: em branco significa "a
+# equipe ainda não respondeu", e o documento sai com [ PREENCHER AQUI ]. Um
+# selectbox que já começa em "Não" transformaria falta de resposta em resposta
+# — e "Não" é a opção que passa despercebida na conferência.
+SIM_NAO = ("", "Sim", "Não")
+
+
+@st.fragment
+def _bloco_transicao(contratante) -> None:
+    """Formulário de entrada de novo cliente por transição contábil.
+
+    Substitui a planilha que a equipe preenchia à mão. O bloco cadastral vem da
+    consulta de CNPJ acima; aqui só ficam as perguntas que **nenhuma API
+    responde** — quantos funcionários, se tem pró-labore, qual o sistema de
+    notas, quem era o contador anterior.
+
+    ``@st.fragment`` isola o bloco: preencher estas respostas não reexecuta a
+    consulta de CNPJ nem perde o que já foi digitado acima.
+    """
+    from ...exporters.docx_transicao import (
+        dados_de_contratante as _prefill,
+        gerar_formulario_transicao,
+    )
+
+    st.subheader("🔄 Formulário de entrada — transição contábil")
+    st.caption(
+        "Para cliente que vem de outra contabilidade. Os dados cadastrais "
+        "consultados acima entram preenchidos; o que ficar em branco aqui sai "
+        "como “PREENCHER AQUI” para o cliente responder."
+    )
+
+    with st.expander("Preencher as respostas da equipe", expanded=False):
+        st.markdown("**Informações iniciais**")
+        c1, c2, c3 = st.columns(3)
+        competencia = c1.text_input(
+            "Competência de entrada", key="tr_competencia",
+            placeholder="09/2026", help="Mês/ano em que assumimos a escrita.")
+        segmento = c2.text_input(
+            "Segmento", key="tr_segmento", placeholder="MiniMercado autônomo",
+            help="O CNAE não serve: ele diz “comércio varejista de mercadorias "
+                 "em geral”, e o que interessa aqui é o negócio real.")
+        faturamento = c3.text_input(
+            "Faturamento mensal médio", key="tr_faturamento",
+            placeholder="R$ 25.000,00")
+
+        c1, c2, c3 = st.columns(3)
+        tem_filiais = c1.selectbox("Tem filiais?", SIM_NAO, key="tr_filiais")
+        cnpj_filiais = c2.text_input("CNPJ das filiais", key="tr_cnpj_filiais")
+        qtd_socios = c3.text_input("Quantos sócios?", key="tr_socios")
+
+        st.markdown("**Departamento pessoal**")
+        c1, c2, c3, c4 = st.columns(4)
+        tem_func = c1.selectbox("Tem funcionários?", SIM_NAO, key="tr_tem_func")
+        qtd_func = c2.text_input("Quantos?", key="tr_qtd_func")
+        pro_labore = c3.selectbox("Terá pró-labore?", SIM_NAO, key="tr_prolabore")
+        adiantamento = c4.selectbox("Adiantamento salarial?", SIM_NAO,
+                                    key="tr_adiantamento")
+
+        st.markdown("**Departamento fiscal**")
+        c1, c2, c3 = st.columns(3)
+        certificado = c1.selectbox("Certificado digital válido?", SIM_NAO,
+                                   key="tr_certificado")
+        validade_cert = c2.text_input("Validade do certificado",
+                                      key="tr_validade_cert")
+        nfce = c3.selectbox("Emite NFC-e / cupom?", SIM_NAO, key="tr_nfce")
+
+        c1, c2, c3 = st.columns(3)
+        sistema_notas = c1.text_input("Sistema de notas", key="tr_sistema_notas",
+                                      placeholder="Bling, Tiny, emissor SEFAZ…")
+        tipo_empresa = c2.selectbox("Tipo de empresa",
+                                    ("", "Comércio", "Indústria", "Serviços"),
+                                    key="tr_tipo_empresa")
+        regime_trib = c3.text_input(
+            "Regime tributário", key="tr_regime_trib",
+            value=getattr(contratante, "regime", "") or "",
+            help="Vem da consulta; corrija se a Receita estiver desatualizada.")
+
+        st.markdown("**Contabilidade anterior**")
+        st.caption(
+            "O contato é o que precisamos para iniciar a sucessão. A lista do "
+            "que será solicitado a ela já vai impressa no documento, com o "
+            "aviso de que quem solicita somos nós."
+        )
+        c1, c2, c3 = st.columns(3)
+        contador_ant = c1.text_input("Escritório / contador", key="tr_contador")
+        email_ant = c2.text_input("E-mail", key="tr_email_ant")
+        tel_ant = c3.text_input("Telefone", key="tr_tel_ant")
+
+    if st.button("🔄 Gerar formulário de transição (DOCX)", width="stretch"):
+        # O prefill entra POR BAIXO: se a equipe corrigiu algo na tela, a
+        # correção manda. O contrário faria a consulta sobrescrever a
+        # conferência humana, que é o que o documento existe para registrar.
+        iniciais = dict(_prefill(contratante)) if contratante is not None else {}
+        iniciais.update({
+            "competencia": competencia, "segmento": segmento,
+            "faturamento": faturamento, "tem_filiais": tem_filiais,
+            "cnpj_filiais": cnpj_filiais, "qtd_socios": qtd_socios,
+        })
+        try:
+            st.session_state[K_DOCX_TRANSICAO] = gerar_formulario_transicao(
+                dados_iniciais={k: v for k, v in iniciais.items() if v},
+                dados_pessoal={"tem_funcionarios": tem_func,
+                               "qtd_funcionarios": qtd_func,
+                               "pro_labore": pro_labore,
+                               "adiantamento": adiantamento},
+                dados_fiscal={"certificado": certificado,
+                              "validade_certificado": validade_cert,
+                              "sistema_notas": sistema_notas,
+                              "tipo_empresa": tipo_empresa,
+                              "regime_tributario": regime_trib,
+                              "nfce": nfce},
+                dados_sucessao={"contador_anterior": contador_ant,
+                                "email_anterior": email_ant,
+                                "telefone_anterior": tel_ant},
+            )
+        except Exception as exc:
+            st.error(f"Falha ao gerar o formulário de transição: {exc}")
+
+    if docx := st.session_state.get(K_DOCX_TRANSICAO):
+        nome = getattr(contratante, "razao_social", None) or "novo-cliente"
+        st.download_button(
+            "⬇️ Baixar formulário de transição (DOCX)", data=docx,
+            file_name=f"transicao_contabil_{_slug_arquivo(nome)}.docx",
+            mime=("application/vnd.openxmlformats-officedocument"
+                  ".wordprocessingml.document"),
+            type="primary", width="stretch",
+        )
+
+
+def _slug_arquivo(texto: str) -> str:
+    import re
+    import unicodedata
+
+    sem_acento = unicodedata.normalize("NFKD", texto or "documento")
+    sem_acento = sem_acento.encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-zA-Z0-9]+", "_", sem_acento).strip("_").lower()[:60] or "doc"
+
+
+# --------------------------------------------------------------------------- #
 # Entrada da aba                                                               #
 # --------------------------------------------------------------------------- #
 def render() -> None:
@@ -723,6 +865,9 @@ def render() -> None:
 
     st.divider()
     _bloco_documentos(_montar_contratante())
+
+    st.divider()
+    _bloco_transicao(_montar_contratante() if _tem_cnpj() else None)
 
     st.divider()
     _bloco_ficha_branco()

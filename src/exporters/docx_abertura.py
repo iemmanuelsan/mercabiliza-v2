@@ -27,136 +27,45 @@ ele vai direto às ~8 decisões que só ele pode tomar.
 from __future__ import annotations
 
 import io
-from dataclasses import dataclass, field
 from datetime import date
 
 from docx import Document
-from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
-from docx.shared import Cm, Pt, RGBColor
+from docx.shared import Pt
 
-from ..config import (
-    CONTRATADA_EMAIL,
-    CONTRATADA_NOME_FANTASIA,
-    CONTRATADA_TELEFONE,
-)
 from ..core.cnpj import formatar as formatar_cnpj
 from ..core.contrato import valor_extenso
 from ..core.cpf import formatar as formatar_cpf
 from ..core.formatters import moeda
+from .docx_base import (
+    MARCADOR_PENDENTE,
+    Campo,
+    Secao,
+    cabecalho as _cabecalho,
+    configurar_pagina as _configurar_pagina,
+    legenda as _legenda,
+    run as _run,
+    rodape_assinatura,
+    tabela_campos as _tabela_campos,
+    titulo_secao as _titulo_secao,
+)
 
-MARCADOR_PENDENTE = "[ PREENCHER AQUI ]"
+# Reexportado: `MARCADOR_PENDENTE` faz parte da interface pública deste módulo
+# desde antes da extração da base, e há teste importando daqui.
+__all__ = [
+    "MARCADOR_PENDENTE",
+    "Campo",
+    "Secao",
+    "capital_social_formatado",
+    "dados_de_contratante",
+    "gerar_formulario_abertura",
+]
 
-COR_MARCA = RGBColor(0xDC, 0x32, 0x50)
-COR_PENDENTE = RGBColor(0xC0, 0x1B, 0x36)
-COR_CINZA = RGBColor(0x55, 0x5B, 0x66)
-CINZA_FUNDO = "F5F6F8"
-
-
-# --------------------------------------------------------------------------- #
-# Modelo de campo                                                              #
-# --------------------------------------------------------------------------- #
-@dataclass(frozen=True, slots=True)
-class Campo:
-    """Um campo do formulário.
-
-    ``valor`` vazio + ``pendente=True`` → sai como ``[ PREENCHER AQUI ]``.
-    ``valor`` preenchido → sai em negrito (veio do sistema).
-    ``valor`` vazio + ``pendente=False`` → sai como linha em branco.
-    """
-
-    rotulo: str
-    valor: str = ""
-    pendente: bool = False
-    dica: str = ""
-
-    @property
-    def preenchido_pelo_sistema(self) -> bool:
-        return bool(self.valor.strip())
-
-
-@dataclass(slots=True)
-class Secao:
-    titulo: str
-    campos: list[Campo] = field(default_factory=list)
-    colunas: int = 2
-
-
-# --------------------------------------------------------------------------- #
-# Helpers de formatação                                                        #
-# --------------------------------------------------------------------------- #
-def _sombrear(celula, cor_hex: str) -> None:
-    """Fundo de célula — o python-docx não expõe isso na API pública."""
-    elemento = OxmlElement("w:shd")
-    elemento.set(qn("w:val"), "clear")
-    elemento.set(qn("w:fill"), cor_hex)
-    celula._tc.get_or_add_tcPr().append(elemento)
-
-
-def _run(paragrafo, texto: str, *, negrito: bool = False, tamanho: float = 9,
-         cor: RGBColor | None = None, italico: bool = False):
-    r = paragrafo.add_run(texto)
-    r.bold = negrito
-    r.italic = italico
-    r.font.size = Pt(tamanho)
-    if cor is not None:
-        r.font.color.rgb = cor
-    return r
-
-
-def _escrever_campo(celula, campo: Campo) -> None:
-    """Rótulo + valor numa célula, aplicando a convenção visual."""
-    celula.text = ""
-    p = celula.paragraphs[0]
-    p.paragraph_format.space_after = Pt(2)
-    _run(p, f"{campo.rotulo}: ", negrito=False, tamanho=8.5, cor=COR_CINZA)
-
-    if campo.preenchido_pelo_sistema:
-        _run(p, campo.valor, negrito=True, tamanho=9)
-    elif campo.pendente:
-        _run(p, MARCADOR_PENDENTE, negrito=True, tamanho=9, cor=COR_PENDENTE)
-    else:
-        _run(p, "_" * 28, tamanho=9, cor=COR_CINZA)
-
-    if campo.dica:
-        p2 = celula.add_paragraph()
-        p2.paragraph_format.space_before = Pt(0)
-        _run(p2, campo.dica, tamanho=7, cor=COR_CINZA, italico=True)
-
-
-def _titulo_secao(doc, texto: str) -> None:
-    tabela = doc.add_table(rows=1, cols=1)
-    tabela.alignment = WD_TABLE_ALIGNMENT.CENTER
-    celula = tabela.rows[0].cells[0]
-    _sombrear(celula, "2F5597")
-    celula.text = ""
-    p = celula.paragraphs[0]
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _run(p, texto.upper(), negrito=True, tamanho=9.5, cor=RGBColor(0xFF, 0xFF, 0xFF))
-    doc.add_paragraph().paragraph_format.space_after = Pt(2)
-
-
-def _tabela_campos(doc, campos: list[Campo], colunas: int = 2) -> None:
-    if not campos:
-        return
-    linhas = -(-len(campos) // colunas)
-    tabela = doc.add_table(rows=linhas, cols=colunas)
-    tabela.style = "Table Grid"
-    tabela.alignment = WD_TABLE_ALIGNMENT.CENTER
-
-    for i, campo in enumerate(campos):
-        celula = tabela.cell(i // colunas, i % colunas)
-        _escrever_campo(celula, campo)
-        if campo.pendente and not campo.preenchido_pelo_sistema:
-            _sombrear(celula, "FDF0F2")
-
-    # Células sobrando na última linha ficam em branco, não com "None".
-    for j in range(len(campos), linhas * colunas):
-        tabela.cell(j // colunas, j % colunas).text = ""
-
-    doc.add_paragraph().paragraph_format.space_after = Pt(4)
+DECLARACAO = (
+    "declaro que as informações prestadas neste formulário são verdadeiras e "
+    "completas, e autorizo seu uso para os atos de constituição/alteração "
+    "societária e cadastro nos órgãos competentes, nos termos da Lei nº "
+    "13.709/2018 (LGPD)."
+)
 
 
 # --------------------------------------------------------------------------- #
@@ -255,77 +164,6 @@ def _secao_desenquadramento(dados: dict) -> Secao:
     ])
 
 
-# --------------------------------------------------------------------------- #
-# Documento                                                                    #
-# --------------------------------------------------------------------------- #
-def _configurar_pagina(doc) -> None:
-    for secao in doc.sections:
-        secao.top_margin = Cm(1.8)
-        secao.bottom_margin = Cm(1.8)
-        secao.left_margin = Cm(1.8)
-        secao.right_margin = Cm(1.8)
-
-
-def _cabecalho(doc, titulo: str, subtitulo: str) -> None:
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _run(p, CONTRATADA_NOME_FANTASIA.upper(), negrito=True, tamanho=16, cor=COR_MARCA)
-
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _run(p, titulo, negrito=True, tamanho=13)
-
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _run(p, subtitulo, tamanho=8.5, cor=COR_CINZA)
-
-
-def _legenda(doc) -> None:
-    tabela = doc.add_table(rows=1, cols=1)
-    tabela.style = "Table Grid"
-    celula = tabela.rows[0].cells[0]
-    _sombrear(celula, CINZA_FUNDO)
-    celula.text = ""
-    p = celula.paragraphs[0]
-    _run(p, "Como preencher: ", negrito=True, tamanho=8.5)
-    _run(p, "os campos em ", tamanho=8.5)
-    _run(p, "negrito", negrito=True, tamanho=8.5)
-    _run(p, " já foram preenchidos pela contabilidade — apenas confira. Os "
-            "campos marcados como ", tamanho=8.5)
-    _run(p, MARCADOR_PENDENTE, negrito=True, tamanho=8.5, cor=COR_PENDENTE)
-    _run(p, " dependem da sua decisão. Os demais são dados que você deve "
-            "informar.", tamanho=8.5)
-    doc.add_paragraph().paragraph_format.space_after = Pt(4)
-
-
-def _rodape_assinatura(doc) -> None:
-    doc.add_paragraph()
-    p = doc.add_paragraph()
-    _run(p, "Declaração: ", negrito=True, tamanho=8)
-    _run(p, "declaro que as informações prestadas neste formulário são "
-            "verdadeiras e completas, e autorizo seu uso para os atos de "
-            "constituição/alteração societária e cadastro nos órgãos "
-            "competentes, nos termos da Lei nº 13.709/2018 (LGPD).", tamanho=8)
-
-    doc.add_paragraph()
-    tabela = doc.add_table(rows=2, cols=2)
-    tabela.alignment = WD_TABLE_ALIGNMENT.CENTER
-    for col, rotulo in enumerate(["Assinatura do titular / sócio administrador",
-                                  "Local e data"]):
-        c = tabela.cell(0, col)
-        c.text = ""
-        _run(c.paragraphs[0], "_" * 40, tamanho=10)
-        c2 = tabela.cell(1, col)
-        c2.text = ""
-        _run(c2.paragraphs[0], rotulo, tamanho=8, cor=COR_CINZA)
-
-    doc.add_paragraph()
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _run(p, f"{CONTRATADA_NOME_FANTASIA} · {CONTRATADA_TELEFONE} · "
-            f"{CONTRATADA_EMAIL}", tamanho=7.5, cor=COR_CINZA)
-
-
 def gerar_formulario_abertura(
     perfil: str,
     dados_empresa: dict | None = None,
@@ -383,7 +221,8 @@ def gerar_formulario_abertura(
         p.paragraph_format.space_after = Pt(1)
         _run(p, f"[   ]  {item}", tamanho=8.5)
 
-    _rodape_assinatura(doc)
+    rodape_assinatura(doc, DECLARACAO,
+                      "Assinatura do titular / sócio administrador")
 
     buffer = io.BytesIO()
     doc.save(buffer)

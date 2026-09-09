@@ -58,6 +58,10 @@ from src.exporters.docx_abertura import (
     dados_de_contratante,
     gerar_formulario_abertura,
 )
+from src.exporters.docx_transicao import (
+    dados_de_contratante as dados_de_contratante_transicao,
+    gerar_formulario_transicao,
+)
 from src.exporters.pdf_documentos import gerar_contrato, gerar_ficha_cadastral
 
 logging.basicConfig(level=os.getenv("MERCABILIZA_LOG_LEVEL", "INFO"))
@@ -66,7 +70,7 @@ logger = logging.getLogger("api.documentos")
 app = FastAPI(
     title="Mercabiliza — API de documentos",
     version="1.0.0",
-    description="Gera contrato, ficha cadastral e formulário de abertura.",
+    description="Gera contrato, ficha cadastral e os formulários de abertura e de transição contábil.",
 )
 
 
@@ -299,6 +303,92 @@ class PedidoFormulario(Estrito):
     desenquadramento: DesenquadramentoIn | None = None
 
 
+class BlocoTransicao(Estrito):
+    """Base dos blocos de resposta do formulário de transição.
+
+    ⚠️ Duas regras valem para TODAS as subclasses:
+
+    1. **Nenhum campo pode ter valor padrão — todos são ``None``.** É a mesma
+       regra do ``ParametrosIn``, e pelo mesmo motivo: quando o schema da API
+       repete um padrão que já existe no domínio, os dois divergem no primeiro
+       dia em que alguém muda um lado, e o documento gerado pela API passa a
+       sair diferente do gerado pela tela, sem ninguém perceber. O
+       ``modelo_entrada`` é o caso concreto: "Transição contábil" mora no
+       exportador, e escrevê-lo aqui criaria a segunda fonte.
+
+    2. **Os nomes dos campos são exatamente as chaves de
+       ``CAMPOS_POR_BLOCO``**, do exportador. Há teste comparando os dois
+       conjuntos: um campo novo em um lado sem o outro quebra o teste em vez
+       de virar um campo que não aparece no documento.
+    """
+
+    def para_dicionario(self) -> dict:
+        # exclude_none + descarte de string vazia: o que não veio simplesmente
+        # não chega ao exportador, e o padrão aplicado é sempre o dele.
+        return {k: v for k, v in self.model_dump(exclude_none=True).items()
+                if str(v).strip() != ""}
+
+
+class IniciaisIn(BlocoTransicao):
+    modelo_entrada: str | None = None
+    competencia: str | None = None
+    razao_social: str | None = None
+    cnpj: str | None = None
+    nome_fantasia: str | None = None
+    inscricao_estadual: str | None = None
+    segmento: str | None = None
+    regime: str | None = None
+    faturamento: str | None = None
+    tem_filiais: str | None = None
+    cnpj_filiais: str | None = None
+    qtd_socios: str | None = None
+    responsavel: str | None = None
+    cpf_responsavel: str | None = None
+    email1: str | None = None
+    email2: str | None = None
+    telefone1: str | None = None
+    telefone2: str | None = None
+
+
+class PessoalIn(BlocoTransicao):
+    tem_funcionarios: str | None = None
+    qtd_funcionarios: str | None = None
+    pro_labore: str | None = None
+    adiantamento: str | None = None
+    fechamento_folha: str | None = None
+    sindicato: str | None = None
+
+
+class FiscalIn(BlocoTransicao):
+    certificado: str | None = None
+    validade_certificado: str | None = None
+    sistema_notas: str | None = None
+    tipo_empresa: str | None = None
+    regime_tributario: str | None = None
+    nfce: str | None = None
+
+
+class SucessaoIn(BlocoTransicao):
+    contador_anterior: str | None = None
+    email_anterior: str | None = None
+    telefone_anterior: str | None = None
+
+
+class PedidoTransicao(Estrito):
+    """Formulário DOCX de entrada de novo cliente por transição contábil.
+
+    ``contratante`` é opcional: sem ele o documento sai em branco, que é
+    exatamente o impresso que a equipe usava antes na planilha. Com ele, o
+    bloco cadastral já vem preenchido e o cliente só confere.
+    """
+
+    contratante: ContratanteIn | None = None
+    iniciais: IniciaisIn = Field(default_factory=IniciaisIn)
+    pessoal: PessoalIn = Field(default_factory=PessoalIn)
+    fiscal: FiscalIn = Field(default_factory=FiscalIn)
+    sucessao: SucessaoIn = Field(default_factory=SucessaoIn)
+
+
 # --------------------------------------------------------------------------- #
 # Auxiliares                                                                  #
 # --------------------------------------------------------------------------- #
@@ -418,3 +508,41 @@ def formulario(pedido: PedidoFormulario) -> Response:
     logger.info("Formulário %s gerado para %s (%d bytes)",
                 pedido.perfil, nome, len(docx))
     return _arquivo(docx, f"formulario-{pedido.perfil.lower()}-{_slug(nome)}.docx", DOCX)
+
+
+@app.post("/v1/transicao", dependencies=[Protegido])
+def transicao(pedido: PedidoTransicao) -> Response:
+    """Formulário de entrada de novo cliente — transição contábil.
+
+    Substitui a planilha que a equipe preenchia à mão. O bloco cadastral vem da
+    consulta de CNPJ; o operacional (departamento pessoal, contábil, fiscal e
+    financeiro) vem da tela, porque nenhuma API o conhece.
+    """
+    iniciais = pedido.iniciais.para_dicionario()
+
+    if pedido.contratante is not None:
+        contratante = pedido.contratante.para_dominio()
+        # O prefill entra POR BAIXO do que veio na requisição: se a equipe
+        # corrigiu um dado na tela, a correção manda. O contrário faria a
+        # consulta sobrescrever a conferência humana — que é o oposto do
+        # objetivo do documento.
+        iniciais = {**dados_de_contratante_transicao(contratante), **iniciais}
+    else:
+        contratante = None
+
+    docx = gerar_formulario_transicao(
+        dados_iniciais=iniciais,
+        dados_pessoal=pedido.pessoal.para_dicionario(),
+        dados_fiscal=pedido.fiscal.para_dicionario(),
+        dados_sucessao=pedido.sucessao.para_dicionario(),
+    )
+
+    nome = (
+        iniciais.get("razao_social")
+        or (getattr(contratante, "razao_social", "") if contratante else "")
+        or (getattr(contratante, "nome", "") if contratante else "")
+        or "em-branco"
+    )
+    logger.info("Formulário de transição gerado para %s (%d bytes)",
+                nome, len(docx))
+    return _arquivo(docx, f"transicao-contabil-{_slug(nome)}.docx", DOCX)

@@ -460,3 +460,157 @@ def test_complemento_sujo_da_receita_sai_limpo_pela_api(autorizado):
 
     assert " ;" not in texto
     assert "CASA CASA" not in texto
+
+
+# --------------------------------------------------------------------------- #
+# /v1/transicao — formulário de entrada por transição contábil                 #
+# --------------------------------------------------------------------------- #
+def _texto_docx(conteudo: bytes) -> str:
+    import io
+
+    from docx import Document
+
+    doc = Document(io.BytesIO(conteudo))
+    partes = [p.text for p in doc.paragraphs]
+    for tabela in doc.tables:
+        for linha in tabela.rows:
+            for celula in linha.cells:
+                partes.append(celula.text)
+    return "\n".join(partes)
+
+
+def test_transicao_exige_chave(cliente):
+    assert cliente.post("/v1/transicao", json={}).status_code == 401
+
+
+def test_transicao_sem_nenhum_dado_gera_o_formulario_em_branco(autorizado):
+    """É o impresso que a equipe usava na planilha. Tem de sair sem exigir
+    consulta de CNPJ nenhuma."""
+    r = autorizado.post("/v1/transicao", json={})
+    assert r.status_code == 200
+    assert r.content[:2] == b"PK"
+    assert "FORMULÁRIO DE ENTRADA DE NOVOS CLIENTES" in _texto_docx(r.content)
+
+
+def test_transicao_com_contratante_preenche_o_cadastral(autorizado):
+    r = autorizado.post("/v1/transicao", json={"contratante": PJ})
+    assert r.status_code == 200
+    texto = _texto_docx(r.content)
+    assert "MERCADO TESTE LTDA" in texto
+    assert "11.222.333/0001-81" in texto
+
+
+def test_transicao_leva_as_respostas_da_tela(autorizado):
+    r = autorizado.post("/v1/transicao", json={
+        "contratante": PJ,
+        "iniciais": {"competencia": "09/2026", "segmento": "MiniMercado Autônomo"},
+        "pessoal": {"tem_funcionarios": "Não"},
+        "fiscal": {"sistema_notas": "Bling"},
+        "sucessao": {"email_anterior": "contato@agilize.com.br"},
+    })
+    assert r.status_code == 200
+    texto = _texto_docx(r.content)
+    for esperado in ("09/2026", "MiniMercado Autônomo", "Bling",
+                     "contato@agilize.com.br"):
+        assert esperado in texto
+
+
+def test_transicao_a_tela_vence_o_prefill(autorizado):
+    """Se a equipe corrigiu um dado na tela, a correção manda. O contrário
+    faria a consulta de CNPJ sobrescrever a conferência humana — que é
+    justamente o que o documento existe para registrar."""
+    r = autorizado.post("/v1/transicao", json={
+        "contratante": PJ,
+        "iniciais": {"razao_social": "NOME CORRIGIDO NA JUNTA LTDA"},
+    })
+    texto = _texto_docx(r.content)
+    assert "NOME CORRIGIDO NA JUNTA LTDA" in texto
+    assert "MERCADO TESTE LTDA" not in texto
+
+
+def test_transicao_campo_digitado_errado_e_422_e_nao_documento_em_branco(autorizado):
+    """A falha do ``valor_mesal``, de novo. Sem ``extra="forbid"``, um "s" a
+    menos em ``tem_funcionarios`` geraria um documento com o campo em branco e
+    resposta 200 — indistinguível de um formulário legitimamente não
+    preenchido."""
+    r = autorizado.post("/v1/transicao", json={
+        "pessoal": {"tem_funcionario": "Não"},
+    })
+    assert r.status_code == 422
+    assert "tem_funcionario" in r.text
+
+
+def test_schema_da_api_e_exportador_nao_podem_divergir():
+    """Os nomes dos campos da API têm de ser exatamente as chaves que o
+    exportador conhece.
+
+    Sem este teste, acrescentar um campo em um lado só produz um campo que a
+    tela envia e o documento ignora — silenciosamente, porque o exportador lê
+    com ``.get`` e a API aceitaria o extra.
+    """
+    from src.exporters.docx_transicao import CAMPOS_POR_BLOCO
+
+    modelos = {
+        "iniciais": modulo_api.IniciaisIn,
+        "pessoal": modulo_api.PessoalIn,
+        "fiscal": modulo_api.FiscalIn,
+        "sucessao": modulo_api.SucessaoIn,
+    }
+    assert set(modelos) == set(CAMPOS_POR_BLOCO)
+    for bloco, modelo in modelos.items():
+        assert set(modelo.model_fields) == set(CAMPOS_POR_BLOCO[bloco]), bloco
+
+
+def test_schema_da_transicao_nao_pode_ter_padrao_proprio():
+    """Nenhum campo dos blocos pode ter valor padrão.
+
+    O padrão mora no exportador. Repetido aqui, os dois divergem — foi
+    exatamente assim que o ``incluir_dp`` saiu ``False`` na API e ``True`` no
+    Streamlit, e os contratos gerados pela web saíram sem a cláusula
+    trabalhista.
+    """
+    for modelo in (modulo_api.IniciaisIn, modulo_api.PessoalIn,
+                   modulo_api.FiscalIn, modulo_api.SucessaoIn):
+        for nome, campo in modelo.model_fields.items():
+            assert campo.default is None, (
+                f"{modelo.__name__}.{nome} tem padrão próprio "
+                f"({campo.default!r}); o padrão pertence ao exportador."
+            )
+
+
+def test_transicao_api_bate_com_o_exportador_direto(autorizado):
+    """Paridade API × Streamlit: os dois caminhos têm de produzir o mesmo
+    documento. Comparo o TEXTO, porque os bytes carregam a data de geração e
+    ids aleatórios do pacote OOXML."""
+    from src.core.pessoas import ContratantePJ
+    from src.exporters.docx_transicao import (
+        dados_de_contratante,
+        gerar_formulario_transicao,
+    )
+
+    corpo = {"contratante": PJ, "pessoal": {"tem_funcionarios": "Não"}}
+    pela_api = autorizado.post("/v1/transicao", json=corpo)
+
+    contratante = modulo_api.ContratantePJIn(**PJ).para_dominio()
+    assert isinstance(contratante, ContratantePJ)
+    direto = gerar_formulario_transicao(
+        dados_iniciais=dados_de_contratante(contratante),
+        dados_pessoal={"tem_funcionarios": "Não"},
+    )
+
+    assert _texto_docx(pela_api.content) == _texto_docx(direto)
+
+
+def test_bloco_removido_nao_e_aceito_em_silencio(autorizado):
+    """Os blocos que o Iago cortou (onboarding, contábil, financeiro,
+    observações) não existem mais no schema.
+
+    Se alguém mandar um deles — uma tela desatualizada, um script antigo — o
+    ``extra="forbid"`` responde 422 nomeando o bloco. Sem isso, o corpo seria
+    aceito, o bloco descartado, e o documento sairia sem aquelas respostas sem
+    nenhum aviso.
+    """
+    for bloco in ("onboarding", "contabil", "financeiro", "observacoes"):
+        r = autorizado.post("/v1/transicao", json={bloco: {"x": "y"}})
+        assert r.status_code == 422, bloco
+        assert bloco in r.text

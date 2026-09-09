@@ -128,3 +128,100 @@ def test_gerar_contrato_pelo_botao_produz_download(app):
     assert botao is not None, "botão de gerar contrato não encontrado"
     botao.click().run()
     assert not app.exception, [str(e) for e in app.exception]
+
+
+# --------------------------------------------------------------------------- #
+# Formulário de transição contábil                                             #
+# --------------------------------------------------------------------------- #
+def test_bloco_de_transicao_aparece_na_aba_de_documentos(app):
+    app.run()
+    assert any("transição contábil" in s.value.lower() for s in app.subheader), \
+        "o bloco de transição não foi renderizado"
+
+
+def test_gerar_formulario_de_transicao_produz_download(app):
+    """Fluxo completo sem preencher nada: o formulário em branco é um uso
+    legítimo — é o impresso que substitui a planilha."""
+    app.run()
+    botao = next((b for b in app.button if "transição" in b.label.lower()), None)
+    assert botao is not None, "botão de gerar transição não encontrado"
+    botao.click().run()
+    assert not app.exception, [str(e) for e in app.exception]
+
+    baixar = [b for b in app.download_button if "transição" in b.label.lower()]
+    assert baixar, "o download do formulário de transição não apareceu"
+
+
+def test_transicao_funciona_tambem_na_modalidade_pf(app):
+    """Em PF não há CNPJ para consultar, e o bloco recebe ``None``. Não pode
+    estourar — só sai sem prefill."""
+    app.run()
+    next(r for r in app.radio if r.label == "Modalidade") \
+        .set_value("PF — Abertura de empresa").run()
+    botao = next((b for b in app.button if "transição" in b.label.lower()), None)
+    assert botao is not None
+    botao.click().run()
+    assert not app.exception, [str(e) for e in app.exception]
+
+
+def test_a_tela_so_manda_campos_que_o_exportador_conhece():
+    """As chaves escritas à mão no ``_bloco_transicao`` têm de existir em
+    ``CAMPOS_POR_BLOCO``.
+
+    Sem isto, um nome digitado errado na tela viraria ``CampoDesconhecidoError``
+    só quando alguém clicasse no botão em produção — e o teste acima gera o
+    formulário em branco, que não exercita todas as chaves.
+    """
+    import ast
+    import inspect
+
+    from src.exporters.docx_transicao import CAMPOS_POR_BLOCO
+    from src.ui.tabs import contratos
+
+    fonte = inspect.getsource(contratos._bloco_transicao)
+    arvore = ast.parse(inspect.cleandoc(fonte))
+
+    chamada = next(
+        no for no in ast.walk(arvore)
+        if isinstance(no, ast.Call)
+        and getattr(no.func, "id", "") == "gerar_formulario_transicao"
+    )
+    conferidos = set()
+    for argumento in chamada.keywords:
+        bloco = argumento.arg.removeprefix("dados_")
+        if not isinstance(argumento.value, ast.Dict):
+            continue  # `dados_iniciais` é uma dict comp; conferido logo abaixo
+        enviadas = {c.value for c in argumento.value.keys
+                    if isinstance(c, ast.Constant)}
+        desconhecidas = enviadas - CAMPOS_POR_BLOCO[bloco]
+        assert not desconhecidas, (
+            f"a tela manda {desconhecidas} no bloco '{bloco}', que o "
+            f"exportador não conhece"
+        )
+        conferidos.add(bloco)
+
+    # `dados_iniciais` é montado antes da chamada, num `iniciais.update({...})`.
+    # Sem conferi-lo aqui, o bloco com MAIS campos ficaria justamente de fora.
+    atualizacoes = [
+        no for no in ast.walk(arvore)
+        if isinstance(no, ast.Call)
+        and getattr(no.func, "attr", "") == "update"
+        and getattr(getattr(no.func, "value", None), "id", "") == "iniciais"
+    ]
+    assert atualizacoes, "não achei o `iniciais.update({...})` para conferir"
+    for chamada_update in atualizacoes:
+        for arg in chamada_update.args:
+            if not isinstance(arg, ast.Dict):
+                continue
+            enviadas = {c.value for c in arg.keys if isinstance(c, ast.Constant)}
+            desconhecidas = enviadas - CAMPOS_POR_BLOCO["iniciais"]
+            assert not desconhecidas, (
+                f"a tela manda {desconhecidas} em 'iniciais', que o exportador "
+                f"não conhece"
+            )
+            conferidos.add("iniciais")
+
+    assert conferidos == set(CAMPOS_POR_BLOCO), (
+        f"blocos não conferidos por este teste: "
+        f"{set(CAMPOS_POR_BLOCO) - conferidos}"
+    )
