@@ -108,7 +108,7 @@ aberta, o caminho é a **ficha em branco** com declaração de veracidade assina
 Antes de emitir documento real, revise `src/config.py`:
 
 ```python
-FORO_PADRAO = "Campinas/SP"    # o modelo elege Campinas; a sede é Jundiaí
+FORO_PADRAO = "Campinas/SP"  # o modelo elege Campinas; a sede é Jundiaí
 ```
 
 A qualificação da CONTRATADA (`CONTRATADA_QUALIFICACAO_FIXA`) é texto fixo,
@@ -131,8 +131,8 @@ formatos:
 ```python
 from src.core.cnpj import validar, calcular_digitos
 
-validar("11.222.333/0001-81")     # numérico tradicional
-validar("12.ABC.345/01DE-35")     # novo formato
+validar("11.222.333/0001-81")  # numérico tradicional
+validar("12.ABC.345/01DE-35")  # novo formato
 calcular_digitos("00000000E08G")  # -> "12"  (primeiro alfanumérico real emitido)
 ```
 

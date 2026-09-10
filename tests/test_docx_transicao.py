@@ -17,14 +17,20 @@ from src.core.models import Endereco
 from src.core.pessoas import ContratantePF, ContratantePJ, RepresentanteLegal
 from src.exporters.docx_transicao import (
     DOCUMENTOS_A_SOLICITAR,
-    CampoDesconhecidoError,
     MARCADOR_PENDENTE,
+    CampoDesconhecidoError,
     dados_de_contratante,
     gerar_formulario_transicao,
 )
 
-END = Endereco(logradouro="RUA DAS FLORES", numero="88", bairro="Centro",
-               municipio="Jundiaí", uf="SP", cep="13201000")
+END = Endereco(
+    logradouro="RUA DAS FLORES",
+    numero="88",
+    bairro="Centro",
+    municipio="Jundiaí",
+    uf="SP",
+    cep="13201000",
+)
 
 PJ = ContratantePJ(
     razao_social="SUZANA DAS DORES MARCILIA COMERCIO DE ALIMENTOS LTDA",
@@ -36,12 +42,16 @@ PJ = ContratantePJ(
     endereco=END,
     telefone="11 95076-0336",
     email="suzanamarcilia@yahoo.com.br",
-    representante=RepresentanteLegal(
-        nome="Suzana das Dores Marcilia", cpf="52998224725"),
+    representante=RepresentanteLegal(nome="Suzana das Dores Marcilia", cpf="52998224725"),
 )
 
-PF = ContratantePF(nome="Vinicius Almeida", cpf="11144477735", endereco=END,
-                   telefone="(22) 98888-7777", email="v@exemplo.com.br")
+PF = ContratantePF(
+    nome="Vinicius Almeida",
+    cpf="11144477735",
+    endereco=END,
+    telefone="(22) 98888-7777",
+    email="v@exemplo.com.br",
+)
 
 
 def _texto(docx_bytes: bytes) -> str:
@@ -181,8 +191,7 @@ def test_modelo_de_entrada_ja_vem_preenchido() -> None:
 # A convenção visual — que é o motivo de o documento existir                   #
 # --------------------------------------------------------------------------- #
 def test_dado_do_sistema_sai_em_negrito_e_sem_marcador() -> None:
-    docx = gerar_formulario_transicao(
-        dados_iniciais={"razao_social": "MERCADO DO ZE LTDA"})
+    docx = gerar_formulario_transicao(dados_iniciais={"razao_social": "MERCADO DO ZE LTDA"})
 
     negritos = [r.text for r in _runs(docx) if r.bold]
     assert "MERCADO DO ZE LTDA" in negritos
@@ -197,8 +206,7 @@ def test_dado_do_sistema_sai_em_negrito_e_sem_marcador() -> None:
 
 
 def test_campo_ausente_continua_pedindo_preenchimento() -> None:
-    docx = gerar_formulario_transicao(
-        dados_iniciais={"razao_social": "MERCADO DO ZE LTDA"})
+    docx = gerar_formulario_transicao(dados_iniciais={"razao_social": "MERCADO DO ZE LTDA"})
     doc = Document(io.BytesIO(docx))
     encontrou = False
     for tabela in doc.tables:
@@ -263,7 +271,8 @@ def test_documento_nao_traz_contato_da_mercabiliza() -> None:
 
 def test_contato_da_contabilidade_anterior_e_campo_de_formulario() -> None:
     docx = gerar_formulario_transicao(
-        dados_sucessao={"email_anterior": "contato@agilize.com.br"})
+        dados_sucessao={"email_anterior": "contato@agilize.com.br"}
+    )
     negritos = [r.text for r in _runs(docx) if r.bold]
     assert "contato@agilize.com.br" in negritos
 
@@ -304,6 +313,8 @@ def test_prefill_de_pf_nao_quebra() -> None:
     assert dados["responsavel"] == "Vinicius Almeida"
     assert dados["cpf_responsavel"] == "111.444.777-35"
     assert "razao_social" not in dados
+
+
 def test_e_um_docx_valido_e_abre() -> None:
     docx = gerar_formulario_transicao(dados_iniciais=dados_de_contratante(PJ))
     assert docx[:2] == b"PK"  # zip
@@ -342,8 +353,10 @@ def test_todo_campo_declarado_e_de_fato_usado_pelo_documento() -> None:
     from src.exporters.docx_transicao import CAMPOS_POR_BLOCO
 
     argumento = {
-        "iniciais": "dados_iniciais", "pessoal": "dados_pessoal",
-        "fiscal": "dados_fiscal", "sucessao": "dados_sucessao",
+        "iniciais": "dados_iniciais",
+        "pessoal": "dados_pessoal",
+        "fiscal": "dados_fiscal",
+        "sucessao": "dados_sucessao",
     }
     for bloco, chaves in CAMPOS_POR_BLOCO.items():
         for chave in chaves:

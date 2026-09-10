@@ -47,9 +47,7 @@ def validar(bruto: object) -> str:
     if not cpf:
         raise CPFInvalidoError("Informe o CPF.")
     if len(cpf) != TAMANHO_CPF:
-        raise CPFInvalidoError(
-            f"CPF deve ter {TAMANHO_CPF} dígitos (recebidos {len(cpf)})."
-        )
+        raise CPFInvalidoError(f"CPF deve ter {TAMANHO_CPF} dígitos (recebidos {len(cpf)}).")
     if len(set(cpf)) == 1:
         raise CPFInvalidoError("Sequência repetida não é um CPF válido.")
     if calcular_digitos(cpf[:9]) != cpf[9:]:

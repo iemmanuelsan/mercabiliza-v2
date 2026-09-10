@@ -40,12 +40,24 @@ from .docx_base import (
     MARCADOR_PENDENTE,
     Campo,
     Secao,
-    cabecalho as _cabecalho,
-    configurar_pagina as _configurar_pagina,
-    legenda as _legenda,
-    run as _run,
     rodape_assinatura,
+)
+from .docx_base import (
+    cabecalho as _cabecalho,
+)
+from .docx_base import (
+    configurar_pagina as _configurar_pagina,
+)
+from .docx_base import (
+    legenda as _legenda,
+)
+from .docx_base import (
+    run as _run,
+)
+from .docx_base import (
     tabela_campos as _tabela_campos,
+)
+from .docx_base import (
     titulo_secao as _titulo_secao,
 )
 
@@ -73,95 +85,145 @@ DECLARACAO = (
 # --------------------------------------------------------------------------- #
 def _secao_empresa(dados: dict) -> Secao:
     """Dados da futura empresa (ou da nova configuração, no desenquadramento)."""
-    return Secao("Dados da empresa", [
-        Campo("Razão Social (1ª opção)", dados.get("razao_social", ""),
-              pendente=True, dica="Nome empresarial pretendido"),
-        Campo("2ª opção de Razão Social", "", pendente=True),
-        Campo("3ª opção de Razão Social", "", pendente=True),
-        Campo("Nome Fantasia", dados.get("nome_fantasia", ""), pendente=True),
-        Campo("Descrição da Atividade", dados.get("atividade", ""), pendente=True,
-              dica="O que a empresa vende/faz, em uma frase"),
-        Campo("CNAE pretendido", dados.get("cnae", ""),
-              dica="Sugerido pela contabilidade"),
-        Campo("Capital Social (R$)", dados.get("capital_social", ""), pendente=True),
-        Campo("Capital Social por extenso", dados.get("capital_extenso", ""),
-              pendente=True),
-        Campo("Tipo Jurídico", dados.get("tipo_juridico", ""), pendente=True,
-              dica="Sociedade Limitada, Sociedade Unipessoal, Empresário Individual"),
-        Campo("Previsão de faturamento mensal", dados.get("faturamento", ""),
-              pendente=True),
-        Campo("Regime tributário pretendido", dados.get("regime", ""),
-              dica="Sugerido pela contabilidade após análise"),
-        Campo("Nº de funcionários previstos", dados.get("funcionarios", ""),
-              pendente=True),
-    ])
+    return Secao(
+        "Dados da empresa",
+        [
+            Campo(
+                "Razão Social (1ª opção)",
+                dados.get("razao_social", ""),
+                pendente=True,
+                dica="Nome empresarial pretendido",
+            ),
+            Campo("2ª opção de Razão Social", "", pendente=True),
+            Campo("3ª opção de Razão Social", "", pendente=True),
+            Campo("Nome Fantasia", dados.get("nome_fantasia", ""), pendente=True),
+            Campo(
+                "Descrição da Atividade",
+                dados.get("atividade", ""),
+                pendente=True,
+                dica="O que a empresa vende/faz, em uma frase",
+            ),
+            Campo(
+                "CNAE pretendido", dados.get("cnae", ""), dica="Sugerido pela contabilidade"
+            ),
+            Campo("Capital Social (R$)", dados.get("capital_social", ""), pendente=True),
+            Campo(
+                "Capital Social por extenso", dados.get("capital_extenso", ""), pendente=True
+            ),
+            Campo(
+                "Tipo Jurídico",
+                dados.get("tipo_juridico", ""),
+                pendente=True,
+                dica="Sociedade Limitada, Sociedade Unipessoal, Empresário Individual",
+            ),
+            Campo(
+                "Previsão de faturamento mensal", dados.get("faturamento", ""), pendente=True
+            ),
+            Campo(
+                "Regime tributário pretendido",
+                dados.get("regime", ""),
+                dica="Sugerido pela contabilidade após análise",
+            ),
+            Campo(
+                "Nº de funcionários previstos", dados.get("funcionarios", ""), pendente=True
+            ),
+        ],
+    )
 
 
 def _secao_endereco(dados: dict) -> Secao:
-    return Secao("Endereço da empresa", [
-        Campo("Logradouro", dados.get("logradouro", "")),
-        Campo("Número", dados.get("numero", "")),
-        Campo("Complemento", dados.get("complemento", "")),
-        Campo("Bairro", dados.get("bairro", "")),
-        Campo("Município", dados.get("municipio", "")),
-        Campo("UF", dados.get("uf", "")),
-        Campo("CEP", dados.get("cep", "")),
-        Campo("Ponto de referência", "", pendente=False),
-        Campo("Telefone", dados.get("telefone", "")),
-        Campo("E-mail", dados.get("email", "")),
-        Campo("O imóvel é próprio ou alugado?", "", pendente=True),
-        Campo("IPTU / inscrição imobiliária", "", pendente=True,
-              dica="Necessário para o alvará"),
-    ])
+    return Secao(
+        "Endereço da empresa",
+        [
+            Campo("Logradouro", dados.get("logradouro", "")),
+            Campo("Número", dados.get("numero", "")),
+            Campo("Complemento", dados.get("complemento", "")),
+            Campo("Bairro", dados.get("bairro", "")),
+            Campo("Município", dados.get("municipio", "")),
+            Campo("UF", dados.get("uf", "")),
+            Campo("CEP", dados.get("cep", "")),
+            Campo("Ponto de referência", "", pendente=False),
+            Campo("Telefone", dados.get("telefone", "")),
+            Campo("E-mail", dados.get("email", "")),
+            Campo("O imóvel é próprio ou alugado?", "", pendente=True),
+            Campo(
+                "IPTU / inscrição imobiliária",
+                "",
+                pendente=True,
+                dica="Necessário para o alvará",
+            ),
+        ],
+    )
 
 
 def _secao_socio(numero: int, dados: dict) -> Secao:
-    return Secao(f"Sócio {numero:02d}", [
-        Campo("Nome completo", dados.get("nome", "")),
-        Campo("Nacionalidade", dados.get("nacionalidade", "brasileiro(a)")),
-        Campo("Naturalidade", dados.get("naturalidade", ""), pendente=True),
-        Campo("Profissão", dados.get("profissao", "")),
-        Campo("Data de nascimento", dados.get("nascimento", ""), pendente=True),
-        Campo("Estado civil", dados.get("estado_civil", "")),
-        Campo("Regime de bens", dados.get("regime_bens", ""), pendente=True,
-              dica="Parcial, Total, Universal — se casado(a)"),
-        Campo("CPF/MF", dados.get("cpf", "")),
-        Campo("C.I. / R.G.", dados.get("rg", "")),
-        Campo("Órgão emissor / UF", dados.get("orgao", "")),
-        Campo("Data de expedição", dados.get("expedicao", ""), pendente=True),
-        Campo("Título de eleitor", "", pendente=True),
-        Campo("Participação no capital (%)", dados.get("participacao", ""),
-              pendente=True),
-        Campo("Sócio administrador?", dados.get("administrador", ""), pendente=True,
-              dica="Sim ou Não"),
-        Campo("Logradouro", dados.get("logradouro", "")),
-        Campo("Número", dados.get("numero", "")),
-        Campo("Complemento", dados.get("complemento", "")),
-        Campo("Bairro", dados.get("bairro", "")),
-        Campo("Município", dados.get("municipio", "")),
-        Campo("UF", dados.get("uf", "")),
-        Campo("CEP", dados.get("cep", "")),
-        Campo("Telefone / Celular", dados.get("telefone", "")),
-        Campo("E-mail", dados.get("email", "")),
-    ])
+    return Secao(
+        f"Sócio {numero:02d}",
+        [
+            Campo("Nome completo", dados.get("nome", "")),
+            Campo("Nacionalidade", dados.get("nacionalidade", "brasileiro(a)")),
+            Campo("Naturalidade", dados.get("naturalidade", ""), pendente=True),
+            Campo("Profissão", dados.get("profissao", "")),
+            Campo("Data de nascimento", dados.get("nascimento", ""), pendente=True),
+            Campo("Estado civil", dados.get("estado_civil", "")),
+            Campo(
+                "Regime de bens",
+                dados.get("regime_bens", ""),
+                pendente=True,
+                dica="Parcial, Total, Universal — se casado(a)",
+            ),
+            Campo("CPF/MF", dados.get("cpf", "")),
+            Campo("C.I. / R.G.", dados.get("rg", "")),
+            Campo("Órgão emissor / UF", dados.get("orgao", "")),
+            Campo("Data de expedição", dados.get("expedicao", ""), pendente=True),
+            Campo("Título de eleitor", "", pendente=True),
+            Campo("Participação no capital (%)", dados.get("participacao", ""), pendente=True),
+            Campo(
+                "Sócio administrador?",
+                dados.get("administrador", ""),
+                pendente=True,
+                dica="Sim ou Não",
+            ),
+            Campo("Logradouro", dados.get("logradouro", "")),
+            Campo("Número", dados.get("numero", "")),
+            Campo("Complemento", dados.get("complemento", "")),
+            Campo("Bairro", dados.get("bairro", "")),
+            Campo("Município", dados.get("municipio", "")),
+            Campo("UF", dados.get("uf", "")),
+            Campo("CEP", dados.get("cep", "")),
+            Campo("Telefone / Celular", dados.get("telefone", "")),
+            Campo("E-mail", dados.get("email", "")),
+        ],
+    )
 
 
 def _secao_desenquadramento(dados: dict) -> Secao:
     """Só aparece no perfil MEI — o que muda ao sair do MEI."""
-    return Secao("Desenquadramento do MEI", [
-        Campo("CNPJ atual (MEI)", dados.get("cnpj", "")),
-        Campo("Razão social atual", dados.get("razao_atual", "")),
-        Campo("Data de abertura", dados.get("abertura", "")),
-        Campo("Faturamento acumulado no ano", dados.get("faturamento_ano", ""),
-              pendente=True, dica="Determina se o desenquadramento é retroativo"),
-        Campo("Faturamento do ano anterior", "", pendente=True),
-        Campo("Data pretendida de efeito", "", pendente=True,
-              dica="Retroativo a 01/01 ou a partir do mês seguinte"),
-        Campo("Possui funcionário registrado?", "", pendente=True),
-        Campo("Emite NFC-e atualmente?", dados.get("nfce", ""), pendente=True),
-        Campo("Sistema de gestão / PDV", dados.get("sistema", ""), pendente=True),
-        Campo("Possui inscrição estadual?", dados.get("ie", ""), pendente=True),
-    ])
+    return Secao(
+        "Desenquadramento do MEI",
+        [
+            Campo("CNPJ atual (MEI)", dados.get("cnpj", "")),
+            Campo("Razão social atual", dados.get("razao_atual", "")),
+            Campo("Data de abertura", dados.get("abertura", "")),
+            Campo(
+                "Faturamento acumulado no ano",
+                dados.get("faturamento_ano", ""),
+                pendente=True,
+                dica="Determina se o desenquadramento é retroativo",
+            ),
+            Campo("Faturamento do ano anterior", "", pendente=True),
+            Campo(
+                "Data pretendida de efeito",
+                "",
+                pendente=True,
+                dica="Retroativo a 01/01 ou a partir do mês seguinte",
+            ),
+            Campo("Possui funcionário registrado?", "", pendente=True),
+            Campo("Emite NFC-e atualmente?", dados.get("nfce", ""), pendente=True),
+            Campo("Sistema de gestão / PDV", dados.get("sistema", ""), pendente=True),
+            Campo("Possui inscrição estadual?", dados.get("ie", ""), pendente=True),
+        ],
+    )
 
 
 def gerar_formulario_abertura(
@@ -183,12 +245,15 @@ def gerar_formulario_abertura(
     socios = socios or []
 
     titulos = {
-        "MEI": ("FICHA CADASTRAL — DESENQUADRAMENTO DE MEI",
-                "Migração de MEI para Microempresa (ME) no Simples Nacional"),
-        "PF": ("FICHA CADASTRAL — ABERTURA DE EMPRESA",
-               "Constituição de nova sociedade"),
-        "PJ": ("FICHA CADASTRAL — ALTERAÇÃO CONTRATUAL",
-               "Atualização de dados cadastrais e societários"),
+        "MEI": (
+            "FICHA CADASTRAL — DESENQUADRAMENTO DE MEI",
+            "Migração de MEI para Microempresa (ME) no Simples Nacional",
+        ),
+        "PF": ("FICHA CADASTRAL — ABERTURA DE EMPRESA", "Constituição de nova sociedade"),
+        "PJ": (
+            "FICHA CADASTRAL — ALTERAÇÃO CONTRATUAL",
+            "Atualização de dados cadastrais e societários",
+        ),
     }
     titulo, subtitulo = titulos.get(perfil, titulos["PF"])
 
@@ -221,8 +286,7 @@ def gerar_formulario_abertura(
         p.paragraph_format.space_after = Pt(1)
         _run(p, f"[   ]  {item}", tamanho=8.5)
 
-    rodape_assinatura(doc, DECLARACAO,
-                      "Assinatura do titular / sócio administrador")
+    rodape_assinatura(doc, DECLARACAO, "Assinatura do titular / sócio administrador")
 
     buffer = io.BytesIO()
     doc.save(buffer)
@@ -292,33 +356,49 @@ def dados_de_contratante(contratante) -> tuple[dict, dict, list[dict]]:
             "regime": contratante.regime,
         }
         rep = contratante.representante
-        socios = [{
-            "nome": rep.nome,
-            "cpf": formatar_cpf(rep.cpf) if rep.cpf else "",
-            "rg": rep.rg,
-            "orgao": rep.orgao_emissor,
-            "estado_civil": rep.estado_civil,
-            "profissao": rep.profissao,
-            "nacionalidade": rep.nacionalidade,
-            "administrador": "Sim",
-            **{k: dados_endereco[k] for k in
-               ("logradouro", "numero", "bairro", "municipio", "uf", "cep")},
-        }] if rep.nome else []
+        socios = (
+            [
+                {
+                    "nome": rep.nome,
+                    "cpf": formatar_cpf(rep.cpf) if rep.cpf else "",
+                    "rg": rep.rg,
+                    "orgao": rep.orgao_emissor,
+                    "estado_civil": rep.estado_civil,
+                    "profissao": rep.profissao,
+                    "nacionalidade": rep.nacionalidade,
+                    "administrador": "Sim",
+                    **{
+                        k: dados_endereco[k]
+                        for k in ("logradouro", "numero", "bairro", "municipio", "uf", "cep")
+                    },
+                }
+            ]
+            if rep.nome
+            else []
+        )
     else:
         empresa = {}
-        socios = [{
-            "nome": contratante.nome,
-            "cpf": formatar_cpf(contratante.cpf) if contratante.cpf else "",
-            "rg": contratante.rg,
-            "orgao": contratante.orgao_emissor,
-            "estado_civil": contratante.estado_civil,
-            "profissao": contratante.profissao,
-            "nacionalidade": contratante.nacionalidade,
-            **{k: dados_endereco[k] for k in
-               ("logradouro", "numero", "bairro", "municipio", "uf", "cep")},
-            "telefone": contratante.telefone,
-            "email": contratante.email,
-        }] if contratante.nome else []
+        socios = (
+            [
+                {
+                    "nome": contratante.nome,
+                    "cpf": formatar_cpf(contratante.cpf) if contratante.cpf else "",
+                    "rg": contratante.rg,
+                    "orgao": contratante.orgao_emissor,
+                    "estado_civil": contratante.estado_civil,
+                    "profissao": contratante.profissao,
+                    "nacionalidade": contratante.nacionalidade,
+                    **{
+                        k: dados_endereco[k]
+                        for k in ("logradouro", "numero", "bairro", "municipio", "uf", "cep")
+                    },
+                    "telefone": contratante.telefone,
+                    "email": contratante.email,
+                }
+            ]
+            if contratante.nome
+            else []
+        )
 
     return empresa, dados_endereco, socios
 

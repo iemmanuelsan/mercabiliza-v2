@@ -92,8 +92,15 @@ def sombrear(celula, cor_hex: str) -> None:
     celula._tc.get_or_add_tcPr().append(elemento)
 
 
-def run(paragrafo, texto: str, *, negrito: bool = False, tamanho: float = 9,
-        cor: RGBColor | None = None, italico: bool = False):
+def run(
+    paragrafo,
+    texto: str,
+    *,
+    negrito: bool = False,
+    tamanho: float = 9,
+    cor: RGBColor | None = None,
+    italico: bool = False,
+):
     r = paragrafo.add_run(texto)
     r.bold = negrito
     r.italic = italico
@@ -211,8 +218,7 @@ def configurar_pagina(doc) -> None:
 def cabecalho(doc, titulo: str, subtitulo: str) -> None:
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run(p, CONTRATADA_NOME_FANTASIA.upper(), negrito=True, tamanho=16,
-        cor=COR_MARCA)
+    run(p, CONTRATADA_NOME_FANTASIA.upper(), negrito=True, tamanho=16, cor=COR_MARCA)
 
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -233,11 +239,15 @@ def legenda(doc) -> None:
     run(p, "Como preencher: ", negrito=True, tamanho=8.5)
     run(p, "os campos em ", tamanho=8.5)
     run(p, "negrito", negrito=True, tamanho=8.5)
-    run(p, " já foram preenchidos pela contabilidade — apenas confira. Os "
-           "campos marcados como ", tamanho=8.5)
+    run(
+        p,
+        " já foram preenchidos pela contabilidade — apenas confira. Os campos marcados como ",
+        tamanho=8.5,
+    )
     run(p, MARCADOR_PENDENTE, negrito=True, tamanho=8.5, cor=COR_PENDENTE)
-    run(p, " dependem da sua decisão. Os demais são dados que você deve "
-           "informar.", tamanho=8.5)
+    run(
+        p, " dependem da sua decisão. Os demais são dados que você deve informar.", tamanho=8.5
+    )
     doc.add_paragraph().paragraph_format.space_after = Pt(4)
 
 
@@ -282,5 +292,9 @@ def rodape_assinatura(doc, declaracao: str, rotulo_assinatura: str) -> None:
     doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run(p, f"{CONTRATADA_NOME_FANTASIA} · {CONTRATADA_TELEFONE} · "
-           f"{CONTRATADA_EMAIL}", tamanho=7.5, cor=COR_CINZA)
+    run(
+        p,
+        f"{CONTRATADA_NOME_FANTASIA} · {CONTRATADA_TELEFONE} · {CONTRATADA_EMAIL}",
+        tamanho=7.5,
+        cor=COR_CINZA,
+    )

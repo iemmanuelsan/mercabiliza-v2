@@ -36,15 +36,15 @@ def render() -> None:
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        faturamento = st.number_input("Faturamento acumulado no ano (R$)",
-                                      min_value=0.0, value=92_000.0, step=5_000.0)
+        faturamento = st.number_input(
+            "Faturamento acumulado no ano (R$)", min_value=0.0, value=92_000.0, step=5_000.0
+        )
     with col2:
         meses = st.slider("Meses de atividade no ano", 1, 12, 12)
     with col3:
         pct_mono = st.slider("Vendas monofásicas (%)", 0, 90, 55, step=5)
 
-    diag = diagnosticar_mei(faturamento, meses,
-                            indicadores.selic_acumulada_12m, pct_mono)
+    diag = diagnosticar_mei(faturamento, meses, indicadores.selic_acumulada_12m, pct_mono)
 
     st.divider()
     st.caption(
@@ -56,8 +56,10 @@ def render() -> None:
     if diag.excesso <= 0:
         st.success("🟢 **MEI regular** — faturamento dentro do limite proporcional.")
         folga = diag.limite_proporcional - faturamento
-        st.progress(min(1.0, faturamento / diag.limite_proporcional),
-                    text=f"Folga de {moeda(folga)} até o limite")
+        st.progress(
+            min(1.0, faturamento / diag.limite_proporcional),
+            text=f"Folga de {moeda(folga)} até o limite",
+        )
         st.caption(AVISO)
         return
 

@@ -60,6 +60,8 @@ from src.exporters.docx_abertura import (
 )
 from src.exporters.docx_transicao import (
     dados_de_contratante as dados_de_contratante_transicao,
+)
+from src.exporters.docx_transicao import (
     gerar_formulario_transicao,
 )
 from src.exporters.pdf_documentos import gerar_contrato, gerar_ficha_cadastral
@@ -137,9 +139,13 @@ class EnderecoIn(Estrito):
 
     def para_dominio(self) -> Endereco:
         return Endereco(
-            logradouro=self.logradouro, numero=self.numero,
-            complemento=self.complemento, bairro=self.bairro,
-            municipio=self.municipio, uf=self.uf, cep=self.cep,
+            logradouro=self.logradouro,
+            numero=self.numero,
+            complemento=self.complemento,
+            bairro=self.bairro,
+            municipio=self.municipio,
+            uf=self.uf,
+            cep=self.cep,
         )
 
 
@@ -156,10 +162,15 @@ class RepresentanteIn(Estrito):
 
     def para_dominio(self) -> RepresentanteLegal:
         return RepresentanteLegal(
-            nome=self.nome, cpf=self.cpf, rg=self.rg,
-            orgao_emissor=self.orgao_emissor, nacionalidade=self.nacionalidade,
-            estado_civil=self.estado_civil, profissao=self.profissao,
-            qualificacao=self.qualificacao, genero_feminino=self.genero_feminino,
+            nome=self.nome,
+            cpf=self.cpf,
+            rg=self.rg,
+            orgao_emissor=self.orgao_emissor,
+            nacionalidade=self.nacionalidade,
+            estado_civil=self.estado_civil,
+            profissao=self.profissao,
+            qualificacao=self.qualificacao,
+            genero_feminino=self.genero_feminino,
         )
 
 
@@ -181,14 +192,18 @@ class ContratantePJIn(Estrito):
 
     def para_dominio(self) -> ContratantePJ:
         return ContratantePJ(
-            razao_social=self.razao_social, nome_fantasia=self.nome_fantasia,
-            cnpj=self.cnpj, cnae_principal=self.cnae_principal,
+            razao_social=self.razao_social,
+            nome_fantasia=self.nome_fantasia,
+            cnpj=self.cnpj,
+            cnae_principal=self.cnae_principal,
             endereco=self.endereco.para_dominio(),
-            telefone=self.telefone, email=self.email,
+            telefone=self.telefone,
+            email=self.email,
             inscricao_estadual=self.inscricao_estadual,
             inscricao_municipal=self.inscricao_municipal,
             representante=self.representante.para_dominio(),
-            regime=self.regime, data_abertura=self.data_abertura,
+            regime=self.regime,
+            data_abertura=self.data_abertura,
             natureza_juridica=self.natureza_juridica,
         )
 
@@ -209,11 +224,16 @@ class ContratantePFIn(Estrito):
 
     def para_dominio(self) -> ContratantePF:
         return ContratantePF(
-            nome=self.nome, cpf=self.cpf, rg=self.rg,
-            orgao_emissor=self.orgao_emissor, nacionalidade=self.nacionalidade,
-            estado_civil=self.estado_civil, profissao=self.profissao,
+            nome=self.nome,
+            cpf=self.cpf,
+            rg=self.rg,
+            orgao_emissor=self.orgao_emissor,
+            nacionalidade=self.nacionalidade,
+            estado_civil=self.estado_civil,
+            profissao=self.profissao,
             endereco=self.endereco.para_dominio(),
-            telefone=self.telefone, email=self.email,
+            telefone=self.telefone,
+            email=self.email,
             genero_feminino=self.genero_feminino,
         )
 
@@ -325,8 +345,9 @@ class BlocoTransicao(Estrito):
     def para_dicionario(self) -> dict:
         # exclude_none + descarte de string vazia: o que não veio simplesmente
         # não chega ao exportador, e o padrão aplicado é sempre o dele.
-        return {k: v for k, v in self.model_dump(exclude_none=True).items()
-                if str(v).strip() != ""}
+        return {
+            k: v for k, v in self.model_dump(exclude_none=True).items() if str(v).strip() != ""
+        }
 
 
 class IniciaisIn(BlocoTransicao):
@@ -468,9 +489,7 @@ def contrato(pedido: PedidoContrato) -> Response:
 def ficha(pedido: PedidoFicha) -> Response:
     contratante = pedido.contratante.para_dominio()
     try:
-        pdf = gerar_ficha_cadastral(
-            contratante, incluir_pendencias=pedido.incluir_pendencias
-        )
+        pdf = gerar_ficha_cadastral(contratante, incluir_pendencias=pedido.incluir_pendencias)
     except ValueError as exc:
         raise HTTPException(422, f"Dados insuficientes para a ficha: {exc}") from exc
 
@@ -498,15 +517,18 @@ def formulario(pedido: PedidoFormulario) -> Response:
 
     try:
         docx = gerar_formulario_abertura(
-            pedido.perfil, empresa, endereco, socios, desenq,
+            pedido.perfil,
+            empresa,
+            endereco,
+            socios,
+            desenq,
             minimo_socios=minimo_socios,
         )
     except ValueError as exc:
         raise HTTPException(422, f"Dados insuficientes: {exc}") from exc
 
     nome = getattr(contratante, "razao_social", None) or getattr(contratante, "nome", "")
-    logger.info("Formulário %s gerado para %s (%d bytes)",
-                pedido.perfil, nome, len(docx))
+    logger.info("Formulário %s gerado para %s (%d bytes)", pedido.perfil, nome, len(docx))
     return _arquivo(docx, f"formulario-{pedido.perfil.lower()}-{_slug(nome)}.docx", DOCX)
 
 
@@ -543,6 +565,5 @@ def transicao(pedido: PedidoTransicao) -> Response:
         or (getattr(contratante, "nome", "") if contratante else "")
         or "em-branco"
     )
-    logger.info("Formulário de transição gerado para %s (%d bytes)",
-                nome, len(docx))
+    logger.info("Formulário de transição gerado para %s (%d bytes)", nome, len(docx))
     return _arquivo(docx, f"transicao-contabil-{_slug(nome)}.docx", DOCX)

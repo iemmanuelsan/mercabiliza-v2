@@ -63,11 +63,15 @@ ANEXO_V: TabelaAnexo = (
 )
 
 TABELAS = {
-    "I": ANEXO_I, "II": ANEXO_II, "III": ANEXO_III, "IV": ANEXO_IV, "V": ANEXO_V,
+    "I": ANEXO_I,
+    "II": ANEXO_II,
+    "III": ANEXO_III,
+    "IV": ANEXO_IV,
+    "V": ANEXO_V,
 }
 
 LIMITE_SIMPLES_ANUAL = 4_800_000.00
-LIMITE_MEI_MENSAL = 6_750.00          # R$ 81.000/ano ÷ 12
+LIMITE_MEI_MENSAL = 6_750.00  # R$ 81.000/ano ÷ 12
 DAS_MEI_MEDIO_MENSAL = 75.00
 
 
@@ -126,37 +130,64 @@ REGRAS: tuple[RegraCNAE, ...] = (
     RegraCNAE(
         prefixos=("4711", "4712", "4721", "4723", "4729"),
         anexo_rotulo="Anexo I (Comércio Varejista Alimentício)",
-        anexo_chave="I", tem_fator_r=False, is_minimercado=True,
+        anexo_chave="I",
+        tem_fator_r=False,
+        is_minimercado=True,
         resumo="🛒 Minimercado / varejo alimentício. Anexo I do Simples Nacional.",
         dica=DICA_MONOFASICO,
     ),
     RegraCNAE(
         prefixos=("45", "46", "47"),
         anexo_rotulo="Anexo I (Comércio)",
-        anexo_chave="I", tem_fator_r=False, is_minimercado=False,
+        anexo_chave="I",
+        tem_fator_r=False,
+        is_minimercado=False,
         resumo="Atividade de comércio. Tributada pelo Anexo I.",
         dica=DICA_MONOFASICO,
     ),
     RegraCNAE(
         prefixos=tuple(str(i) for i in range(10, 33)),
         anexo_rotulo="Anexo II (Indústria)",
-        anexo_chave="II", tem_fator_r=False, is_minimercado=False,
+        anexo_chave="II",
+        tem_fator_r=False,
+        is_minimercado=False,
         resumo="Atividade industrial. Tributada pelo Anexo II.",
         dica="Atentar ao destaque de IPI, apuração de insumos e crédito de ICMS.",
     ),
     RegraCNAE(
         prefixos=("41", "42", "43", "8010", "8020", "8011", "8012", "8013"),
         anexo_rotulo="Anexo IV (Construção Civil / Vigilância)",
-        anexo_chave="IV", tem_fator_r=False, is_minimercado=False,
+        anexo_chave="IV",
+        tem_fator_r=False,
+        is_minimercado=False,
         resumo="Tributada pelo Anexo IV.",
-        dica=("A contribuição patronal do INSS (CPP) NÃO está inclusa no DAS. "
-              "Recolher em GPS/DARF apartada — impacto relevante no fluxo de caixa."),
+        dica=(
+            "A contribuição patronal do INSS (CPP) NÃO está inclusa no DAS. "
+            "Recolher em GPS/DARF apartada — impacto relevante no fluxo de caixa."
+        ),
     ),
     RegraCNAE(
-        prefixos=("6201", "6202", "6203", "6204", "6209", "6911", "7020", "7111",
-                  "7112", "7311", "7490", "8610", "8630", "8650", "9000"),
+        prefixos=(
+            "6201",
+            "6202",
+            "6203",
+            "6204",
+            "6209",
+            "6911",
+            "7020",
+            "7111",
+            "7112",
+            "7311",
+            "7490",
+            "8610",
+            "8630",
+            "8650",
+            "9000",
+        ),
         anexo_rotulo="Anexo III ou V (sujeito ao Fator R ⚡)",
-        anexo_chave="III", tem_fator_r=True, is_minimercado=False,
+        anexo_chave="III",
+        tem_fator_r=True,
+        is_minimercado=False,
         resumo="⚡ Atividade sujeita à regra do Fator R.",
         dica=DICA_FATOR_R,
     ),
@@ -165,7 +196,9 @@ REGRAS: tuple[RegraCNAE, ...] = (
 REGRA_PADRAO = RegraCNAE(
     prefixos=(),
     anexo_rotulo="Anexo III (Serviços Gerais)",
-    anexo_chave="III", tem_fator_r=False, is_minimercado=False,
+    anexo_chave="III",
+    tem_fator_r=False,
+    is_minimercado=False,
     resumo="Tributada diretamente pelo Anexo III.",
     dica="Serviço com tributação no Anexo III sem necessidade de atingir o Fator R.",
 )
@@ -297,8 +330,7 @@ def comparar_regimes(
     """
     fat_anual = max(0.0, faturamento_mensal) * 12
     if fat_anual <= 0:
-        return ComparacaoRegimes(0, 0, 0, 0, 0, "Informe um faturamento válido",
-                                 0, 0, 0, {})
+        return ComparacaoRegimes(0, 0, 0, 0, 0, "Informe um faturamento válido", 0, 0, 0, {})
 
     fracao_mono = min(max(pct_monofasico, 0.0), 100.0) / 100.0
     folha = max(0.0, folha_mensal)
@@ -317,8 +349,7 @@ def comparar_regimes(
     PARCELA_PIS_COFINS_ANEXO_I = 0.1550
     simples_bruto = simples_das + encargo_no_simples
     simples_otimizado = (
-        simples_das * (1 - fracao_mono * PARCELA_PIS_COFINS_ANEXO_I)
-        + encargo_no_simples
+        simples_das * (1 - fracao_mono * PARCELA_PIS_COFINS_ANEXO_I) + encargo_no_simples
     )
     # A economia é só sobre o DAS: segregar monofásico não toca a folha.
     economia_mono = simples_das - (simples_otimizado - encargo_no_simples)
@@ -336,13 +367,19 @@ def comparar_regimes(
     csll = fat_anual * PRESUNCAO_CSLL_COMERCIO * ALIQ_CSLL
 
     detalhamento = {
-        "PIS": pis, "COFINS": cofins, "IRPJ": irpj, "CSLL": csll,
+        "PIS": pis,
+        "COFINS": cofins,
+        "IRPJ": irpj,
+        "CSLL": csll,
         "INSS patronal": encargo_folha_anual,
     }
     presumido = sum(detalhamento.values())
 
-    melhor = ("Simples Nacional (com segregação de monofásicos)"
-              if simples_otimizado <= presumido else "Lucro Presumido")
+    melhor = (
+        "Simples Nacional (com segregação de monofásicos)"
+        if simples_otimizado <= presumido
+        else "Lucro Presumido"
+    )
 
     return ComparacaoRegimes(
         faturamento_anual=fat_anual,
@@ -395,9 +432,14 @@ def diagnosticar_mei(
 
     if fat <= limite:
         return DiagnosticoMEI(
-            limite_proporcional=limite, excesso=0.0, pct_excesso=0.0,
-            requer_retroativo=False, imposto_estimado=0.0, encargos_estimados=0.0,
-            total_com_encargos=0.0, selic_utilizada=selic_acumulada_aa,
+            limite_proporcional=limite,
+            excesso=0.0,
+            pct_excesso=0.0,
+            requer_retroativo=False,
+            imposto_estimado=0.0,
+            encargos_estimados=0.0,
+            total_com_encargos=0.0,
+            selic_utilizada=selic_acumulada_aa,
             orientacao="🟢 **MEI regular:** faturamento dentro do limite proporcional.",
         )
 
@@ -435,10 +477,15 @@ def diagnosticar_mei(
         encargos = 0.0
 
     return DiagnosticoMEI(
-        limite_proporcional=limite, excesso=excesso, pct_excesso=pct_excesso,
-        requer_retroativo=retroativo, imposto_estimado=imposto,
-        encargos_estimados=encargos, total_com_encargos=imposto + encargos,
-        orientacao=orientacao, selic_utilizada=selic_acumulada_aa,
+        limite_proporcional=limite,
+        excesso=excesso,
+        pct_excesso=pct_excesso,
+        requer_retroativo=retroativo,
+        imposto_estimado=imposto,
+        encargos_estimados=encargos,
+        total_com_encargos=imposto + encargos,
+        orientacao=orientacao,
+        selic_utilizada=selic_acumulada_aa,
     )
 
 
@@ -463,7 +510,9 @@ class Honorarios:
 
 
 def calcular_honorarios(
-    num_cnpjs: int, num_pessoas: int, servicos_pontuais: Iterable[tuple[str, float]],
+    num_cnpjs: int,
+    num_pessoas: int,
+    servicos_pontuais: Iterable[tuple[str, float]],
     precos,
 ) -> Honorarios:
     """Centraliza a regra de preço.

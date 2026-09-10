@@ -38,15 +38,14 @@ def gerar_contrato(
     texto = renderizar_minuta(contratante, contratada, parametros, **kwargs_minuta)
 
     if isinstance(contratante, ContratantePJ):
-        signatario_contratante = (
-            contratante.representante.nome or contratante.razao_social
-        )
+        signatario_contratante = contratante.representante.nome or contratante.razao_social
     else:
         signatario_contratante = contratante.nome
 
     # A CONTRATADA assina pela razão social + CNPJ, sem nomear pessoa física
     # — decisão de negócio refletida no contrato modelo.
     from ..config import CONTRATADA_ASSINATURA_CNPJ, CONTRATADA_ASSINATURA_NOME
+
     signatario_contratada = CONTRATADA_ASSINATURA_NOME
     cnpj_contratada = CONTRATADA_ASSINATURA_CNPJ
 
@@ -58,8 +57,10 @@ def gerar_contrato(
             else f"CONTRATANTE\nCPF: {contratante.documento_principal}"
         )
         assinaturas = blocos_assinatura_contrato(
-            signatario_contratada, signatario_contratante,
-            estilos, com_testemunhas=com_testemunhas,
+            signatario_contratada,
+            signatario_contratante,
+            estilos,
+            com_testemunhas=com_testemunhas,
             rotulo_esquerda=f"CONTRATADA\nCNPJ: {cnpj_contratada}",
             rotulo_direita=rotulo_contratante,
         )

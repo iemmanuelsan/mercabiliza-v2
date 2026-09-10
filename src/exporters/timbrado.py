@@ -83,66 +83,91 @@ class Timbrado:
     # ------------------------------------------------------------------ #
     def _desenhar_imagem(self, canvas, largura: float, altura: float) -> None:
         try:
-            canvas.drawImage(str(self.imagem), 0, 0, width=largura, height=altura,
-                             preserveAspectRatio=False, anchor="c", mask=None)
+            canvas.drawImage(
+                str(self.imagem),
+                0,
+                0,
+                width=largura,
+                height=altura,
+                preserveAspectRatio=False,
+                anchor="c",
+                mask=None,
+            )
         except Exception:
-            logger.warning("Timbrado %s não pôde ser desenhado.", self.imagem,
-                           exc_info=True)
+            logger.warning("Timbrado %s não pôde ser desenhado.", self.imagem, exc_info=True)
             self._desenhar_faixa(canvas, largura, altura, "")
 
-    def _desenhar_logo(self, canvas, largura: float, altura: float,
-                       titulo: str) -> None:
+    def _desenhar_logo(self, canvas, largura: float, altura: float, titulo: str) -> None:
         from ..config import (
             CONTRATADA_EMAIL,
             CONTRATADA_NOME_FANTASIA,
             CONTRATADA_TELEFONE,
         )
+
         try:
-            canvas.drawImage(str(LOGO_PADRAO), self.margem_lateral_mm * mm,
-                             altura - 24 * mm, width=45 * mm, height=14 * mm,
-                             preserveAspectRatio=True, anchor="sw", mask="auto")
+            canvas.drawImage(
+                str(LOGO_PADRAO),
+                self.margem_lateral_mm * mm,
+                altura - 24 * mm,
+                width=45 * mm,
+                height=14 * mm,
+                preserveAspectRatio=True,
+                anchor="sw",
+                mask="auto",
+            )
         except Exception:
             logger.warning("Logo não pôde ser desenhada.", exc_info=True)
 
         canvas.setFillColor(colors.HexColor("#555B66"))
         canvas.setFont("Helvetica", 7.5)
-        canvas.drawRightString(largura - self.margem_lateral_mm * mm,
-                               altura - 15 * mm, CONTRATADA_NOME_FANTASIA)
-        canvas.drawRightString(largura - self.margem_lateral_mm * mm,
-                               altura - 19 * mm,
-                               f"{CONTRATADA_TELEFONE} · {CONTRATADA_EMAIL}")
+        canvas.drawRightString(
+            largura - self.margem_lateral_mm * mm, altura - 15 * mm, CONTRATADA_NOME_FANTASIA
+        )
+        canvas.drawRightString(
+            largura - self.margem_lateral_mm * mm,
+            altura - 19 * mm,
+            f"{CONTRATADA_TELEFONE} · {CONTRATADA_EMAIL}",
+        )
         canvas.setStrokeColor(colors.HexColor("#DDE1E6"))
         canvas.setLineWidth(0.5)
-        canvas.line(self.margem_lateral_mm * mm, altura - 27 * mm,
-                    largura - self.margem_lateral_mm * mm, altura - 27 * mm)
+        canvas.line(
+            self.margem_lateral_mm * mm,
+            altura - 27 * mm,
+            largura - self.margem_lateral_mm * mm,
+            altura - 27 * mm,
+        )
 
-    def _desenhar_faixa(self, canvas, largura: float, altura: float,
-                        titulo: str) -> None:
+    def _desenhar_faixa(self, canvas, largura: float, altura: float, titulo: str) -> None:
         from ..config import CONTRATADA_NOME_FANTASIA
+
         r, g, b = settings.emissor.cor_marca
         canvas.setFillColorRGB(r / 255, g / 255, b / 255)
         canvas.rect(0, altura - 12 * mm, largura, 12 * mm, stroke=0, fill=1)
         canvas.setFillColor(colors.white)
         canvas.setFont("Helvetica-Bold", 9)
-        canvas.drawString(self.margem_lateral_mm * mm, altura - 8 * mm,
-                          CONTRATADA_NOME_FANTASIA.upper())
+        canvas.drawString(
+            self.margem_lateral_mm * mm, altura - 8 * mm, CONTRATADA_NOME_FANTASIA.upper()
+        )
         if titulo:
             canvas.setFont("Helvetica", 7.5)
-            canvas.drawRightString(largura - self.margem_lateral_mm * mm,
-                                   altura - 8 * mm, titulo.upper()[:60])
+            canvas.drawRightString(
+                largura - self.margem_lateral_mm * mm, altura - 8 * mm, titulo.upper()[:60]
+            )
 
-    def _desenhar_rodape(self, canvas, largura: float, pagina: int,
-                         total: int | str) -> None:
+    def _desenhar_rodape(self, canvas, largura: float, pagina: int, total: int | str) -> None:
         canvas.setFillColor(colors.HexColor("#8A9099"))
         canvas.setFont("Helvetica", 7.5)
         y = 12 * mm
-        canvas.drawRightString(largura - self.margem_lateral_mm * mm, y,
-                               f"Página {pagina} de {total}")
+        canvas.drawRightString(
+            largura - self.margem_lateral_mm * mm, y, f"Página {pagina} de {total}"
+        )
         if not self.tem_imagem:
             # Com timbrado, o contato já está impresso na arte.
             from ..config import CONTRATADA_EMAIL, CONTRATADA_TELEFONE
-            canvas.drawString(self.margem_lateral_mm * mm, y,
-                              f"{CONTRATADA_EMAIL} · {CONTRATADA_TELEFONE}")
+
+            canvas.drawString(
+                self.margem_lateral_mm * mm, y, f"{CONTRATADA_EMAIL} · {CONTRATADA_TELEFONE}"
+            )
 
 
 def timbrado_padrao(usar_timbrado: bool = True) -> Timbrado:
@@ -161,6 +186,5 @@ def listar_timbrados() -> list[Path]:
     if not TIMBRADO_DIR.is_dir():
         return []
     return sorted(
-        p for p in TIMBRADO_DIR.iterdir()
-        if p.suffix.lower() in {".png", ".jpg", ".jpeg"}
+        p for p in TIMBRADO_DIR.iterdir() if p.suffix.lower() in {".png", ".jpg", ".jpeg"}
     )

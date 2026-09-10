@@ -35,9 +35,12 @@ def painel_compliance(empresa: Empresa) -> None:
     st.markdown("#### 🛡️ Situação cadastral")
     esq, dir_ = st.columns([1, 2])
     with esq:
-        st.metric("Situação na Receita", empresa.situacao.situacao_receita,
-                  delta="Regular" if empresa.situacao.esta_ativa else "Irregular",
-                  delta_color="normal" if empresa.situacao.esta_ativa else "inverse")
+        st.metric(
+            "Situação na Receita",
+            empresa.situacao.situacao_receita,
+            delta="Regular" if empresa.situacao.esta_ativa else "Irregular",
+            delta_color="normal" if empresa.situacao.esta_ativa else "inverse",
+        )
         st.caption(f"Regime: **{empresa.regime}** · Porte: {empresa.porte}")
     with dir_:
         st.warning(AVISO_COMPLIANCE)
@@ -81,9 +84,11 @@ def painel_tributario(empresa: Empresa) -> None:
     esq, dir_ = st.columns([1, 2])
     with esq:
         st.markdown(f"**CNAE principal**\n\n`{empresa.cnae_principal_str}`")
-        rotulo = ("Enquadramento SE deixar de ser MEI"
-                  if (empresa.mei_confirmado or empresa.regime_incerto)
-                  else "Enquadramento")
+        rotulo = (
+            "Enquadramento SE deixar de ser MEI"
+            if (empresa.mei_confirmado or empresa.regime_incerto)
+            else "Enquadramento"
+        )
         st.success(f"**{rotulo}:** {diag.anexo}")
         st.caption(f"Alíquota: {diag.aliquota_inicial}")
         if diag.is_minimercado:
@@ -96,12 +101,17 @@ def painel_tributario(empresa: Empresa) -> None:
     if empresa.atividades_secundarias:
         with st.expander(f"📋 {len(empresa.atividades_secundarias)} CNAEs secundários"):
             st.dataframe(
-                pd.DataFrame([{
-                    "CNAE": a.codigo,
-                    "Descrição": a.descricao,
-                    "Anexo": a.diagnostico.anexo,
-                    "Alíquota": a.diagnostico.aliquota_inicial,
-                } for a in empresa.atividades_secundarias]),
+                pd.DataFrame(
+                    [
+                        {
+                            "CNAE": a.codigo,
+                            "Descrição": a.descricao,
+                            "Anexo": a.diagnostico.anexo,
+                            "Alíquota": a.diagnostico.aliquota_inicial,
+                        }
+                        for a in empresa.atividades_secundarias
+                    ]
+                ),
                 hide_index=True,
             )
 
@@ -116,11 +126,16 @@ def painel_societario(empresa: Empresa) -> None:
         )
     if empresa.socios:
         st.dataframe(
-            pd.DataFrame([{
-                "Sócio / Administrador": s.nome,
-                "Qualificação": s.qualificacao,
-                "Faixa etária": s.faixa_etaria,
-            } for s in empresa.socios]),
+            pd.DataFrame(
+                [
+                    {
+                        "Sócio / Administrador": s.nome,
+                        "Qualificação": s.qualificacao,
+                        "Faixa etária": s.faixa_etaria,
+                    }
+                    for s in empresa.socios
+                ]
+            ),
             hide_index=True,
         )
     else:
@@ -133,8 +148,9 @@ def painel_contato(empresa: Empresa) -> None:
     with esq:
         st.markdown(f"**Endereço**\n\n{empresa.endereco.linha_completa}")
         st.caption(f"IBGE: `{empresa.endereco.cod_ibge}` · Região: {empresa.endereco.regiao}")
-        st.link_button("🗺️ Abrir no Google Maps",
-                       url_google_maps(empresa.endereco.linha_completa))
+        st.link_button(
+            "🗺️ Abrir no Google Maps", url_google_maps(empresa.endereco.linha_completa)
+        )
     with dir_:
         st.markdown(f"**E-mail(s):** {empresa.email_str}")
         st.markdown(f"**Telefone(s):** {empresa.telefone_str}")
@@ -144,7 +160,8 @@ def painel_contato(empresa: Empresa) -> None:
         # 11 dígitos, gerando um número inexistente. Agora o usuário escolhe.
         if empresa.telefones:
             escolhido = st.selectbox(
-                "Telefone para o WhatsApp:", empresa.telefones,
+                "Telefone para o WhatsApp:",
+                empresa.telefones,
                 key=f"wpp_{empresa.cnpj}",
             )
             mensagem = (
@@ -163,8 +180,10 @@ def painel_contato(empresa: Empresa) -> None:
 
 def cartao_cnpj(empresa: Empresa) -> None:
     with st.expander("📜 Comprovante de Inscrição e Situação Cadastral"):
-        st.caption("Reprodução a partir de bases públicas — não substitui o "
-                   "comprovante oficial da Receita Federal.")
+        st.caption(
+            "Reprodução a partir de bases públicas — não substitui o "
+            "comprovante oficial da Receita Federal."
+        )
         dados = {
             "Número de inscrição": f"{formatar_cnpj(empresa.cnpj)} ({empresa.matriz_filial})",
             "Data de abertura": empresa.data_abertura,
@@ -183,7 +202,8 @@ def cartao_cnpj(empresa: Empresa) -> None:
         # sem escape (XSS armazenado via razão social maliciosa).
         st.dataframe(
             pd.DataFrame({"Campo": list(dados), "Valor": list(dados.values())}),
-            hide_index=True, width="stretch",
+            hide_index=True,
+            width="stretch",
         )
         st.download_button(
             "📄 Baixar Cartão CNPJ (PDF)",

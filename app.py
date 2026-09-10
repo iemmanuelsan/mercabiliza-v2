@@ -74,14 +74,16 @@ def main() -> None:
         "calculadora de MEI e CRM integrado."
     )
 
-    aba_dossie, aba_regimes, aba_lote, aba_mei, aba_docs, aba_crm = st.tabs([
-        "🔍 Dossiê individual",
-        "⚔️ Comparador de regimes",
-        "📊 Análise em lote",
-        "🛠️ Calculadora MEI",
-        "📝 Ficha & contrato",
-        "🗃️ CRM & leads",
-    ])
+    aba_dossie, aba_regimes, aba_lote, aba_mei, aba_docs, aba_crm = st.tabs(
+        [
+            "🔍 Dossiê individual",
+            "⚔️ Comparador de regimes",
+            "📊 Análise em lote",
+            "🛠️ Calculadora MEI",
+            "📝 Ficha & contrato",
+            "🗃️ CRM & leads",
+        ]
+    )
 
     with aba_dossie:
         dossie.render()

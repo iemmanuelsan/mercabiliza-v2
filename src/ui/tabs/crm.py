@@ -36,8 +36,9 @@ def render() -> None:
         return
 
     if df.empty:
-        st.info("Nenhum lead registrado. Faça consultas nas abas 1 ou 3 para "
-                "alimentar a base.")
+        st.info(
+            "Nenhum lead registrado. Faça consultas nas abas 1 ou 3 para alimentar a base."
+        )
         return
 
     # ---------------- Filtros ------------------------------------------- #
@@ -73,8 +74,9 @@ def render() -> None:
     st.dataframe(filtrado, hide_index=True, width="stretch")
 
     if not filtrado.empty:
-        st.bar_chart(filtrado["uf"].value_counts(), x_label="UF",
-                     y_label="Leads", horizontal=True)
+        st.bar_chart(
+            filtrado["uf"].value_counts(), x_label="UF", y_label="Leads", horizontal=True
+        )
 
     st.download_button(
         f"📥 Exportar {len(filtrado)} lead(s) em Excel",

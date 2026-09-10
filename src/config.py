@@ -29,8 +29,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 AMBIENTE = os.getenv("MERCABILIZA_AMBIENTE", "local").strip().lower()
 EH_PRODUCAO = AMBIENTE in {"producao", "production", "prod"}
 
-LOG_LEVEL = os.getenv("MERCABILIZA_LOG_LEVEL", "WARNING" if EH_PRODUCAO
-                      else "INFO").upper()
+LOG_LEVEL = os.getenv("MERCABILIZA_LOG_LEVEL", "WARNING" if EH_PRODUCAO else "INFO").upper()
 
 
 # --------------------------------------------------------------------------- #
@@ -51,15 +50,15 @@ class HttpSettings:
 
 @dataclass(frozen=True)
 class CacheSettings:
-    dossie_ttl: int = 60 * 60 * 12       # 12h — dado cadastral muda pouco
-    bacen_ttl: int = 60 * 60 * 24        # 24h
-    ibge_ttl: int = 60 * 60 * 24 * 30    # 30d — código IBGE é praticamente estático
+    dossie_ttl: int = 60 * 60 * 12  # 12h — dado cadastral muda pouco
+    bacen_ttl: int = 60 * 60 * 24  # 24h
+    ibge_ttl: int = 60 * 60 * 24 * 30  # 30d — código IBGE é praticamente estático
 
 
 @dataclass(frozen=True)
 class LimitSettings:
     max_cnpjs_por_lote: int = 200
-    max_historico_sessao: int = 25       # trava de memória p/ Streamlit Cloud
+    max_historico_sessao: int = 25  # trava de memória p/ Streamlit Cloud
 
 
 # --------------------------------------------------------------------------- #
@@ -69,7 +68,9 @@ BRASIL_API_CNPJ = "https://brasilapi.com.br/api/cnpj/v1/{cnpj}"
 CNPJ_WS_PUBLICA = "https://publica.cnpj.ws/cnpj/{cnpj}"
 RECEITA_WS = "https://receitaws.com.br/v1/cnpj/{cnpj}"
 IBGE_MUNICIPIOS = "https://servicodados.ibge.gov.br/api/v1/localidades/estados/{uf}/municipios"
-BACEN_SGS = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{serie}/dados/ultimos/{n}?formato=json"
+BACEN_SGS = (
+    "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{serie}/dados/ultimos/{n}?formato=json"
+)
 
 # Séries do SGS/BACEN.
 #   4390 = Taxa Selic acumulada no mês (% a.m.) -> precisa ser COMPOSTA, não somada.
@@ -118,7 +119,7 @@ class DadosEmissor:
 CONTRATADA_RAZAO_SOCIAL = "MERCABILIZA SOLUCOES FISCAIS E CONTABEIS LTDA"
 CONTRATADA_NOME_FANTASIA = "Mercabiliza"
 CONTRATADA_CNPJ = "62350925000110"
-CONTRATADA_CRC = ""                      # ← PREENCHER
+CONTRATADA_CRC = ""  # ← PREENCHER
 CONTRATADA_TELEFONE = "(19) 3327-0038"
 CONTRATADA_EMAIL = "contato@contabilidadeclassea.com.br"
 CONTRATADA_SITE = ""
@@ -132,10 +133,10 @@ CONTRATADA_CEP = "13201804"
 
 # Representante legal que assina pela Mercabiliza.
 CONTRATADA_REP_NOME = "Luis Felipe"
-CONTRATADA_REP_CPF = ""                  # ← PREENCHER
-CONTRATADA_REP_RG = ""                   # ← PREENCHER
-CONTRATADA_REP_ORGAO = ""                # ← PREENCHER
-CONTRATADA_REP_ESTADO_CIVIL = ""         # ← PREENCHER
+CONTRATADA_REP_CPF = ""  # ← PREENCHER
+CONTRATADA_REP_RG = ""  # ← PREENCHER
+CONTRATADA_REP_ORGAO = ""  # ← PREENCHER
+CONTRATADA_REP_ESTADO_CIVIL = ""  # ← PREENCHER
 CONTRATADA_REP_PROFISSAO = "contador"
 CONTRATADA_REP_QUALIFICACAO = "sócio administrador"
 
@@ -176,7 +177,7 @@ CONTRATO_NOTA_RODAPE = (
 )
 
 # Foro padrão sugerido na aba de contratos (comarca da sede).
-FORO_PADRAO = "Campinas/SP"   # o contrato modelo elege Campinas
+FORO_PADRAO = "Campinas/SP"  # o contrato modelo elege Campinas
 
 
 @dataclass(frozen=True)

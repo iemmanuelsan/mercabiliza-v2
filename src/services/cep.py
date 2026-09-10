@@ -32,9 +32,7 @@ def normalizar(bruto: object) -> str:
 def validar(bruto: object) -> str:
     cep = normalizar(bruto)
     if len(cep) != 8:
-        raise CEPInvalidoError(
-            f"CEP deve ter 8 dígitos (recebidos {len(cep)})."
-        )
+        raise CEPInvalidoError(f"CEP deve ter 8 dígitos (recebidos {len(cep)}).")
     if len(set(cep)) == 1:
         raise CEPInvalidoError("Sequência repetida não é um CEP válido.")
     return cep

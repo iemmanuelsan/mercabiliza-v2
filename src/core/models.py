@@ -101,10 +101,13 @@ class Endereco:
         finais: list[str] = []
         for trecho in trechos:
             atual = {p.casefold() for p in trecho.split()}
-            if any(atual < {p.casefold() for p in outro.split()}
-                   for outro in trechos if outro != trecho):
+            if any(
+                atual < {p.casefold() for p in outro.split()}
+                for outro in trechos
+                if outro != trecho
+            ):
                 continue
-            if trecho not in finais:      # remove duplicata exata
+            if trecho not in finais:  # remove duplicata exata
                 finais.append(trecho)
 
         return ", ".join(finais)
@@ -118,11 +121,13 @@ class Endereco:
     @property
     def linha_completa(self) -> str:
         partes = [
-            p for p in (
+            p
+            for p in (
                 self.logradouro_numero,
                 self.bairro,
                 f"{self.municipio}/{self.uf}".strip("/"),
-            ) if p
+            )
+            if p
         ]
         base = " - ".join(partes)
         return f"{base} - CEP: {self.cep}" if self.cep else base
@@ -162,8 +167,11 @@ class Endereco:
             partes.append(f"**{cidade}**")
         base = ", ".join(partes)
         if self.cep:
-            return f"{base}, **CEP {self.cep_formatado}**" if base \
+            return (
+                f"{base}, **CEP {self.cep_formatado}**"
+                if base
                 else f"**CEP {self.cep_formatado}**"
+            )
         return base
 
     @property
@@ -247,8 +255,11 @@ class Empresa:
         if self.optante_mei is True:
             return "MEI"
         if self.optante_simples is True:
-            return ("Simples Nacional" if self.optante_mei is False
-                    else "Simples Nacional (confirmar se é MEI)")
+            return (
+                "Simples Nacional"
+                if self.optante_mei is False
+                else "Simples Nacional (confirmar se é MEI)"
+            )
         if self.optante_simples is False:
             return "Lucro Presumido / Real"
         return "Regime não informado pelos provedores"
@@ -307,7 +318,8 @@ class Empresa:
             "uf": self.endereco.uf,
             "cnae_principal": self.cnae_principal_str,
             "anexo": self.atividade_principal.diagnostico.anexo
-            if self.atividade_principal else "",
+            if self.atividade_principal
+            else "",
             "capital_social": self.capital_social,
             "consultado_em": self.consultado_em.isoformat(),
         }

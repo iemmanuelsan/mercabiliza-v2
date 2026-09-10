@@ -64,10 +64,10 @@ MODALIDADES = (
 DESCRICAO_MODALIDADE = {
     MODALIDADES[0]: "Empresa já constituída: consulta o CNPJ e gera ficha + contrato.",
     MODALIDADES[1]: "MEI que estourou o limite: consulta o CNPJ, gera ficha + "
-                    "contrato e o formulário de alteração com o que falta o "
-                    "cliente decidir (razão social, capital, quotas).",
+    "contrato e o formulário de alteração com o que falta o "
+    "cliente decidir (razão social, capital, quotas).",
     MODALIDADES[2]: "Sem empresa aberta: coleta os dados por CPF e CEP e gera o "
-                    "formulário de abertura para o cliente preencher.",
+    "formulário de abertura para o cliente preencher.",
 }
 K_TIPO = "ct_tipo"
 K_PDF_BRANCO = "doc_pdf_branco"
@@ -80,20 +80,46 @@ K_DOCX = "ct_docx_formulario"
 K_DOCX_TRANSICAO = "ct_docx_transicao"
 
 CAMPOS_PJ = {
-    "ct_pj_cnpj": "", "ct_pj_razao": "", "ct_pj_fantasia": "", "ct_pj_cnae": "",
-    "ct_pj_ie": "", "ct_pj_im": "", "ct_pj_tel": "", "ct_pj_email": "",
-    "ct_pj_regime": "", "ct_pj_abertura": "",
-    "ct_pj_log": "", "ct_pj_num": "", "ct_pj_compl": "", "ct_pj_bairro": "",
-    "ct_pj_mun": "", "ct_pj_uf": "", "ct_pj_cep": "",
-    "ct_rep_nome": "", "ct_rep_cpf": "", "ct_rep_rg": "", "ct_rep_orgao": "",
-    "ct_rep_prof": "contador", "ct_rep_nac": "brasileiro",
+    "ct_pj_cnpj": "",
+    "ct_pj_razao": "",
+    "ct_pj_fantasia": "",
+    "ct_pj_cnae": "",
+    "ct_pj_ie": "",
+    "ct_pj_im": "",
+    "ct_pj_tel": "",
+    "ct_pj_email": "",
+    "ct_pj_regime": "",
+    "ct_pj_abertura": "",
+    "ct_pj_log": "",
+    "ct_pj_num": "",
+    "ct_pj_compl": "",
+    "ct_pj_bairro": "",
+    "ct_pj_mun": "",
+    "ct_pj_uf": "",
+    "ct_pj_cep": "",
+    "ct_rep_nome": "",
+    "ct_rep_cpf": "",
+    "ct_rep_rg": "",
+    "ct_rep_orgao": "",
+    "ct_rep_prof": "contador",
+    "ct_rep_nac": "brasileiro",
 }
 CAMPOS_PF = {
-    "ct_pf_nome": "", "ct_pf_cpf": "", "ct_pf_rg": "", "ct_pf_orgao": "",
-    "ct_pf_prof": "", "ct_pf_nac": "brasileiro",
-    "ct_pf_tel": "", "ct_pf_email": "",
-    "ct_pf_log": "", "ct_pf_num": "", "ct_pf_compl": "", "ct_pf_bairro": "",
-    "ct_pf_mun": "", "ct_pf_uf": "", "ct_pf_cep": "",
+    "ct_pf_nome": "",
+    "ct_pf_cpf": "",
+    "ct_pf_rg": "",
+    "ct_pf_orgao": "",
+    "ct_pf_prof": "",
+    "ct_pf_nac": "brasileiro",
+    "ct_pf_tel": "",
+    "ct_pf_email": "",
+    "ct_pf_log": "",
+    "ct_pf_num": "",
+    "ct_pf_compl": "",
+    "ct_pf_bairro": "",
+    "ct_pf_mun": "",
+    "ct_pf_uf": "",
+    "ct_pf_cep": "",
 }
 
 
@@ -130,31 +156,35 @@ def _buscar_cnpj() -> None:
     if empresa is None:
         st.session_state[K_MSG_BUSCA] = (
             "erro",
-            ("CNPJ não localizado nas bases públicas, ou os provedores estão "
-             "indisponíveis. Preencha manualmente ou tente novamente."),
+            (
+                "CNPJ não localizado nas bases públicas, ou os provedores estão "
+                "indisponíveis. Preencha manualmente ou tente novamente."
+            ),
         )
         return
 
     pj = de_empresa(empresa)
-    st.session_state.update({
-        "ct_pj_cnpj": pj.cnpj,
-        "ct_pj_razao": pj.razao_social,
-        "ct_pj_fantasia": pj.nome_fantasia,
-        "ct_pj_cnae": pj.cnae_principal,
-        "ct_pj_ie": pj.inscricao_estadual,
-        "ct_pj_im": pj.inscricao_municipal,
-        "ct_pj_tel": pj.telefone,
-        "ct_pj_email": pj.email,
-        "ct_pj_regime": pj.regime,
-        "ct_pj_abertura": pj.data_abertura,
-        "ct_pj_log": pj.endereco.logradouro,
-        "ct_pj_num": pj.endereco.numero,
-        "ct_pj_bairro": pj.endereco.bairro,
-        "ct_pj_mun": pj.endereco.municipio,
-        "ct_pj_uf": pj.endereco.uf,
-        "ct_pj_cep": pj.endereco.cep,
-        K_QSA: [s.nome for s in empresa.socios],
-    })
+    st.session_state.update(
+        {
+            "ct_pj_cnpj": pj.cnpj,
+            "ct_pj_razao": pj.razao_social,
+            "ct_pj_fantasia": pj.nome_fantasia,
+            "ct_pj_cnae": pj.cnae_principal,
+            "ct_pj_ie": pj.inscricao_estadual,
+            "ct_pj_im": pj.inscricao_municipal,
+            "ct_pj_tel": pj.telefone,
+            "ct_pj_email": pj.email,
+            "ct_pj_regime": pj.regime,
+            "ct_pj_abertura": pj.data_abertura,
+            "ct_pj_log": pj.endereco.logradouro,
+            "ct_pj_num": pj.endereco.numero,
+            "ct_pj_bairro": pj.endereco.bairro,
+            "ct_pj_mun": pj.endereco.municipio,
+            "ct_pj_uf": pj.endereco.uf,
+            "ct_pj_cep": pj.endereco.cep,
+            K_QSA: [s.nome for s in empresa.socios],
+        }
+    )
     # Pré-seleciona o primeiro sócio como signatário provável.
     if empresa.socios:
         st.session_state["ct_rep_nome"] = empresa.socios[0].nome
@@ -163,8 +193,11 @@ def _buscar_cnpj() -> None:
     st.session_state[K_MSG_BUSCA] = (
         "ok",
         f"Dados de {pj.razao_social} carregados de {', '.join(empresa.fontes)}. "
-        + (f"{achados} sócio(s) no QSA — confira o signatário abaixo."
-           if achados else "Nenhum sócio no QSA; informe o signatário manualmente."),
+        + (
+            f"{achados} sócio(s) no QSA — confira o signatário abaixo."
+            if achados
+            else "Nenhum sócio no QSA; informe o signatário manualmente."
+        ),
     )
 
 
@@ -181,19 +214,27 @@ def _buscar_cep(prefixo: str) -> None:
 
     if endereco is None:
         st.session_state[K_MSG_BUSCA] = (
-            "erro", "CEP não localizado no ViaCEP nem na BrasilAPI.")
+            "erro",
+            "CEP não localizado no ViaCEP nem na BrasilAPI.",
+        )
         return
 
-    st.session_state.update({
-        f"ct_{prefixo}_log": endereco.logradouro,
-        f"ct_{prefixo}_bairro": endereco.bairro,
-        f"ct_{prefixo}_mun": endereco.municipio,
-        f"ct_{prefixo}_uf": endereco.uf,
-        f"ct_{prefixo}_cep": endereco.cep,
-    })
+    st.session_state.update(
+        {
+            f"ct_{prefixo}_log": endereco.logradouro,
+            f"ct_{prefixo}_bairro": endereco.bairro,
+            f"ct_{prefixo}_mun": endereco.municipio,
+            f"ct_{prefixo}_uf": endereco.uf,
+            f"ct_{prefixo}_cep": endereco.cep,
+        }
+    )
     st.session_state[K_MSG_BUSCA] = (
-        "ok", (f"Endereço encontrado: {endereco.linha_completa}. "
-               "Complete o número e o complemento."))
+        "ok",
+        (
+            f"Endereço encontrado: {endereco.linha_completa}. "
+            "Complete o número e o complemento."
+        ),
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -264,13 +305,17 @@ def _bloco_endereco(prefixo: str, titulo: str = "Endereço") -> None:
     with st.form(f"form_cep_{prefixo}", clear_on_submit=False):
         c1, c2 = st.columns([1, 2])
         with c1:
-            st.text_input("CEP", key=f"ct_busca_cep_{prefixo}",
-                          placeholder="13201-804", max_chars=9)
+            st.text_input(
+                "CEP", key=f"ct_busca_cep_{prefixo}", placeholder="13201-804", max_chars=9
+            )
         with c2:
             st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
             st.form_submit_button(
                 "🔎 Buscar endereço pelo CEP",
-                on_click=_buscar_cep, args=(prefixo,), width="stretch")
+                on_click=_buscar_cep,
+                args=(prefixo,),
+                width="stretch",
+            )
 
     c1, c2, c3 = st.columns([3, 1, 1])
     c1.text_input("Logradouro", key=f"ct_{prefixo}_log")
@@ -281,8 +326,9 @@ def _bloco_endereco(prefixo: str, titulo: str = "Endereço") -> None:
     c4.text_input("Bairro", key=f"ct_{prefixo}_bairro")
     c5.text_input("Município", key=f"ct_{prefixo}_mun")
     c6.text_input("UF", key=f"ct_{prefixo}_uf", max_chars=2)
-    c7.text_input("CEP", key=f"ct_{prefixo}_cep", max_chars=9,
-                  help="Preenchido pela busca; editável.")
+    c7.text_input(
+        "CEP", key=f"ct_{prefixo}_cep", max_chars=9, help="Preenchido pela busca; editável."
+    )
 
 
 def _form_pj() -> None:
@@ -291,12 +337,16 @@ def _form_pj() -> None:
     with st.form("form_busca_cnpj", clear_on_submit=False):
         c1, c2 = st.columns([2, 1])
         with c1:
-            st.text_input("CNPJ do cliente", key="ct_busca_cnpj",
-                          placeholder="00.000.000/0001-91 ou 12.ABC.345/01DE-35")
+            st.text_input(
+                "CNPJ do cliente",
+                key="ct_busca_cnpj",
+                placeholder="00.000.000/0001-91 ou 12.ABC.345/01DE-35",
+            )
         with c2:
             st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
-            st.form_submit_button("🔎 Buscar na Receita", type="primary",
-                                  on_click=_buscar_cnpj, width="stretch")
+            st.form_submit_button(
+                "🔎 Buscar na Receita", type="primary", on_click=_buscar_cnpj, width="stretch"
+            )
 
     c1, c2 = st.columns(2)
     c1.text_input("Razão social *", key="ct_pj_razao")
@@ -325,8 +375,10 @@ def _form_pj() -> None:
     if opcoes:
         st.caption(f"Sócios encontrados no QSA: {', '.join(opcoes)}")
         escolha = st.radio(
-            "Signatário", [*opcoes, "Outro (procurador ou não consta do QSA)"],
-            key="ct_rep_escolha", horizontal=False,
+            "Signatário",
+            [*opcoes, "Outro (procurador ou não consta do QSA)"],
+            key="ct_rep_escolha",
+            horizontal=False,
         )
         if not escolha.startswith("Outro"):
             st.session_state["ct_rep_nome"] = escolha
@@ -346,8 +398,11 @@ def _form_pj() -> None:
     c7, c8, c9 = st.columns([1, 1, 1])
     c7.text_input("Nacionalidade", key="ct_rep_nac")
     c8.selectbox("Estado civil", ("", *ESTADOS_CIVIS), key="ct_rep_civil")
-    c9.checkbox("Concordância no feminino", key="ct_rep_fem",
-                help="Flexiona 'portadora', 'inscrita', 'sócia' no contrato.")
+    c9.checkbox(
+        "Concordância no feminino",
+        key="ct_rep_fem",
+        help="Flexiona 'portadora', 'inscrita', 'sócia' no contrato.",
+    )
 
     if cpf := st.session_state.get("ct_rep_cpf", ""):
         try:
@@ -378,8 +433,11 @@ def _form_pf() -> None:
     c6, c7, c8 = st.columns([1, 1, 1])
     c6.text_input("Nacionalidade", key="ct_pf_nac")
     c7.selectbox("Estado civil *", ("", *ESTADOS_CIVIS), key="ct_pf_civil")
-    c8.checkbox("Concordância no feminino", key="ct_pf_fem",
-                help="Flexiona 'portadora', 'inscrita', 'domiciliada' no contrato.")
+    c8.checkbox(
+        "Concordância no feminino",
+        key="ct_pf_fem",
+        help="Flexiona 'portadora', 'inscrita', 'domiciliada' no contrato.",
+    )
 
     c9, c10 = st.columns(2)
     c9.text_input("Telefone / WhatsApp", key="ct_pf_tel")
@@ -423,7 +481,11 @@ def _gerar_docx(contratante) -> bytes:
         empresa = {}
 
     return gerar_formulario_abertura(
-        perfil, empresa, endereco, socios, desenq,
+        perfil,
+        empresa,
+        endereco,
+        socios,
+        desenq,
         minimo_socios=2 if perfil != "MEI" else 1,
     )
 
@@ -437,7 +499,10 @@ def _bloco_documentos(contratante) -> None:
     st.markdown("#### 3. Parâmetros do contrato")
 
     objeto = st.text_area(
-        "Objeto do serviço", value=OBJETO_PADRAO, key="ct_objeto", height=80,
+        "Objeto do serviço",
+        value=OBJETO_PADRAO,
+        key="ct_objeto",
+        height=80,
         help="Completa a frase: “…a prestação dos serviços de {objeto}”.",
     )
 
@@ -445,7 +510,8 @@ def _bloco_documentos(contratante) -> None:
     modo = st.radio(
         "Origem do valor",
         ["Calcular pela tabela do app", "Informar manualmente"],
-        key="ct_modo_valor", horizontal=True,
+        key="ct_modo_valor",
+        horizontal=True,
     )
 
     if modo.startswith("Calcular"):
@@ -454,12 +520,11 @@ def _bloco_documentos(contratante) -> None:
         qtd_pessoas = c2.number_input("Vínculos (DP)", 0, 200, 0, key="ct_qtd_pes")
         pontuais = []
         with c3:
-            if st.checkbox(f"Desenq. MEI ({moeda(precos.desenquadramento_mei)})",
-                           key="ct_inc_desenq"):
-                pontuais.append(("Desenquadramento de MEI",
-                                 precos.desenquadramento_mei))
-            if st.checkbox(f"Abertura ({moeda(precos.abertura_empresa)})",
-                           key="ct_inc_abert"):
+            if st.checkbox(
+                f"Desenq. MEI ({moeda(precos.desenquadramento_mei)})", key="ct_inc_desenq"
+            ):
+                pontuais.append(("Desenquadramento de MEI", precos.desenquadramento_mei))
+            if st.checkbox(f"Abertura ({moeda(precos.abertura_empresa)})", key="ct_inc_abert"):
                 pontuais.append(("Constituição de empresa", precos.abertura_empresa))
         h = calcular_honorarios(qtd_cnpjs, qtd_pessoas, pontuais, precos)
         valor_mensal, valor_implantacao = h.mensal, h.total_pontual
@@ -470,10 +535,12 @@ def _bloco_documentos(contratante) -> None:
         )
     else:
         c1, c2 = st.columns(2)
-        valor_mensal = c1.number_input("Honorário mensal (R$)", 0.0,
-                                       value=350.0, step=50.0, key="ct_val_mes")
-        valor_implantacao = c2.number_input("Taxa de implantação (R$)", 0.0,
-                                           value=0.0, step=50.0, key="ct_val_impl")
+        valor_mensal = c1.number_input(
+            "Honorário mensal (R$)", 0.0, value=350.0, step=50.0, key="ct_val_mes"
+        )
+        valor_implantacao = c2.number_input(
+            "Taxa de implantação (R$)", 0.0, value=0.0, step=50.0, key="ct_val_impl"
+        )
 
     c1, c2, c3 = st.columns(3)
     dia_venc = c1.number_input("Dia do vencimento", 1, 31, 10, key="ct_dia")
@@ -481,22 +548,27 @@ def _bloco_documentos(contratante) -> None:
     indice = c3.selectbox("Índice de reajuste", INDICES_REAJUSTE, key="ct_indice")
 
     c4, c5, c6 = st.columns(3)
-    data_inicio = c4.date_input("Início da vigência", value=date.today(),
-                                key="ct_inicio", format="DD/MM/YYYY")
-    vigencia = c5.number_input("Vigência (meses; 0 = indeterminado)", 0, 120, 12,
-                               key="ct_vigencia")
+    data_inicio = c4.date_input(
+        "Início da vigência", value=date.today(), key="ct_inicio", format="DD/MM/YYYY"
+    )
+    vigencia = c5.number_input(
+        "Vigência (meses; 0 = indeterminado)", 0, 120, 12, key="ct_vigencia"
+    )
     rescisao = c6.number_input("Aviso prévio (dias)", 0, 180, 30, key="ct_rescisao")
 
     c7, c8, c9 = st.columns(3)
     foro = c7.text_input("Foro (comarca)", value=FORO_PADRAO, key="ct_foro")
-    cidade = c8.text_input("Cidade da assinatura",
-                           value=FORO_PADRAO.split("/")[0], key="ct_cidade")
-    data_assin = c9.date_input("Data da assinatura", value=date.today(),
-                               key="ct_data_assin", format="DD/MM/YYYY")
+    cidade = c8.text_input(
+        "Cidade da assinatura", value=FORO_PADRAO.split("/")[0], key="ct_cidade"
+    )
+    data_assin = c9.date_input(
+        "Data da assinatura", value=date.today(), key="ct_data_assin", format="DD/MM/YYYY"
+    )
 
     particulares_txt = st.text_area(
         "Cláusulas particulares (uma por linha, opcional)",
-        key="ct_particulares", height=90,
+        key="ct_particulares",
+        height=90,
         placeholder="Os três primeiros meses terão desconto de 20% sobre os honorários.",
     )
 
@@ -534,53 +606,67 @@ def _bloco_documentos(contratante) -> None:
     col_a, col_b = st.columns(2)
     with col_a:
         if pend_cliente:
-            st.warning("**Faltando no cadastro do cliente:**\n\n"
-                       + "\n".join(f"- {p}" for p in pend_cliente))
+            st.warning(
+                "**Faltando no cadastro do cliente:**\n\n"
+                + "\n".join(f"- {p}" for p in pend_cliente)
+            )
         else:
             st.success("✅ Cadastro do cliente completo.")
         if pend_param:
-            st.warning("**Faltando nos parâmetros:**\n\n"
-                       + "\n".join(f"- {p}" for p in pend_param))
+            st.warning(
+                "**Faltando nos parâmetros:**\n\n" + "\n".join(f"- {p}" for p in pend_param)
+            )
         else:
             st.success("✅ Parâmetros do contrato completos.")
     with col_b:
         if pend_contratada:
-            st.error("**Faltando no cadastro da Mercabiliza** (edite `src/config.py`):\n\n"
-                     + "\n".join(f"- {p}" for p in pend_contratada))
+            st.error(
+                "**Faltando no cadastro da Mercabiliza** (edite `src/config.py`):\n\n"
+                + "\n".join(f"- {p}" for p in pend_contratada)
+            )
         else:
             st.success("✅ Cadastro da contratada completo.")
 
-    with st.expander("👁️ Qualificação das partes (texto que vai ao contrato)",
-                     expanded=True):
+    with st.expander("👁️ Qualificação das partes (texto que vai ao contrato)", expanded=True):
         st.markdown(f"**CONTRATANTE**\n\n{contratante.qualificacao_contratual}.")
         st.markdown(f"**CONTRATADA**\n\n{contratada.qualificacao_contratual}.")
 
     with st.expander("📋 Resumo dos dados cadastrais"):
         import pandas as pd
+
         linhas = contratante.linhas_ficha()
         if contratante.tipo == "PJ":
-            linhas = [*linhas, ("—— Representante ——", ""),
-                      *contratante.linhas_representante()]
+            linhas = [
+                *linhas,
+                ("—— Representante ——", ""),
+                *contratante.linhas_representante(),
+            ]
         st.dataframe(
             pd.DataFrame(linhas, columns=["Campo", "Valor"]),
-            hide_index=True, width="stretch",
+            hide_index=True,
+            width="stretch",
         )
 
     # ---------------- Geração ---------------------------------------- #
     st.divider()
     st.markdown("#### 5. Gerar documentos")
 
-    nome_arquivo = "".join(
-        c for c in (contratante.cnpj if contratante.tipo == "PJ" else contratante.cpf)
-        if c.isalnum()
-    ) or "cliente"
+    nome_arquivo = (
+        "".join(
+            c
+            for c in (contratante.cnpj if contratante.tipo == "PJ" else contratante.cpf)
+            if c.isalnum()
+        )
+        or "cliente"
+    )
 
     c1, c2, c3 = st.columns(3)
     with c1:
         if st.button("📋 Gerar Ficha Cadastral", width="stretch"):
             try:
                 st.session_state[K_FICHA_PDF] = gerar_ficha_cadastral(
-                    contratante, contratada, parametros)
+                    contratante, contratada, parametros
+                )
                 st.session_state[K_NOME_ARQ] = nome_arquivo
             except Exception as exc:
                 st.error(f"Falha ao gerar a ficha: {exc}")
@@ -588,7 +674,8 @@ def _bloco_documentos(contratante) -> None:
         if st.button("📄 Gerar Contrato", type="primary", width="stretch"):
             try:
                 st.session_state[K_CONTRATO_PDF] = gerar_contrato(
-                    contratante, contratada, parametros, template=template)
+                    contratante, contratada, parametros, template=template
+                )
                 st.session_state[K_NOME_ARQ] = nome_arquivo
             except Exception as exc:
                 st.error(f"Falha ao gerar o contrato: {exc}")
@@ -609,25 +696,32 @@ def _bloco_documentos(contratante) -> None:
     with d1:
         if pdf := st.session_state.get(K_FICHA_PDF):
             st.download_button(
-                "⬇️ Baixar Ficha Cadastral (PDF)", data=pdf,
+                "⬇️ Baixar Ficha Cadastral (PDF)",
+                data=pdf,
                 file_name=f"ficha_cadastral_{arq}.pdf",
-                mime="application/pdf", width="stretch",
+                mime="application/pdf",
+                width="stretch",
             )
     with d2:
         if pdf := st.session_state.get(K_CONTRATO_PDF):
             st.download_button(
-                "⬇️ Baixar Contrato (PDF)", data=pdf,
+                "⬇️ Baixar Contrato (PDF)",
+                data=pdf,
                 file_name=f"contrato_{arq}.pdf",
-                mime="application/pdf", type="primary", width="stretch",
+                mime="application/pdf",
+                type="primary",
+                width="stretch",
             )
 
     with d3:
         if docx := st.session_state.get(K_DOCX):
             st.download_button(
-                "⬇️ Baixar Formulário (DOCX)", data=docx,
+                "⬇️ Baixar Formulário (DOCX)",
+                data=docx,
                 file_name=f"formulario_{_perfil().lower()}_{arq}.docx",
-                mime=("application/vnd.openxmlformats-officedocument"
-                      ".wordprocessingml.document"),
+                mime=(
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                ),
                 width="stretch",
             )
 
@@ -665,18 +759,23 @@ def _bloco_ficha_branco() -> None:
 
     col1, col2, col3 = st.columns([1, 1, 2])
     tipo = col1.radio("Modelo", ["PF", "PJ"], horizontal=True, key="branco_tipo")
-    operacao = col2.checkbox("Incluir dados da operação", value=True,
-                             key="branco_operacao",
-                             help="Lojas, sistema de gestão, NFC-e, franquia.")
+    operacao = col2.checkbox(
+        "Incluir dados da operação",
+        value=True,
+        key="branco_operacao",
+        help="Lojas, sistema de gestão, NFC-e, franquia.",
+    )
     if col3.button("Gerar ficha em branco", width="stretch"):
-        st.session_state[K_PDF_BRANCO] = gerar_ficha_em_branco(
-            tipo, incluir_operacao=operacao)
+        st.session_state[K_PDF_BRANCO] = gerar_ficha_em_branco(tipo, incluir_operacao=operacao)
 
     if pdf := st.session_state.get(K_PDF_BRANCO):
         st.download_button(
-            "📄 Baixar ficha em branco (PDF)", data=pdf,
+            "📄 Baixar ficha em branco (PDF)",
+            data=pdf,
             file_name=f"ficha_cadastral_em_branco_{st.session_state.branco_tipo}.pdf",
-            mime="application/pdf", type="primary", width="stretch",
+            mime="application/pdf",
+            type="primary",
+            width="stretch",
         )
 
 
@@ -704,6 +803,8 @@ def _bloco_transicao(contratante) -> None:
     """
     from ...exporters.docx_transicao import (
         dados_de_contratante as _prefill,
+    )
+    from ...exporters.docx_transicao import (
         gerar_formulario_transicao,
     )
 
@@ -718,15 +819,21 @@ def _bloco_transicao(contratante) -> None:
         st.markdown("**Informações iniciais**")
         c1, c2, c3 = st.columns(3)
         competencia = c1.text_input(
-            "Competência de entrada", key="tr_competencia",
-            placeholder="09/2026", help="Mês/ano em que assumimos a escrita.")
+            "Competência de entrada",
+            key="tr_competencia",
+            placeholder="09/2026",
+            help="Mês/ano em que assumimos a escrita.",
+        )
         segmento = c2.text_input(
-            "Segmento", key="tr_segmento", placeholder="MiniMercado autônomo",
+            "Segmento",
+            key="tr_segmento",
+            placeholder="MiniMercado autônomo",
             help="O CNAE não serve: ele diz “comércio varejista de mercadorias "
-                 "em geral”, e o que interessa aqui é o negócio real.")
+            "em geral”, e o que interessa aqui é o negócio real.",
+        )
         faturamento = c3.text_input(
-            "Faturamento mensal médio", key="tr_faturamento",
-            placeholder="R$ 25.000,00")
+            "Faturamento mensal médio", key="tr_faturamento", placeholder="R$ 25.000,00"
+        )
 
         c1, c2, c3 = st.columns(3)
         tem_filiais = c1.selectbox("Tem filiais?", SIM_NAO, key="tr_filiais")
@@ -738,27 +845,31 @@ def _bloco_transicao(contratante) -> None:
         tem_func = c1.selectbox("Tem funcionários?", SIM_NAO, key="tr_tem_func")
         qtd_func = c2.text_input("Quantos?", key="tr_qtd_func")
         pro_labore = c3.selectbox("Terá pró-labore?", SIM_NAO, key="tr_prolabore")
-        adiantamento = c4.selectbox("Adiantamento salarial?", SIM_NAO,
-                                    key="tr_adiantamento")
+        adiantamento = c4.selectbox("Adiantamento salarial?", SIM_NAO, key="tr_adiantamento")
 
         st.markdown("**Departamento fiscal**")
         c1, c2, c3 = st.columns(3)
-        certificado = c1.selectbox("Certificado digital válido?", SIM_NAO,
-                                   key="tr_certificado")
-        validade_cert = c2.text_input("Validade do certificado",
-                                      key="tr_validade_cert")
+        certificado = c1.selectbox(
+            "Certificado digital válido?", SIM_NAO, key="tr_certificado"
+        )
+        validade_cert = c2.text_input("Validade do certificado", key="tr_validade_cert")
         nfce = c3.selectbox("Emite NFC-e / cupom?", SIM_NAO, key="tr_nfce")
 
         c1, c2, c3 = st.columns(3)
-        sistema_notas = c1.text_input("Sistema de notas", key="tr_sistema_notas",
-                                      placeholder="Bling, Tiny, emissor SEFAZ…")
-        tipo_empresa = c2.selectbox("Tipo de empresa",
-                                    ("", "Comércio", "Indústria", "Serviços"),
-                                    key="tr_tipo_empresa")
+        sistema_notas = c1.text_input(
+            "Sistema de notas",
+            key="tr_sistema_notas",
+            placeholder="Bling, Tiny, emissor SEFAZ…",
+        )
+        tipo_empresa = c2.selectbox(
+            "Tipo de empresa", ("", "Comércio", "Indústria", "Serviços"), key="tr_tipo_empresa"
+        )
         regime_trib = c3.text_input(
-            "Regime tributário", key="tr_regime_trib",
+            "Regime tributário",
+            key="tr_regime_trib",
             value=getattr(contratante, "regime", "") or "",
-            help="Vem da consulta; corrija se a Receita estiver desatualizada.")
+            help="Vem da consulta; corrija se a Receita estiver desatualizada.",
+        )
 
         st.markdown("**Contabilidade anterior**")
         st.caption(
@@ -776,27 +887,38 @@ def _bloco_transicao(contratante) -> None:
         # correção manda. O contrário faria a consulta sobrescrever a
         # conferência humana, que é o que o documento existe para registrar.
         iniciais = dict(_prefill(contratante)) if contratante is not None else {}
-        iniciais.update({
-            "competencia": competencia, "segmento": segmento,
-            "faturamento": faturamento, "tem_filiais": tem_filiais,
-            "cnpj_filiais": cnpj_filiais, "qtd_socios": qtd_socios,
-        })
+        iniciais.update(
+            {
+                "competencia": competencia,
+                "segmento": segmento,
+                "faturamento": faturamento,
+                "tem_filiais": tem_filiais,
+                "cnpj_filiais": cnpj_filiais,
+                "qtd_socios": qtd_socios,
+            }
+        )
         try:
             st.session_state[K_DOCX_TRANSICAO] = gerar_formulario_transicao(
                 dados_iniciais={k: v for k, v in iniciais.items() if v},
-                dados_pessoal={"tem_funcionarios": tem_func,
-                               "qtd_funcionarios": qtd_func,
-                               "pro_labore": pro_labore,
-                               "adiantamento": adiantamento},
-                dados_fiscal={"certificado": certificado,
-                              "validade_certificado": validade_cert,
-                              "sistema_notas": sistema_notas,
-                              "tipo_empresa": tipo_empresa,
-                              "regime_tributario": regime_trib,
-                              "nfce": nfce},
-                dados_sucessao={"contador_anterior": contador_ant,
-                                "email_anterior": email_ant,
-                                "telefone_anterior": tel_ant},
+                dados_pessoal={
+                    "tem_funcionarios": tem_func,
+                    "qtd_funcionarios": qtd_func,
+                    "pro_labore": pro_labore,
+                    "adiantamento": adiantamento,
+                },
+                dados_fiscal={
+                    "certificado": certificado,
+                    "validade_certificado": validade_cert,
+                    "sistema_notas": sistema_notas,
+                    "tipo_empresa": tipo_empresa,
+                    "regime_tributario": regime_trib,
+                    "nfce": nfce,
+                },
+                dados_sucessao={
+                    "contador_anterior": contador_ant,
+                    "email_anterior": email_ant,
+                    "telefone_anterior": tel_ant,
+                },
             )
         except Exception as exc:
             st.error(f"Falha ao gerar o formulário de transição: {exc}")
@@ -804,11 +926,12 @@ def _bloco_transicao(contratante) -> None:
     if docx := st.session_state.get(K_DOCX_TRANSICAO):
         nome = getattr(contratante, "razao_social", None) or "novo-cliente"
         st.download_button(
-            "⬇️ Baixar formulário de transição (DOCX)", data=docx,
+            "⬇️ Baixar formulário de transição (DOCX)",
+            data=docx,
             file_name=f"transicao_contabil_{_slug_arquivo(nome)}.docx",
-            mime=("application/vnd.openxmlformats-officedocument"
-                  ".wordprocessingml.document"),
-            type="primary", width="stretch",
+            mime=("application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+            type="primary",
+            width="stretch",
         )
 
 
@@ -839,16 +962,17 @@ def render() -> None:
         st.warning(
             "⚙️ **Cadastro da Mercabiliza incompleto.** Os documentos podem ser "
             "gerados para conferência, mas sairão marcados como minuta. "
-            "Complete em `src/config.py`: "
-            + ", ".join(contratada.pendencias) + ".",
+            "Complete em `src/config.py`: " + ", ".join(contratada.pendencias) + ".",
             icon="⚙️",
         )
 
     st.radio(
         "Modalidade",
-        MODALIDADES, key=K_TIPO, horizontal=True,
+        MODALIDADES,
+        key=K_TIPO,
+        horizontal=True,
         help="PJ: contrato regular. MEI: desenquadramento com formulário de "
-             "alteração. PF: abertura de empresa nova.",
+        "alteração. PF: abertura de empresa nova.",
     )
     st.caption(DESCRICAO_MODALIDADE[st.session_state[K_TIPO]])
 

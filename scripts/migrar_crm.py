@@ -23,9 +23,20 @@ from datetime import datetime
 from pathlib import Path
 
 COLUNAS_V2 = (
-    "cnpj", "razao_social", "nome_fantasia", "telefone", "email", "municipio",
-    "uf", "regime", "porte", "situacao", "cnae_principal", "anexo",
-    "capital_social", "consultado_em",
+    "cnpj",
+    "razao_social",
+    "nome_fantasia",
+    "telefone",
+    "email",
+    "municipio",
+    "uf",
+    "regime",
+    "porte",
+    "situacao",
+    "cnae_principal",
+    "anexo",
+    "capital_social",
+    "consultado_em",
 )
 
 ESQUEMA_V2 = """
@@ -67,8 +78,9 @@ def migrar(caminho: Path) -> int:
     conn = sqlite3.connect(caminho)
     conn.row_factory = sqlite3.Row
     try:
-        tabelas = {r[0] for r in conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'")}
+        tabelas = {
+            r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
         if "leads" not in tabelas:
             print("❌ Não há tabela 'leads' neste arquivo.")
             return 1
@@ -92,12 +104,19 @@ def migrar(caminho: Path) -> int:
             f"VALUES ({placeholders})",
             [
                 (
-                    linha["cnpj"], linha["razao_social"], linha["nome_fantasia"],
-                    linha["telefone"], linha["email"], linha["municipio"],
-                    linha["uf"], linha["regime"], linha["porte"],
-                    "NÃO CONSULTADA",   # situacao — não existia na v1
-                    "", "",             # cnae_principal, anexo
-                    0.0,                # capital_social
+                    linha["cnpj"],
+                    linha["razao_social"],
+                    linha["nome_fantasia"],
+                    linha["telefone"],
+                    linha["email"],
+                    linha["municipio"],
+                    linha["uf"],
+                    linha["regime"],
+                    linha["porte"],
+                    "NÃO CONSULTADA",  # situacao — não existia na v1
+                    "",
+                    "",  # cnae_principal, anexo
+                    0.0,  # capital_social
                     _converter_data(linha["data_consulta"]),
                 )
                 for linha in linhas
@@ -107,7 +126,8 @@ def migrar(caminho: Path) -> int:
         conn.execute("ALTER TABLE leads_v2 RENAME TO leads")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_leads_uf ON leads(uf)")
         conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_leads_consulta ON leads(consultado_em DESC)")
+            "CREATE INDEX IF NOT EXISTS idx_leads_consulta ON leads(consultado_em DESC)"
+        )
         conn.commit()
         print(f"✅ Migração concluída: {len(linhas)} lead(s) preservado(s).")
         print("   Mova o arquivo para data/leads_contabeis.db e rode o app.")

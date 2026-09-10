@@ -103,13 +103,13 @@ def _do_ambiente() -> dict[str, str]:
             dados = json.loads(bruto)
             if isinstance(dados, dict) and dados:
                 return {str(u).strip().lower(): str(s) for u, s in dados.items()}
-            logger.error("%s não é um objeto JSON com pares usuário/senha.",
-                         ENV_SENHAS)
+            logger.error("%s não é um objeto JSON com pares usuário/senha.", ENV_SENHAS)
         except json.JSONDecodeError:
             # Falha explícita: senha malformada não pode virar "gate aberto"
             # silencioso — seria uma brecha causada por um erro de digitação.
-            logger.error("%s não é JSON válido. Formato esperado: "
-                         '{"usuario":"senha"}', ENV_SENHAS)
+            logger.error(
+                '%s não é JSON válido. Formato esperado: {"usuario":"senha"}', ENV_SENHAS
+            )
 
     geral = os.getenv(ENV_SENHA_GERAL, "").strip()
     if geral:
@@ -121,8 +121,7 @@ def _dos_secrets() -> dict[str, str]:
     """Senhas via ``st.secrets`` (Streamlit Community Cloud e local)."""
     try:
         if "senhas" in st.secrets:
-            return {str(u).strip().lower(): str(s)
-                    for u, s in st.secrets["senhas"].items()}
+            return {str(u).strip().lower(): str(s) for u, s in st.secrets["senhas"].items()}
         if "senha_geral" in st.secrets:
             return {"equipe": str(st.secrets["senha_geral"])}
     except Exception:
@@ -164,11 +163,9 @@ def _formulario(configuradas: dict[str, str]) -> None:
     usuario_unico = list(configuradas) == ["equipe"]
 
     with st.form("form_login"):
-        usuario = ("equipe" if usuario_unico
-                   else st.text_input("Usuário").strip().lower())
+        usuario = "equipe" if usuario_unico else st.text_input("Usuário").strip().lower()
         senha = st.text_input("Senha", type="password")
-        enviado = st.form_submit_button("Entrar", type="primary",
-                                        width="stretch")
+        enviado = st.form_submit_button("Entrar", type="primary", width="stretch")
 
     if not enviado:
         return
@@ -187,10 +184,12 @@ def _formulario(configuradas: dict[str, str]) -> None:
     else:
         st.session_state[K_TENTATIVAS] = tentativas + 1
         restantes = MAX_TENTATIVAS - st.session_state[K_TENTATIVAS]
-        logger.warning("Login falhou para '%s' (%d tentativas)",
-                       usuario or "(vazio)", st.session_state[K_TENTATIVAS])
-        st.error(f"Usuário ou senha inválidos. "
-                 f"{max(0, restantes)} tentativa(s) restante(s).")
+        logger.warning(
+            "Login falhou para '%s' (%d tentativas)",
+            usuario or "(vazio)",
+            st.session_state[K_TENTATIVAS],
+        )
+        st.error(f"Usuário ou senha inválidos. {max(0, restantes)} tentativa(s) restante(s).")
 
 
 def exigir_login() -> bool:

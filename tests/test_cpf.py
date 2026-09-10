@@ -10,27 +10,33 @@ from src.core.cpf import (
 )
 
 
-@pytest.mark.parametrize("valor", [
-    "529.982.247-25",
-    "52998224725",
-    "111.444.777-35",
-    "123.456.789-09",
-    "  529.982.247-25  ",
-])
+@pytest.mark.parametrize(
+    "valor",
+    [
+        "529.982.247-25",
+        "52998224725",
+        "111.444.777-35",
+        "123.456.789-09",
+        "  529.982.247-25  ",
+    ],
+)
 def test_cpf_valido(valor):
     assert len(validar(valor)) == 11
 
 
-@pytest.mark.parametrize("valor", [
-    "529.982.247-26",   # DV errado
-    "5299822472",       # curto
-    "529982247255",     # longo
-    "11111111111",      # repetido
-    "00000000000",
-    "",
-    None,
-    "abc.def.ghi-jk",
-])
+@pytest.mark.parametrize(
+    "valor",
+    [
+        "529.982.247-26",  # DV errado
+        "5299822472",  # curto
+        "529982247255",  # longo
+        "11111111111",  # repetido
+        "00000000000",
+        "",
+        None,
+        "abc.def.ghi-jk",
+    ],
+)
 def test_cpf_invalido(valor):
     assert not eh_valido(valor)
     with pytest.raises(CPFInvalidoError):
@@ -50,7 +56,7 @@ def test_base_de_tamanho_errado():
 
 def test_formatacao():
     assert formatar("52998224725") == "529.982.247-25"
-    assert formatar("123") == "123"          # devolve como veio se inválido
+    assert formatar("123") == "123"  # devolve como veio se inválido
 
 
 def test_normalizar_remove_mascara():

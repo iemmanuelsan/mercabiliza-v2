@@ -89,23 +89,55 @@ class CampoDesconhecidoError(ValueError):
 # compare com o schema da API — sem isso os dois divergem no primeiro campo
 # novo, e a divergência só aparece no documento gerado.
 CAMPOS_POR_BLOCO: dict[str, frozenset[str]] = {
-    "iniciais": frozenset({
-        "modelo_entrada", "competencia", "razao_social", "cnpj", "nome_fantasia",
-        "inscricao_estadual", "segmento", "regime", "faturamento", "tem_filiais",
-        "cnpj_filiais", "qtd_socios", "responsavel", "cpf_responsavel",
-        "email1", "email2", "telefone1", "telefone2",
-    }),
-    "pessoal": frozenset({
-        "tem_funcionarios", "qtd_funcionarios", "pro_labore", "adiantamento",
-        "fechamento_folha", "sindicato",
-    }),
-    "fiscal": frozenset({
-        "certificado", "validade_certificado", "sistema_notas",
-        "tipo_empresa", "regime_tributario", "nfce",
-    }),
-    "sucessao": frozenset({
-        "contador_anterior", "email_anterior", "telefone_anterior",
-    }),
+    "iniciais": frozenset(
+        {
+            "modelo_entrada",
+            "competencia",
+            "razao_social",
+            "cnpj",
+            "nome_fantasia",
+            "inscricao_estadual",
+            "segmento",
+            "regime",
+            "faturamento",
+            "tem_filiais",
+            "cnpj_filiais",
+            "qtd_socios",
+            "responsavel",
+            "cpf_responsavel",
+            "email1",
+            "email2",
+            "telefone1",
+            "telefone2",
+        }
+    ),
+    "pessoal": frozenset(
+        {
+            "tem_funcionarios",
+            "qtd_funcionarios",
+            "pro_labore",
+            "adiantamento",
+            "fechamento_folha",
+            "sindicato",
+        }
+    ),
+    "fiscal": frozenset(
+        {
+            "certificado",
+            "validade_certificado",
+            "sistema_notas",
+            "tipo_empresa",
+            "regime_tributario",
+            "nfce",
+        }
+    ),
+    "sucessao": frozenset(
+        {
+            "contador_anterior",
+            "email_anterior",
+            "telefone_anterior",
+        }
+    ),
 }
 
 
@@ -125,6 +157,7 @@ def _validar(bloco: str, dados: dict) -> dict:
             f"Aceitos: {', '.join(sorted(conhecidas))}."
         )
     return dados
+
 
 # ⚠️ Redação ajustada quando a assinatura saiu do documento (revisão de
 # 09/09/2026). A versão anterior dizia "declaro... e AUTORIZO a Mercabiliza a
@@ -161,8 +194,8 @@ DOCUMENTOS_A_SOLICITAR: dict[str, tuple[str, ...]] = {
         "DRE dos últimos exercícios",
         "Livro Diário e Livro Razão",
         "ECD e ECF transmitidas (arquivos e recibos)",
-        "Composição dos saldos: caixa, bancos, clientes, fornecedores e "
-        "empréstimos na data da transferência",
+        ("Composição dos saldos: caixa, bancos, clientes, fornecedores e "
+        "empréstimos na data da transferência"),
         "Relação do ativo imobilizado com depreciação acumulada",
     ),
     "Fiscal": (
@@ -196,56 +229,84 @@ DOCUMENTOS_A_SOLICITAR: dict[str, tuple[str, ...]] = {
 # --------------------------------------------------------------------------- #
 def _secao_iniciais(dados: dict) -> Secao:
     """Bloco INFORMAÇÕES INICIAIS da planilha."""
-    return Secao("Informações iniciais", [
-        Campo("Modelo de entrada", dados.get("modelo_entrada", "Transição contábil")),
-        Campo("Competência de entrada", dados.get("competencia", ""), pendente=True,
-              dica="Mês/ano em que assumimos a escrita — ex.: 09/2026"),
-        Campo("Razão social", dados.get("razao_social", "")),
-        Campo("CNPJ", dados.get("cnpj", "")),
-        Campo("Nome fantasia", dados.get("nome_fantasia", "")),
-        Campo("Inscrição estadual", dados.get("inscricao_estadual", "")),
-        Campo("Segmento da empresa", dados.get("segmento", ""), pendente=True,
-              dica="Ex.: supermercado, minimercado autônomo, salão de beleza"),
-        Campo("Regime tributário atual", dados.get("regime", "")),
-        Campo("Faturamento mensal médio", dados.get("faturamento", ""), pendente=True),
-        Campo("Tem filiais?", dados.get("tem_filiais", ""), pendente=True),
-        Campo("CNPJ das filiais", dados.get("cnpj_filiais", ""),
-              dica="Uma por linha, se houver"),
-        Campo("Quantos sócios?", dados.get("qtd_socios", ""), pendente=True),
-        Campo("Responsável legal", dados.get("responsavel", "")),
-        Campo("CPF do responsável", dados.get("cpf_responsavel", "")),
-        Campo("E-mail 1", dados.get("email1", "")),
-        Campo("E-mail 2", dados.get("email2", "")),
-        Campo("Telefone 1", dados.get("telefone1", "")),
-        Campo("Telefone 2", dados.get("telefone2", "")),
-    ])
+    return Secao(
+        "Informações iniciais",
+        [
+            Campo("Modelo de entrada", dados.get("modelo_entrada", "Transição contábil")),
+            Campo(
+                "Competência de entrada",
+                dados.get("competencia", ""),
+                pendente=True,
+                dica="Mês/ano em que assumimos a escrita — ex.: 09/2026",
+            ),
+            Campo("Razão social", dados.get("razao_social", "")),
+            Campo("CNPJ", dados.get("cnpj", "")),
+            Campo("Nome fantasia", dados.get("nome_fantasia", "")),
+            Campo("Inscrição estadual", dados.get("inscricao_estadual", "")),
+            Campo(
+                "Segmento da empresa",
+                dados.get("segmento", ""),
+                pendente=True,
+                dica="Ex.: supermercado, minimercado autônomo, salão de beleza",
+            ),
+            Campo("Regime tributário atual", dados.get("regime", "")),
+            Campo("Faturamento mensal médio", dados.get("faturamento", ""), pendente=True),
+            Campo("Tem filiais?", dados.get("tem_filiais", ""), pendente=True),
+            Campo(
+                "CNPJ das filiais",
+                dados.get("cnpj_filiais", ""),
+                dica="Uma por linha, se houver",
+            ),
+            Campo("Quantos sócios?", dados.get("qtd_socios", ""), pendente=True),
+            Campo("Responsável legal", dados.get("responsavel", "")),
+            Campo("CPF do responsável", dados.get("cpf_responsavel", "")),
+            Campo("E-mail 1", dados.get("email1", "")),
+            Campo("E-mail 2", dados.get("email2", "")),
+            Campo("Telefone 1", dados.get("telefone1", "")),
+            Campo("Telefone 2", dados.get("telefone2", "")),
+        ],
+    )
 
 
 def _secao_pessoal(dados: dict) -> Secao:
-    return Secao("Departamento pessoal", [
-        Campo("Tem funcionários?", dados.get("tem_funcionarios", ""), pendente=True),
-        Campo("Se sim, quantos?", dados.get("qtd_funcionarios", "")),
-        Campo("Terá pró-labore?", dados.get("pro_labore", ""), pendente=True),
-        Campo("Terá adiantamento salarial?", dados.get("adiantamento", ""),
-              pendente=True),
-        Campo("Data de fechamento da folha", dados.get("fechamento_folha", ""),
-              dica="Dia do mês em que a folha é fechada"),
-        Campo("Sindicato / convenção coletiva", dados.get("sindicato", "")),
-    ])
+    return Secao(
+        "Departamento pessoal",
+        [
+            Campo("Tem funcionários?", dados.get("tem_funcionarios", ""), pendente=True),
+            Campo("Se sim, quantos?", dados.get("qtd_funcionarios", "")),
+            Campo("Terá pró-labore?", dados.get("pro_labore", ""), pendente=True),
+            Campo("Terá adiantamento salarial?", dados.get("adiantamento", ""), pendente=True),
+            Campo(
+                "Data de fechamento da folha",
+                dados.get("fechamento_folha", ""),
+                dica="Dia do mês em que a folha é fechada",
+            ),
+            Campo("Sindicato / convenção coletiva", dados.get("sindicato", "")),
+        ],
+    )
 
 
 def _secao_fiscal(dados: dict) -> Secao:
-    return Secao("Departamento fiscal", [
-        Campo("Possui certificado digital válido?", dados.get("certificado", ""),
-              pendente=True),
-        Campo("Validade do certificado", dados.get("validade_certificado", "")),
-        Campo("Sistema de notas utilizado", dados.get("sistema_notas", ""),
-              pendente=True),
-        Campo("Tipo de empresa", dados.get("tipo_empresa", ""), pendente=True,
-              dica="Comércio, indústria ou serviços"),
-        Campo("Regime tributário", dados.get("regime_tributario", ""), pendente=True),
-        Campo("Emite NFC-e / cupom fiscal?", dados.get("nfce", "")),
-    ])
+    return Secao(
+        "Departamento fiscal",
+        [
+            Campo(
+                "Possui certificado digital válido?",
+                dados.get("certificado", ""),
+                pendente=True,
+            ),
+            Campo("Validade do certificado", dados.get("validade_certificado", "")),
+            Campo("Sistema de notas utilizado", dados.get("sistema_notas", ""), pendente=True),
+            Campo(
+                "Tipo de empresa",
+                dados.get("tipo_empresa", ""),
+                pendente=True,
+                dica="Comércio, indústria ou serviços",
+            ),
+            Campo("Regime tributário", dados.get("regime_tributario", ""), pendente=True),
+            Campo("Emite NFC-e / cupom fiscal?", dados.get("nfce", "")),
+        ],
+    )
 
 
 def _bloco_sucessao(doc, dados: dict) -> None:
@@ -257,24 +318,36 @@ def _bloco_sucessao(doc, dados: dict) -> None:
     """
     titulo_secao(doc, "Sucessão contábil — contabilidade anterior")
 
-    tabela_campos(doc, [
-        Campo("Nome do escritório / contador", dados.get("contador_anterior", ""),
-              pendente=True),
-        Campo("E-mail", dados.get("email_anterior", ""), pendente=True),
-        Campo("Telefone", dados.get("telefone_anterior", ""), pendente=True),
-    ])
+    tabela_campos(
+        doc,
+        [
+            Campo(
+                "Nome do escritório / contador",
+                dados.get("contador_anterior", ""),
+                pendente=True,
+            ),
+            Campo("E-mail", dados.get("email_anterior", ""), pendente=True),
+            Campo("Telefone", dados.get("telefone_anterior", ""), pendente=True),
+        ],
+    )
 
     p = doc.add_paragraph()
     p.paragraph_format.space_after = Pt(4)
-    run(p, "O que faremos a seguir — você não precisa providenciar nada disto. ",
-        negrito=True, tamanho=8.5)
-    run(p,
+    run(
+        p,
+        "O que faremos a seguir — você não precisa providenciar nada disto. ",
+        negrito=True,
+        tamanho=8.5,
+    )
+    run(
+        p,
         "Com o contrato firmado e este formulário devolvido, nós mesmos "
         "entramos em contato com a contabilidade anterior e solicitamos os "
         "itens abaixo. Estamos listando para que você acompanhe o processo e "
         "saiba o que esperar — é comum o contador anterior procurar você para "
         "confirmar a autorização, que já consta do contrato assinado.",
-        tamanho=8.5)
+        tamanho=8.5,
+    )
 
     for grupo, itens in DOCUMENTOS_A_SOLICITAR.items():
         p = doc.add_paragraph()
@@ -289,12 +362,16 @@ def _bloco_sucessao(doc, dados: dict) -> None:
 
     p = doc.add_paragraph()
     p.paragraph_format.space_before = Pt(6)
-    run(p,
+    run(
+        p,
         "Prazo: pedimos os documentos dos últimos 5 exercícios, que é o "
         "período em que o Fisco ainda pode exigi-los. O levantamento costuma "
         "levar de 15 a 30 dias, e é a etapa que mais atrasa uma transição — "
         "por isso ela começa no primeiro dia.",
-        tamanho=8, italico=True, cor=COR_CINZA)
+        tamanho=8,
+        italico=True,
+        cor=COR_CINZA,
+    )
     doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
 

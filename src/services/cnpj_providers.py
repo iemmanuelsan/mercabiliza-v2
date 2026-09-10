@@ -71,13 +71,14 @@ def _dedup_telefones(telefones: list[str]) -> list[str]:
     for bruto in telefones:
         texto = _limpo(bruto)
         digitos = "".join(c for c in texto if c.isdigit())
-        if len(digitos) < 10:        # descarta fragmentos truncados
+        if len(digitos) < 10:  # descarta fragmentos truncados
             continue
         chave = digitos[-11:] if len(digitos) > 11 else digitos
         atual = melhores.get(chave)
         # Prefere a versão com máscara (mais legível para o cliente).
-        if atual is None or (not any(c in atual for c in "()-")
-                             and any(c in texto for c in "()-")):
+        if atual is None or (
+            not any(c in atual for c in "()-") and any(c in texto for c in "()-")
+        ):
             melhores[chave] = texto
     return sorted(melhores.values())
 
@@ -138,15 +139,19 @@ def _de_brasilapi(d: Canonico) -> Canonico:
         # Sem juntar os dois, o endereço saía "ANCHIETA, 204" em vez de
         # "RUA ANCHIETA, 204" — aceitável num dossiê, inaceitável num contrato.
         "logradouro": _com_tipo_logradouro(
-            d.get("descricao_tipo_de_logradouro"), d.get("logradouro")),
+            d.get("descricao_tipo_de_logradouro"), d.get("logradouro")
+        ),
         "numero": _limpo(d.get("numero")),
         "bairro": _limpo(d.get("bairro")),
         "municipio": _limpo(d.get("municipio")),
         "uf": _limpo(d.get("uf")),
         "cep": _limpo(d.get("cep")),
         "socios": [
-            (_limpo(s.get("nome_socio")), _limpo(s.get("qualificacao_socio")),
-             _limpo(s.get("faixa_etaria")) or "N/A")
+            (
+                _limpo(s.get("nome_socio")),
+                _limpo(s.get("qualificacao_socio")),
+                _limpo(s.get("faixa_etaria")) or "N/A",
+            )
             for s in d.get("qsa") or []
         ],
         "inscricoes_estaduais": [],
@@ -196,8 +201,11 @@ def _de_cnpjws(d: Canonico) -> Canonico:
         "uf": _limpo((estab.get("estado") or {}).get("sigla")),
         "cep": _limpo(estab.get("cep")),
         "socios": [
-            (_limpo(s.get("nome")),
-             _limpo((s.get("qualificacao_socio") or {}).get("descricao")), "N/A")
+            (
+                _limpo(s.get("nome")),
+                _limpo((s.get("qualificacao_socio") or {}).get("descricao")),
+                "N/A",
+            )
             for s in d.get("socios") or []
         ],
         "inscricoes_estaduais": ies,
@@ -235,8 +243,7 @@ def _de_receitaws(d: Canonico) -> Canonico:
         "uf": _limpo(d.get("uf")),
         "cep": _limpo(d.get("cep")),
         "socios": [
-            (_limpo(s.get("nome")), _limpo(s.get("qual")), "N/A")
-            for s in d.get("qsa") or []
+            (_limpo(s.get("nome")), _limpo(s.get("qual")), "N/A") for s in d.get("qsa") or []
         ],
         "inscricoes_estaduais": [],
         "inscricao_municipal": "",
@@ -286,8 +293,7 @@ def _primeiro_preenchido(fontes: list[Canonico], chave: str, padrao: Any = "") -
 
 def consolidar(cnpj: str, fontes: list[Canonico], rbt12: float = 0.0) -> Empresa:
     emails = sorted({e for f in fontes for e in f.get("emails", []) if e})
-    telefones = _dedup_telefones(
-        [t for f in fontes for t in f.get("telefones", []) if t])
+    telefones = _dedup_telefones([t for f in fontes for t in f.get("telefones", []) if t])
 
     municipio = _primeiro_preenchido(fontes, "municipio")
     uf = _primeiro_preenchido(fontes, "uf")
@@ -297,28 +303,36 @@ def consolidar(cnpj: str, fontes: list[Canonico], rbt12: float = 0.0) -> Empresa
         logradouro=_primeiro_preenchido(fontes, "logradouro"),
         numero=_primeiro_preenchido(fontes, "numero"),
         bairro=_primeiro_preenchido(fontes, "bairro"),
-        municipio=municipio, uf=uf,
+        municipio=municipio,
+        uf=uf,
         cep=_primeiro_preenchido(fontes, "cep"),
-        cod_ibge=cod_ibge, regiao=regiao,
+        cod_ibge=cod_ibge,
+        regiao=regiao,
     )
 
     cnae_cod = _primeiro_preenchido(fontes, "cnae_codigo")
     cnae_desc = _primeiro_preenchido(fontes, "cnae_descricao")
-    principal = AtividadeCNAE(
-        codigo=cnae_cod or "N/A",
-        descricao=cnae_desc or "Não informado",
-        diagnostico=classificar_cnae(cnae_cod, rbt12),
-    ) if (cnae_cod or cnae_desc) else None
+    principal = (
+        AtividadeCNAE(
+            codigo=cnae_cod or "N/A",
+            descricao=cnae_desc or "Não informado",
+            diagnostico=classificar_cnae(cnae_cod, rbt12),
+        )
+        if (cnae_cod or cnae_desc)
+        else None
+    )
 
     secundarias_brutas = _primeiro_preenchido(fontes, "cnaes_secundarios", [])
     secundarias = tuple(
         AtividadeCNAE(codigo=cod, descricao=desc, diagnostico=classificar_cnae(cod, rbt12))
-        for cod, desc in secundarias_brutas if cod
+        for cod, desc in secundarias_brutas
+        if cod
     )
 
     socios = tuple(
         Socio(nome=nome, qualificacao=qual or "Não informada", faixa_etaria=faixa)
-        for nome, qual, faixa in _primeiro_preenchido(fontes, "socios", []) if nome
+        for nome, qual, faixa in _primeiro_preenchido(fontes, "socios", [])
+        if nome
     )
 
     return Empresa(
@@ -331,7 +345,8 @@ def consolidar(cnpj: str, fontes: list[Canonico], rbt12: float = 0.0) -> Empresa
         natureza_juridica=_primeiro_preenchido(fontes, "natureza_juridica", "Não informada"),
         porte=_primeiro_preenchido(fontes, "porte", "Não informado"),
         capital_social=_float(_primeiro_preenchido(fontes, "capital_social", 0.0)),
-        emails=tuple(emails), telefones=tuple(telefones),
+        emails=tuple(emails),
+        telefones=tuple(telefones),
         optante_simples=_consolidar(fontes, "optante_simples"),
         optante_mei=_consolidar(fontes, "optante_mei"),
         endereco=endereco,
@@ -343,7 +358,8 @@ def consolidar(cnpj: str, fontes: list[Canonico], rbt12: float = 0.0) -> Empresa
         atividades_secundarias=secundarias,
         inscricoes_estaduais=tuple(_primeiro_preenchido(fontes, "inscricoes_estaduais", [])),
         inscricao_municipal=_primeiro_preenchido(
-            fontes, "inscricao_municipal", "Não identificada em busca pública"),
+            fontes, "inscricao_municipal", "Não identificada em busca pública"
+        ),
         socios=socios,
         fontes=tuple(f["fonte"] for f in fontes),
     )
@@ -359,6 +375,7 @@ def consultar_cnpj(cnpj: str, rbt12: float = 0.0) -> Empresa | None:
     resultados: dict[str, Canonico] = {}
 
     with criar_sessao() as sessao:
+
         def _buscar(item):
             nome, template, adapter = item
             bruto = get_json(sessao, template.format(cnpj=cnpj), rotulo=nome)

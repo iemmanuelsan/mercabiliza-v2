@@ -16,8 +16,14 @@ from src.core.pessoas import (
 )
 from src.core.tributario import classificar_cnae
 
-END = Endereco(logradouro="Rua Anchieta", numero="204", bairro="Vila Boaventura",
-               municipio="Jundiaí", uf="SP", cep="13201804")
+END = Endereco(
+    logradouro="Rua Anchieta",
+    numero="204",
+    bairro="Vila Boaventura",
+    municipio="Jundiaí",
+    uf="SP",
+    cep="13201804",
+)
 
 
 # --------------------------------------------------------------------------- #
@@ -38,7 +44,8 @@ def test_complemento_entra_no_logradouro():
 
 def test_linha_juridica():
     assert END.linha_juridica == (
-        "Rua Anchieta, 204, Vila Boaventura, Jundiaí/SP, CEP 13201-804")
+        "Rua Anchieta, 204, Vila Boaventura, Jundiaí/SP, CEP 13201-804"
+    )
 
 
 def test_endereco_vazio_nao_esta_preenchido():
@@ -50,9 +57,15 @@ def test_endereco_vazio_nao_esta_preenchido():
 # Concordância de gênero                                                       #
 # --------------------------------------------------------------------------- #
 def test_pf_masculino():
-    pf = ContratantePF(nome="João Souza", cpf="11144477735", rg="1",
-                       orgao_emissor="SSP/SP", estado_civil="solteiro",
-                       profissao="comerciante", endereco=END)
+    pf = ContratantePF(
+        nome="João Souza",
+        cpf="11144477735",
+        rg="1",
+        orgao_emissor="SSP/SP",
+        estado_civil="solteiro",
+        profissao="comerciante",
+        endereco=END,
+    )
     texto = pf.qualificacao_contratual
     assert "portador da" in texto
     assert "inscrito no CPF" in texto
@@ -61,10 +74,17 @@ def test_pf_masculino():
 
 
 def test_pf_feminino():
-    pf = ContratantePF(nome="Maria Silva", cpf="52998224725", rg="1",
-                       orgao_emissor="SSP/SP", estado_civil="casada",
-                       nacionalidade="brasileira", profissao="comerciante",
-                       endereco=END, genero_feminino=True)
+    pf = ContratantePF(
+        nome="Maria Silva",
+        cpf="52998224725",
+        rg="1",
+        orgao_emissor="SSP/SP",
+        estado_civil="casada",
+        nacionalidade="brasileira",
+        profissao="comerciante",
+        endereco=END,
+        genero_feminino=True,
+    )
     texto = pf.qualificacao_contratual
     assert "portadora da" in texto
     assert "inscrita no CPF" in texto
@@ -86,22 +106,31 @@ def test_pf_vazia_lista_pendencias():
 
 
 def test_pf_completa_sem_pendencias():
-    pf = ContratantePF(nome="João", cpf="11144477735", estado_civil="solteiro",
-                       profissao="comerciante", endereco=END)
+    pf = ContratantePF(
+        nome="João",
+        cpf="11144477735",
+        estado_civil="solteiro",
+        profissao="comerciante",
+        endereco=END,
+    )
     assert pf.pendencias == ()
 
 
 def test_pj_exige_representante():
-    pj = ContratantePJ(razao_social="X Ltda", cnpj="11222333000181",
-                       endereco=END, email="a@b.com")
+    pj = ContratantePJ(
+        razao_social="X Ltda", cnpj="11222333000181", endereco=END, email="a@b.com"
+    )
     assert any("representante" in p for p in pj.pendencias)
 
 
 def test_pj_completa_sem_pendencias():
-    pj = ContratantePJ(razao_social="X Ltda", cnpj="11222333000181",
-                       endereco=END, email="a@b.com",
-                       representante=RepresentanteLegal(nome="Ana",
-                                                        cpf="52998224725"))
+    pj = ContratantePJ(
+        razao_social="X Ltda",
+        cnpj="11222333000181",
+        endereco=END,
+        email="a@b.com",
+        representante=RepresentanteLegal(nome="Ana", cpf="52998224725"),
+    )
     assert pj.pendencias == ()
 
 
@@ -110,11 +139,15 @@ def test_pj_completa_sem_pendencias():
 # --------------------------------------------------------------------------- #
 def test_pj_qualificacao_traz_cnpj_formatado_e_representante():
     pj = ContratantePJ(
-        razao_social="Mercadinho São João Ltda", cnpj="11222333000181",
+        razao_social="Mercadinho São João Ltda",
+        cnpj="11222333000181",
         endereco=END,
-        representante=RepresentanteLegal(nome="Ana Costa", cpf="52998224725",
-                                         qualificacao="sócia administradora",
-                                         genero_feminino=True),
+        representante=RepresentanteLegal(
+            nome="Ana Costa",
+            cpf="52998224725",
+            qualificacao="sócia administradora",
+            genero_feminino=True,
+        ),
     )
     texto = pj.qualificacao_contratual
     assert "MERCADINHO SÃO JOÃO LTDA" in texto
@@ -135,19 +168,25 @@ def test_representante_sem_cpf_deixa_linha_para_preencher():
 # --------------------------------------------------------------------------- #
 def _empresa() -> Empresa:
     return Empresa(
-        cnpj="11222333000181", razao_social="Mercadinho São João Ltda",
-        nome_fantasia="Mercadinho", endereco=END,
+        cnpj="11222333000181",
+        razao_social="Mercadinho São João Ltda",
+        nome_fantasia="Mercadinho",
+        endereco=END,
         emails=("financeiro@saojoao.com.br",),
         telefones=("(19) 3333-4444", "(19) 99999-8888"),
         # `optante_mei=False` explícito: a empresa é comprovadamente NÃO-MEI.
         # Antes o padrão do campo era `False` e bastava omitir; agora o padrão
         # é `None` (ninguém informou), e omitir aqui significaria outra coisa.
-        optante_simples=True, optante_mei=False,
+        optante_simples=True,
+        optante_mei=False,
         situacao=SituacaoCadastral("ATIVA"),
-        atividade_principal=AtividadeCNAE("4712100", "Minimercados",
-                                          classificar_cnae("4712100")),
-        socios=(Socio("MARIA DA SILVA", "Sócio-Administrador"),
-                Socio("JOAO DA SILVA", "Sócio")),
+        atividade_principal=AtividadeCNAE(
+            "4712100", "Minimercados", classificar_cnae("4712100")
+        ),
+        socios=(
+            Socio("MARIA DA SILVA", "Sócio-Administrador"),
+            Socio("JOAO DA SILVA", "Sócio"),
+        ),
         inscricoes_estaduais=("123456789 (SP) - [Ativa]",),
         data_abertura="2019-03-14",
     )
@@ -220,12 +259,20 @@ def test_contratada_sem_crc_deixa_linha_no_contrato():
 def _pj() -> ContratantePJ:
     """PJ com todos os campos identificadores preenchidos."""
     return ContratantePJ(
-        razao_social="Mercadinho São João Ltda", cnpj="11222333000181",
-        natureza_juridica="Sociedade Empresária Limitada", endereco=END,
+        razao_social="Mercadinho São João Ltda",
+        cnpj="11222333000181",
+        natureza_juridica="Sociedade Empresária Limitada",
+        endereco=END,
         representante=RepresentanteLegal(
-            nome="Ana Costa", cpf="52998224725", rg="11.222.333",
-            orgao_emissor="SSP/SP", estado_civil="casado", profissao="contador",
-            qualificacao="sócio administrador", genero_feminino=True),
+            nome="Ana Costa",
+            cpf="52998224725",
+            rg="11.222.333",
+            orgao_emissor="SSP/SP",
+            estado_civil="casado",
+            profissao="contador",
+            qualificacao="sócio administrador",
+            genero_feminino=True,
+        ),
     )
 
 
@@ -242,26 +289,40 @@ def test_dados_identificadores_saem_em_negrito():
 def test_prosa_juridica_fica_sem_negrito():
     """Só o dado é destacado; o texto que liga os dados fica normal."""
     texto = _pj().qualificacao_contratual
-    for termo in ("pessoa jurídica de direito privado", "inscrita no CNPJ sob o nº",
-                  "com sede na", "doravante denominada simplesmente CONTRATANTE"):
+    for termo in (
+        "pessoa jurídica de direito privado",
+        "inscrita no CNPJ sob o nº",
+        "com sede na",
+        "doravante denominada simplesmente CONTRATANTE",
+    ):
         assert f"**{termo}**" not in texto
         assert termo in texto
 
 
 def test_documentos_do_representante_em_negrito():
     texto = _pj().qualificacao_contratual
-    assert "**529.982.247-25**" in texto        # CPF
-    assert "**11.222.333**" in texto            # RG
+    assert "**529.982.247-25**" in texto  # CPF
+    assert "**11.222.333**" in texto  # RG
 
 
 def test_pf_destaca_nome_cpf_e_endereco():
     from src.core.pessoas import ContratantePF
+
     pf = ContratantePF(
-        nome="Vinicius Almeida", cpf="11144477735", rg="98.765.432",
-        orgao_emissor="SSP/RJ", estado_civil="solteiro", profissao="comerciante",
-        endereco=Endereco(logradouro="Rua das Flores", numero="45",
-                          bairro="Centro", municipio="Macaé", uf="RJ",
-                          cep="27910000"),
+        nome="Vinicius Almeida",
+        cpf="11144477735",
+        rg="98.765.432",
+        orgao_emissor="SSP/RJ",
+        estado_civil="solteiro",
+        profissao="comerciante",
+        endereco=Endereco(
+            logradouro="Rua das Flores",
+            numero="45",
+            bairro="Centro",
+            municipio="Macaé",
+            uf="RJ",
+            cep="27910000",
+        ),
     )
     texto = pf.qualificacao_contratual
     assert "**VINICIUS ALMEIDA**" in texto
@@ -275,6 +336,7 @@ def test_pf_destaca_nome_cpf_e_endereco():
 def test_campo_vazio_nao_gera_marcador_solto():
     """``n("")`` não pode devolver ``****``, que apareceria como asteriscos."""
     from src.core.pessoas import n
+
     assert n("") == ""
     assert n(None) == ""
     assert n("  ") == ""
@@ -318,8 +380,9 @@ def test_negrito_sobrevive_a_geracao_do_pdf():
 
     pdfplumber = pytest.importorskip("pdfplumber")
 
-    pdf = gerar_contrato(_pj(), contratada_padrao(),
-                         ParametrosContrato(valor_mensal=350.0, foro="Campinas/SP"))
+    pdf = gerar_contrato(
+        _pj(), contratada_padrao(), ParametrosContrato(valor_mensal=350.0, foro="Campinas/SP")
+    )
     assert pdf.startswith(b"%PDF")
 
     with pdfplumber.open(io.BytesIO(pdf)) as doc:
@@ -329,8 +392,9 @@ def test_negrito_sobrevive_a_geracao_do_pdf():
 
     assert "**" not in texto, "marcador markdown vazou para o texto do PDF"
     assert "MERCADINHO SÃO JOÃO LTDA" in texto
-    assert any("bold" in f.lower() for f in fontes), \
+    assert any("bold" in f.lower() for f in fontes), (
         "nenhuma fonte em negrito foi usada na primeira página"
+    )
 
 
 def test_razao_social_e_cnpj_saem_em_fonte_negrito_no_pdf():
@@ -344,8 +408,9 @@ def test_razao_social_e_cnpj_saem_em_fonte_negrito_no_pdf():
 
     pdfplumber = pytest.importorskip("pdfplumber")
 
-    pdf = gerar_contrato(_pj(), contratada_padrao(),
-                         ParametrosContrato(valor_mensal=350.0, foro="Campinas/SP"))
+    pdf = gerar_contrato(
+        _pj(), contratada_padrao(), ParametrosContrato(valor_mensal=350.0, foro="Campinas/SP")
+    )
     with pdfplumber.open(io.BytesIO(pdf)) as doc:
         pagina = doc.pages[0]
         fonte_razao = _fonte_de(pagina, "MERCADINHO")
@@ -354,8 +419,9 @@ def test_razao_social_e_cnpj_saem_em_fonte_negrito_no_pdf():
 
     assert "bold" in fonte_razao.lower(), f"razão social em {fonte_razao}"
     assert "bold" in fonte_cnpj.lower(), f"CNPJ em {fonte_cnpj}"
-    assert "bold" not in fonte_prosa.lower(), \
+    assert "bold" not in fonte_prosa.lower(), (
         f"prosa jurídica não deveria estar em negrito ({fonte_prosa})"
+    )
 
 
 # =========================================================================== #
@@ -365,34 +431,41 @@ def test_razao_social_e_cnpj_saem_em_fonte_negrito_no_pdf():
 # preencheu o cadastro. Um caso real, encontrado num contrato já emitido:
 #     "CASA CASA CASA CASA ;CASA TERREO ;CASA TERREO"
 # que saía assim mesmo no PDF, com o ";" colado na palavra seguinte.
-@pytest.mark.parametrize("bruto,esperado", [
-    # O caso que motivou a correção
-    ("CASA CASA CASA CASA ;CASA TERREO ;CASA TERREO", "CASA TERREO"),
-    # Separador colado — a origem do "palavra ;palavra"
-    ("FUNDOS ;FUNDOS", "FUNDOS"),
-    ("LOJA;SOBRELOJA", "LOJA, SOBRELOJA"),
-    # Repetição consecutiva
-    ("LOJA LOJA 3", "LOJA 3"),
-    ("CASA CASA", "CASA"),
-    # Trecho contido em outro
-    ("CASA;CASA TERREO;TERREO", "CASA TERREO"),
-    # Vazio
-    ("", ""),
-    ("   ", ""),
-    (";;", ""),
-])
+@pytest.mark.parametrize(
+    "bruto,esperado",
+    [
+        # O caso que motivou a correção
+        ("CASA CASA CASA CASA ;CASA TERREO ;CASA TERREO", "CASA TERREO"),
+        # Separador colado — a origem do "palavra ;palavra"
+        ("FUNDOS ;FUNDOS", "FUNDOS"),
+        ("LOJA;SOBRELOJA", "LOJA, SOBRELOJA"),
+        # Repetição consecutiva
+        ("LOJA LOJA 3", "LOJA 3"),
+        ("CASA CASA", "CASA"),
+        # Trecho contido em outro
+        ("CASA;CASA TERREO;TERREO", "CASA TERREO"),
+        # Vazio
+        ("", ""),
+        ("   ", ""),
+        (";;", ""),
+    ],
+)
 def test_complemento_limpo(bruto, esperado):
     from src.core.models import Endereco
+
     assert Endereco(complemento=bruto).complemento_limpo == esperado
 
 
-@pytest.mark.parametrize("intacto", [
-    "SALA 102",
-    "BLOCO A APTO 12",
-    "ANDAR 3 SALA 5",
-    "QUADRA 2 LOTE 7",
-    "GALPAO",
-])
+@pytest.mark.parametrize(
+    "intacto",
+    [
+        "SALA 102",
+        "BLOCO A APTO 12",
+        "ANDAR 3 SALA 5",
+        "QUADRA 2 LOTE 7",
+        "GALPAO",
+    ],
+)
 def test_complemento_legitimo_nao_e_alterado(intacto):
     """A limpeza não pode comer complemento de verdade.
 
@@ -400,6 +473,7 @@ def test_complemento_legitimo_nao_e_alterado(intacto):
     incompleto no contrato pode inviabilizar a entrega de citação.
     """
     from src.core.models import Endereco
+
     assert Endereco(complemento=intacto).complemento_limpo == intacto
 
 
@@ -409,6 +483,7 @@ def test_numeros_parecidos_nao_se_engolem():
     Por prefixo, "SALA 1" seria engolido por "SALA 10" — endereços diferentes.
     """
     from src.core.models import Endereco
+
     assert Endereco(complemento="SALA 1;SALA 10").complemento_limpo == "SALA 1, SALA 10"
 
 
@@ -416,10 +491,15 @@ def test_complemento_sujo_nao_chega_ao_contrato():
     """Fecha o ciclo: da entrada suja até a linha que sai no PDF."""
     from src.core.models import Endereco
 
-    e = Endereco(logradouro="RUA MARCOS MARCONDES", numero="95",
-                 complemento="CASA CASA CASA CASA ;CASA TERREO ;CASA TERREO",
-                 bairro="JARDIM AUDIR", municipio="Barueri", uf="SP",
-                 cep="06433050")
+    e = Endereco(
+        logradouro="RUA MARCOS MARCONDES",
+        numero="95",
+        complemento="CASA CASA CASA CASA ;CASA TERREO ;CASA TERREO",
+        bairro="JARDIM AUDIR",
+        municipio="Barueri",
+        uf="SP",
+        cep="06433050",
+    )
     linha = e.linha_juridica_negrito
     assert " ;" not in linha
     assert "CASA CASA" not in linha
@@ -431,8 +511,9 @@ def test_complemento_sujo_nao_chega_ao_contrato():
 # Regime tributário — ausência de informação não é negativa                    #
 # --------------------------------------------------------------------------- #
 def test_mei_confirmado_e_mei():
-    e = Empresa(cnpj="11222333000181", razao_social="X",
-                optante_simples=True, optante_mei=True)
+    e = Empresa(
+        cnpj="11222333000181", razao_social="X", optante_simples=True, optante_mei=True
+    )
     assert e.regime == "MEI"
     assert e.mei_confirmado
 
@@ -446,8 +527,9 @@ def test_simples_sim_e_mei_desconhecido_nao_vira_simples_puro():
     chute a resposta que erra por ordem de grandeza: 4% da receita contra DAS
     fixo de pouco mais de R$ 80 por mês.
     """
-    e = Empresa(cnpj="11222333000181", razao_social="X",
-                optante_simples=True, optante_mei=None)
+    e = Empresa(
+        cnpj="11222333000181", razao_social="X", optante_simples=True, optante_mei=None
+    )
     assert e.regime == "Simples Nacional (confirmar se é MEI)"
     assert e.regime_incerto
     assert not e.mei_confirmado
@@ -463,7 +545,8 @@ def test_nada_informado_nao_vira_lucro_presumido():
 
 
 def test_negativa_afirmativa_continua_valendo():
-    e = Empresa(cnpj="11222333000181", razao_social="X",
-                optante_simples=False, optante_mei=False)
+    e = Empresa(
+        cnpj="11222333000181", razao_social="X", optante_simples=False, optante_mei=False
+    )
     assert e.regime == "Lucro Presumido / Real"
     assert not e.regime_incerto

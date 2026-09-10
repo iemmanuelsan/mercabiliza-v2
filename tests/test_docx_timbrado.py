@@ -16,22 +16,43 @@ from src.exporters.docx_abertura import (
 )
 from src.exporters.timbrado import TIMBRADO_PADRAO, Timbrado, timbrado_padrao
 
-END = Endereco(logradouro="RUA TENENTE RUI", numero="120", bairro="Centro",
-               municipio="Macaé", uf="RJ", cep="27910000")
-
-MEI = ContratantePJ(
-    razao_social="ANDERSON ANDRADE MONTEIRO", cnpj="63435477000110",
-    nome_fantasia="EasyMarket Molinere", regime="MEI",
-    natureza_juridica="Empresário (Individual)", data_abertura="30/10/2025",
-    cnae_principal="4723700 - Comércio varejista de bebidas", endereco=END,
-    telefone="(22) 99999-1234", email="contato@easymarket.com.br",
-    representante=RepresentanteLegal(
-        nome="Anderson Andrade Monteiro", cpf="52998224725", rg="12.345.678",
-        orgao_emissor="DETRAN/RJ", estado_civil="casado", profissao="empresário"),
+END = Endereco(
+    logradouro="RUA TENENTE RUI",
+    numero="120",
+    bairro="Centro",
+    municipio="Macaé",
+    uf="RJ",
+    cep="27910000",
 )
 
-PF = ContratantePF(nome="Vinicius Almeida", cpf="11144477735", endereco=END,
-                   telefone="(22) 98888-7777", email="v@easymarket.com.br")
+MEI = ContratantePJ(
+    razao_social="ANDERSON ANDRADE MONTEIRO",
+    cnpj="63435477000110",
+    nome_fantasia="EasyMarket Molinere",
+    regime="MEI",
+    natureza_juridica="Empresário (Individual)",
+    data_abertura="30/10/2025",
+    cnae_principal="4723700 - Comércio varejista de bebidas",
+    endereco=END,
+    telefone="(22) 99999-1234",
+    email="contato@easymarket.com.br",
+    representante=RepresentanteLegal(
+        nome="Anderson Andrade Monteiro",
+        cpf="52998224725",
+        rg="12.345.678",
+        orgao_emissor="DETRAN/RJ",
+        estado_civil="casado",
+        profissao="empresário",
+    ),
+)
+
+PF = ContratantePF(
+    nome="Vinicius Almeida",
+    cpf="11144477735",
+    endereco=END,
+    telefone="(22) 98888-7777",
+    email="v@easymarket.com.br",
+)
 
 
 def _texto(docx_bytes: bytes) -> str:
@@ -64,19 +85,22 @@ def _negritos(docx_bytes: bytes) -> set[str]:
 def test_docx_gera_arquivo_valido(perfil):
     empresa, endereco, socios = dados_de_contratante(MEI)
     dados = gerar_formulario_abertura(perfil, empresa, endereco, socios)
-    assert dados[:2] == b"PK"          # container zip do OOXML
+    assert dados[:2] == b"PK"  # container zip do OOXML
     assert len(dados) > 10_000
-    Document(io.BytesIO(dados))        # abre sem erro
+    Document(io.BytesIO(dados))  # abre sem erro
 
 
 def test_titulo_muda_por_perfil():
     empresa, endereco, socios = dados_de_contratante(MEI)
     assert "DESENQUADRAMENTO" in _texto(
-        gerar_formulario_abertura("MEI", empresa, endereco, socios))
+        gerar_formulario_abertura("MEI", empresa, endereco, socios)
+    )
     assert "ABERTURA DE EMPRESA" in _texto(
-        gerar_formulario_abertura("PF", empresa, endereco, socios))
+        gerar_formulario_abertura("PF", empresa, endereco, socios)
+    )
     assert "ALTERAÇÃO CONTRATUAL" in _texto(
-        gerar_formulario_abertura("PJ", empresa, endereco, socios))
+        gerar_formulario_abertura("PJ", empresa, endereco, socios)
+    )
 
 
 def test_dados_conhecidos_saem_em_negrito():
@@ -94,15 +118,22 @@ def test_decisoes_do_cliente_saem_marcadas():
     texto = _texto(gerar_formulario_abertura("MEI", empresa, endereco, socios))
     assert MARCADOR_PENDENTE in texto
     # Estes são os campos que só o cliente decide.
-    for rotulo in ("2ª opção de Razão Social", "Capital Social",
-                   "Participação no capital", "Sócio administrador"):
+    for rotulo in (
+        "2ª opção de Razão Social",
+        "Capital Social",
+        "Participação no capital",
+        "Sócio administrador",
+    ):
         assert rotulo in texto
 
 
 def test_perfil_mei_tem_bloco_de_desenquadramento():
     empresa, endereco, socios = dados_de_contratante(MEI)
-    desenq = {"cnpj": "63.435.477/0001-10", "razao_atual": "ANDERSON",
-              "abertura": "30/10/2025"}
+    desenq = {
+        "cnpj": "63.435.477/0001-10",
+        "razao_atual": "ANDERSON",
+        "abertura": "30/10/2025",
+    }
     com = _texto(gerar_formulario_abertura("MEI", empresa, endereco, socios, desenq))
     sem = _texto(gerar_formulario_abertura("PF", empresa, endereco, socios))
     assert "DESENQUADRAMENTO DO MEI" in com
@@ -114,8 +145,7 @@ def test_sempre_imprime_blocos_de_socio_para_o_cliente_completar():
     """Mesmo conhecendo 1 sócio, sai espaço para o segundo — o cliente pode
     incluir alguém que a contabilidade ainda não conhece."""
     _, endereco, socios = dados_de_contratante(MEI)
-    texto = _texto(gerar_formulario_abertura("PF", {}, endereco, socios,
-                                             minimo_socios=2))
+    texto = _texto(gerar_formulario_abertura("PF", {}, endereco, socios, minimo_socios=2))
     assert "SÓCIO 01" in texto
     assert "SÓCIO 02" in texto
 
@@ -172,6 +202,7 @@ def test_imagem_inexistente_nao_quebra_o_pdf():
 
     quebrado = Timbrado(imagem=Path("/nao/existe/timbrado.png"))
     assert not quebrado.tem_imagem
-    pdf = gerar_contrato(MEI, contratada_padrao(),
-                         ParametrosContrato(valor_mensal=350.0, foro="Macaé/RJ"))
+    pdf = gerar_contrato(
+        MEI, contratada_padrao(), ParametrosContrato(valor_mensal=350.0, foro="Macaé/RJ")
+    )
     assert pdf.startswith(b"%PDF")

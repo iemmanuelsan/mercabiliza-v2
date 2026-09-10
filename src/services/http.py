@@ -38,10 +38,12 @@ def criar_sessao() -> requests.Session:
     )
     sessao.mount("https://", adaptador)
     sessao.mount("http://", adaptador)
-    sessao.headers.update({
-        "User-Agent": settings.http.user_agent,
-        "Accept": "application/json",
-    })
+    sessao.headers.update(
+        {
+            "User-Agent": settings.http.user_agent,
+            "Accept": "application/json",
+        }
+    )
     return sessao
 
 

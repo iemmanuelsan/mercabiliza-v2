@@ -50,9 +50,20 @@ CREATE INDEX IF NOT EXISTS idx_leads_consulta ON leads(consultado_em DESC);
 """
 
 _COLUNAS = (
-    "cnpj", "razao_social", "nome_fantasia", "telefone", "email", "municipio",
-    "uf", "regime", "porte", "situacao", "cnae_principal", "anexo",
-    "capital_social", "consultado_em",
+    "cnpj",
+    "razao_social",
+    "nome_fantasia",
+    "telefone",
+    "email",
+    "municipio",
+    "uf",
+    "regime",
+    "porte",
+    "situacao",
+    "cnae_principal",
+    "anexo",
+    "capital_social",
+    "consultado_em",
 )
 
 
@@ -99,11 +110,20 @@ class SQLiteLeadRepository:
     def salvar_varios(self, empresas: Iterable[Empresa]) -> int:
         linhas = [
             (
-                e.cnpj, e.razao_social, e.nome_fantasia, e.telefone_str, e.email_str,
-                e.endereco.municipio, e.endereco.uf, e.regime, e.porte,
-                e.situacao.situacao_receita, e.cnae_principal_str,
+                e.cnpj,
+                e.razao_social,
+                e.nome_fantasia,
+                e.telefone_str,
+                e.email_str,
+                e.endereco.municipio,
+                e.endereco.uf,
+                e.regime,
+                e.porte,
+                e.situacao.situacao_receita,
+                e.cnae_principal_str,
                 e.atividade_principal.diagnostico.anexo if e.atividade_principal else "",
-                e.capital_social, e.consultado_em.isoformat(),
+                e.capital_social,
+                e.consultado_em.isoformat(),
             )
             for e in empresas
         ]
@@ -111,8 +131,7 @@ class SQLiteLeadRepository:
             return 0
 
         placeholders = ", ".join("?" * len(_COLUNAS))
-        sql = (f"INSERT OR REPLACE INTO leads ({', '.join(_COLUNAS)}) "
-               f"VALUES ({placeholders})")
+        sql = f"INSERT OR REPLACE INTO leads ({', '.join(_COLUNAS)}) VALUES ({placeholders})"
         with self._lock, self._conexao() as conn:
             conn.executemany(sql, linhas)
         logger.info("Persistidos %d lead(s) no CRM.", len(linhas))
@@ -155,11 +174,11 @@ def criar_repositorio() -> LeadRepository:
     from ..config import DATABASE_URL
 
     if not DATABASE_URL:
-        logger.info("DATABASE_URL ausente — usando SQLite em %s",
-                    settings.db_path)
+        logger.info("DATABASE_URL ausente — usando SQLite em %s", settings.db_path)
         return SQLiteLeadRepository()
 
     from .repository_pg import PostgresLeadRepository
+
     logger.info("Usando Postgres (DATABASE_URL definida).")
     return PostgresLeadRepository(DATABASE_URL)
 
@@ -168,4 +187,5 @@ def backend_em_uso() -> str:
     """Rótulo para exibir na aba CRM — o usuário precisa saber se a base é
     persistente ou vai evaporar no próximo deploy."""
     from ..config import DATABASE_URL
+
     return "PostgreSQL (persistente)" if DATABASE_URL else "SQLite (efêmero em PaaS)"

@@ -52,11 +52,14 @@ def test_descontinuidade_conhecida_na_6a_faixa():
     assert aliquota_efetiva(3_600_001, ANEXO_I) == pytest.approx(0.085, abs=1e-5)
 
 
-@pytest.mark.parametrize("rbt12,esperado", [
-    (4_000_000, 0.0955),    # referência publicada
-    (4_800_000, 0.11125),   # teto efetivo do Anexo I
-    (3_000_000, 0.1139),
-])
+@pytest.mark.parametrize(
+    "rbt12,esperado",
+    [
+        (4_000_000, 0.0955),  # referência publicada
+        (4_800_000, 0.11125),  # teto efetivo do Anexo I
+        (3_000_000, 0.1139),
+    ],
+)
 def test_pontos_de_referencia_publicados(rbt12, esperado):
     assert aliquota_efetiva(rbt12, ANEXO_I) == pytest.approx(esperado, abs=1e-4)
 
@@ -142,7 +145,11 @@ def test_presumido_detalhado_soma_o_total():
 def test_presumido_tem_os_tributos_e_o_encargo_de_folha():
     r = comparar_regimes(35_000, 0)
     assert set(r.detalhamento_presumido) == {
-        "PIS", "COFINS", "IRPJ", "CSLL", "INSS patronal",
+        "PIS",
+        "COFINS",
+        "IRPJ",
+        "CSLL",
+        "INSS patronal",
     }
 
 
@@ -173,8 +180,7 @@ def test_com_folha_realista_o_simples_vence():
 def test_encargo_de_folha_e_27_8_por_cento():
     r = comparar_regimes(35_000, 55, folha_mensal=6_000)
     assert r.encargo_folha_anual == pytest.approx(6_000 * 12 * 0.278)
-    assert r.detalhamento_presumido["INSS patronal"] == pytest.approx(
-        r.encargo_folha_anual)
+    assert r.detalhamento_presumido["INSS patronal"] == pytest.approx(r.encargo_folha_anual)
 
 
 def test_existe_folha_de_virada():
@@ -195,10 +201,9 @@ def test_anexo_iv_soma_o_encargo_nos_dois_lados():
     favorecido no Simples.
     """
     from src.core.tributario import ANEXO_IV
-    sem = comparar_regimes(35_000, 0, ANEXO_IV, folha_mensal=0,
-                           cpp_fora_do_simples=True)
-    com = comparar_regimes(35_000, 0, ANEXO_IV, folha_mensal=6_000,
-                           cpp_fora_do_simples=True)
+
+    sem = comparar_regimes(35_000, 0, ANEXO_IV, folha_mensal=0, cpp_fora_do_simples=True)
+    com = comparar_regimes(35_000, 0, ANEXO_IV, folha_mensal=6_000, cpp_fora_do_simples=True)
     encargo = 6_000 * 12 * 0.278
     assert com.simples_otimizado - sem.simples_otimizado == pytest.approx(encargo)
     assert com.presumido - sem.presumido == pytest.approx(encargo)
@@ -213,8 +218,8 @@ def test_segregacao_nao_mexe_no_encargo_de_folha():
 
 def test_adicional_de_irpj_incide_acima_do_limite():
     """Presunção de 8% > R$ 240 mil/ano exige receita > R$ 3 mi."""
-    pequeno = comparar_regimes(100_000)     # R$ 1,2 mi/ano
-    grande = comparar_regimes(350_000)      # R$ 4,2 mi/ano
+    pequeno = comparar_regimes(100_000)  # R$ 1,2 mi/ano
+    grande = comparar_regimes(350_000)  # R$ 4,2 mi/ano
     assert grande.aliquota_presumido_efetiva > pequeno.aliquota_presumido_efetiva
 
 
@@ -239,7 +244,7 @@ def test_limite_proporcional_por_meses():
 
 
 def test_excesso_ate_20_pct_nao_retroage():
-    d = diagnosticar_mei(90_000, 12, 10.5)   # limite 81.000, excesso 11,1%
+    d = diagnosticar_mei(90_000, 12, 10.5)  # limite 81.000, excesso 11,1%
     assert d.excesso > 0 and not d.requer_retroativo and d.encargos_estimados == 0
 
 
@@ -277,17 +282,26 @@ class _Precos:
     pessoas_por_bloco_dp = 3
 
 
-@pytest.mark.parametrize("pessoas,blocos", [
-    (0, 0), (1, 1), (3, 1), (4, 2), (6, 2), (7, 3), (10, 4),
-])
+@pytest.mark.parametrize(
+    "pessoas,blocos",
+    [
+        (0, 0),
+        (1, 1),
+        (3, 1),
+        (4, 2),
+        (6, 2),
+        (7, 3),
+        (10, 4),
+    ],
+)
 def test_blocos_de_dp(pessoas, blocos):
     assert calcular_honorarios(1, pessoas, [], _Precos()).blocos_dp == blocos
 
 
 def test_mensalidade_completa():
     h = calcular_honorarios(3, 4, [("Abertura", 1600.0)], _Precos())
-    assert h.adicional_cnpjs == 100.0          # 2 filiais
-    assert h.adicional_dp == 100.0             # 2 blocos
+    assert h.adicional_cnpjs == 100.0  # 2 filiais
+    assert h.adicional_dp == 100.0  # 2 blocos
     assert h.mensal == 550.0
     assert h.total_pontual == 1600.0
 

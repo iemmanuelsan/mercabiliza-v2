@@ -22,8 +22,12 @@ def sem_acento(texto: object) -> str:
     if not texto:
         return ""
     normalizado = unicodedata.normalize("NFKD", str(texto))
-    return "".join(c for c in normalizado if not unicodedata.combining(c)) \
-        .encode("ascii", "ignore").decode("ascii").strip()
+    return (
+        "".join(c for c in normalizado if not unicodedata.combining(c))
+        .encode("ascii", "ignore")
+        .decode("ascii")
+        .strip()
+    )
 
 
 def texto_ou(valor: object, padrao: str = "Não informado") -> str:

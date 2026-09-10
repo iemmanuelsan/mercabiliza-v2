@@ -37,21 +37,70 @@ FORMAS_PAGAMENTO: tuple[str, ...] = (
 )
 
 MESES_PT = (
-    "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+    "janeiro",
+    "fevereiro",
+    "março",
+    "abril",
+    "maio",
+    "junho",
+    "julho",
+    "agosto",
+    "setembro",
+    "outubro",
+    "novembro",
+    "dezembro",
 )
 
 
 # --------------------------------------------------------------------------- #
 # Números por extenso                                                          #
 # --------------------------------------------------------------------------- #
-_UNIDADES = ("", "um", "dois", "três", "quatro", "cinco", "seis", "sete",
-             "oito", "nove", "dez", "onze", "doze", "treze", "quatorze",
-             "quinze", "dezesseis", "dezessete", "dezoito", "dezenove")
-_DEZENAS = ("", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta",
-            "setenta", "oitenta", "noventa")
-_CENTENAS = ("", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos",
-             "seiscentos", "setecentos", "oitocentos", "novecentos")
+_UNIDADES = (
+    "",
+    "um",
+    "dois",
+    "três",
+    "quatro",
+    "cinco",
+    "seis",
+    "sete",
+    "oito",
+    "nove",
+    "dez",
+    "onze",
+    "doze",
+    "treze",
+    "quatorze",
+    "quinze",
+    "dezesseis",
+    "dezessete",
+    "dezoito",
+    "dezenove",
+)
+_DEZENAS = (
+    "",
+    "",
+    "vinte",
+    "trinta",
+    "quarenta",
+    "cinquenta",
+    "sessenta",
+    "setenta",
+    "oitenta",
+    "noventa",
+)
+_CENTENAS = (
+    "",
+    "cento",
+    "duzentos",
+    "trezentos",
+    "quatrocentos",
+    "quinhentos",
+    "seiscentos",
+    "setecentos",
+    "oitocentos",
+    "novecentos",
+)
 
 
 def _ate_999(n: int) -> str:
@@ -97,7 +146,7 @@ def valor_extenso(valor: float) -> str:
     seis centavos'``."""
     reais = int(abs(valor))
     centavos = round((abs(valor) - reais) * 100)
-    if centavos == 100:          # arredondamento de 0,999...
+    if centavos == 100:  # arredondamento de 0,999...
         reais += 1
         centavos = 0
 
@@ -130,7 +179,7 @@ class ParametrosContrato:
     dia_vencimento: int = 10
     forma_pagamento: str = "boleto bancário"
     data_inicio: date = field(default_factory=date.today)
-    vigencia_meses: int = 12           # o contrato modelo usa 12 meses
+    vigencia_meses: int = 12  # o contrato modelo usa 12 meses
     indice_reajuste: str = "IPCA"
     prazo_rescisao_dias: int = 30
     multa_atraso_pct: float = 2.0
@@ -138,8 +187,8 @@ class ParametrosContrato:
     foro: str = ""
     cidade_assinatura: str = ""
     data_assinatura: date = field(default_factory=date.today)
-    incluir_dp: bool = True            # área trabalhista/previdenciária
-    incluir_monofasico: bool = True     # segregação de monofásicos
+    incluir_dp: bool = True  # área trabalhista/previdenciária
+    incluir_monofasico: bool = True  # segregação de monofásicos
     clausulas_particulares: tuple[str, ...] = ()
 
     # ------------------------------------------------------------------ #
@@ -164,17 +213,15 @@ class ParametrosContrato:
             "valor_mensal_fmt": moeda(self.valor_mensal),
             "honorarios_extenso": valor_extenso(self.valor_mensal),
             "valor_implantacao_fmt": (
-                f"{moeda(self.valor_implantacao)} "
-                f"({valor_extenso(self.valor_implantacao)})"
-                if self.valor_implantacao > 0 else ""
+                f"{moeda(self.valor_implantacao)} ({valor_extenso(self.valor_implantacao)})"
+                if self.valor_implantacao > 0
+                else ""
             ),
             "dia_vencimento": self.dia_vencimento,
             "forma_pagamento": self.forma_pagamento,
             "data_inicio_fmt": data_extenso(self.data_inicio),
             "vigencia_meses": self.vigencia_meses or 12,
-            "vigencia_meses_extenso": (
-                numero_extenso(self.vigencia_meses or 12)
-            ),
+            "vigencia_meses_extenso": (numero_extenso(self.vigencia_meses or 12)),
             "indice_reajuste": self.indice_reajuste,
             "prazo_rescisao_dias": self.prazo_rescisao_dias,
             "prazo_rescisao_extenso": numero_extenso(self.prazo_rescisao_dias),
@@ -199,11 +246,11 @@ class ParametrosContrato:
 def _ambiente() -> Environment:
     return Environment(
         loader=FileSystemLoader(str(TEMPLATES_DIR)),
-        undefined=StrictUndefined,   # falha alto em variável ausente
+        undefined=StrictUndefined,  # falha alto em variável ausente
         trim_blocks=True,
         lstrip_blocks=True,
         keep_trailing_newline=True,
-        autoescape=False,            # saída é texto puro, não HTML
+        autoescape=False,  # saída é texto puro, não HTML
     )
 
 

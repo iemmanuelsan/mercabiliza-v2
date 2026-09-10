@@ -141,18 +141,22 @@ def _bloco_declaracao(estilos, nome_titular: str, cidade: str = "") -> list:
     local = f"{cidade}, " if cidade else ""
     return [
         Spacer(1, 6 * mm),
-        KeepTogether([
-            _secao(estilos, "Declaração de veracidade"),
-            Paragraph(escapar(DECLARACAO), estilos["nota"]),
-            Spacer(1, 4 * mm),
-            Paragraph(escapar(f"{local}______ de _____________________ de ______."),
-                      estilos["corpo"]),
-            bloco_assinatura_dupla(
-                (nome_titular or "", "Titular / Representante legal"),
-                ("", "Mercabiliza — recebido por"),
-                estilos,
-            ),
-        ]),
+        KeepTogether(
+            [
+                _secao(estilos, "Declaração de veracidade"),
+                Paragraph(escapar(DECLARACAO), estilos["nota"]),
+                Spacer(1, 4 * mm),
+                Paragraph(
+                    escapar(f"{local}______ de _____________________ de ______."),
+                    estilos["corpo"],
+                ),
+                bloco_assinatura_dupla(
+                    (nome_titular or "", "Titular / Representante legal"),
+                    ("", "Mercabiliza — recebido por"),
+                    estilos,
+                ),
+            ]
+        ),
     ]
 
 
@@ -161,16 +165,19 @@ def _aviso_pendencias(estilos, pendencias: tuple[str, ...]) -> list:
     if not pendencias:
         return []
     texto = "CAMPOS PENDENTES: " + "; ".join(pendencias) + "."
-    tabela = Table([[Paragraph(escapar(texto), estilos["nota"])]],
-                   colWidths=[LARGURA_UTIL])
-    tabela.setStyle(TableStyle([
-        ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#DC3250")),
-        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FDF0F2")),
-        ("LEFTPADDING", (0, 0), (-1, -1), 6),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-        ("TOPPADDING", (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-    ]))
+    tabela = Table([[Paragraph(escapar(texto), estilos["nota"])]], colWidths=[LARGURA_UTIL])
+    tabela.setStyle(
+        TableStyle(
+            [
+                ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#DC3250")),
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FDF0F2")),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ]
+        )
+    )
     return [Spacer(1, 4 * mm), tabela]
 
 
@@ -187,14 +194,17 @@ def _linhas_condicoes(parametros) -> list[tuple[str, str]]:
         ("Honorário mensal", moeda(parametros.valor_mensal)),
     ]
     if parametros.valor_implantacao > 0:
-        linhas.append(("Taxa de implantação (única)",
-                       moeda(parametros.valor_implantacao)))
+        linhas.append(("Taxa de implantação (única)", moeda(parametros.valor_implantacao)))
     linhas += [
         ("Vencimento", f"dia {parametros.dia_vencimento} de cada mês"),
         ("Forma de pagamento", parametros.forma_pagamento),
         ("Início dos serviços", _data(parametros.data_inicio)),
-        ("Vigência", f"{parametros.vigencia_meses} meses"
-                     if parametros.vigencia_meses else "prazo indeterminado"),
+        (
+            "Vigência",
+            f"{parametros.vigencia_meses} meses"
+            if parametros.vigencia_meses
+            else "prazo indeterminado",
+        ),
         ("Reajuste anual", parametros.indice_reajuste),
     ]
     return linhas
@@ -212,17 +222,20 @@ def gerar_ficha_preenchida(
     comerciais — assim o cliente confirma cadastro e valores no mesmo
     documento, antes de o contrato ser emitido.
     """
+
     def fabrica() -> list:
         estilos = construir_estilos()
         eh_pj = isinstance(contratante, ContratantePJ)
 
         itens = _cabecalho(
-            estilos, "FICHA CADASTRAL",
+            estilos,
+            "FICHA CADASTRAL",
             f"{'Pessoa Jurídica' if eh_pj else 'Pessoa Física'} · "
             f"emitida em {data_extenso(date.today())}",
         )
-        itens.append(_secao(
-            estilos, "1. Identificação " + ("da empresa" if eh_pj else "do cliente")))
+        itens.append(
+            _secao(estilos, "1. Identificação " + ("da empresa" if eh_pj else "do cliente"))
+        )
         itens.append(tabela_dados(contratante.linhas_ficha(), estilos))
 
         if eh_pj:
@@ -230,8 +243,9 @@ def gerar_ficha_preenchida(
             itens.append(tabela_dados(contratante.linhas_representante(), estilos))
 
         if parametros is not None:
-            itens.append(_secao(estilos,
-                                f"{3 if eh_pj else 2}. Condições comerciais acordadas"))
+            itens.append(
+                _secao(estilos, f"{3 if eh_pj else 2}. Condições comerciais acordadas")
+            )
             itens.append(tabela_dados(_linhas_condicoes(parametros), estilos))
 
         itens.append(Spacer(1, 3 * mm))
@@ -240,10 +254,13 @@ def gerar_ficha_preenchida(
         if incluir_pendencias:
             itens.extend(_aviso_pendencias(estilos, contratante.pendencias))
 
-        itens.extend(_bloco_declaracao(
-            estilos, contratante.nome_exibicao,
-            contratante.endereco.municipio,
-        ))
+        itens.extend(
+            _bloco_declaracao(
+                estilos,
+                contratante.nome_exibicao,
+                contratante.endereco.municipio,
+            )
+        )
         return itens
 
     return render_documento("Ficha Cadastral", contratante.nome_exibicao, fabrica)
@@ -271,24 +288,27 @@ def gerar_ficha_em_branco(
         eh_pj = tipo == "PJ"
 
         itens = _cabecalho(
-            estilos, "FICHA CADASTRAL",
-            f"{'Pessoa Jurídica' if eh_pj else 'Pessoa Física'} · "
-            "preenchimento pelo cliente",
+            estilos,
+            "FICHA CADASTRAL",
+            f"{'Pessoa Jurídica' if eh_pj else 'Pessoa Física'} · preenchimento pelo cliente",
         )
         itens.append(Paragraph(escapar(NOTA_EM_BRANCO), estilos["nota"]))
         itens.append(Spacer(1, 4 * mm))
 
         numero = 1
-        itens.append(_secao(
-            estilos,
-            f"{numero}. Identificação " + ("da empresa" if eh_pj else "do cliente")))
-        itens.append(_tabela_branco(
-            CAMPOS_PJ_BRANCO if eh_pj else CAMPOS_PF_BRANCO, estilos))
+        itens.append(
+            _secao(
+                estilos,
+                f"{numero}. Identificação " + ("da empresa" if eh_pj else "do cliente"),
+            )
+        )
+        itens.append(_tabela_branco(CAMPOS_PJ_BRANCO if eh_pj else CAMPOS_PF_BRANCO, estilos))
         numero += 1
 
         if eh_pj:
-            itens.append(_secao(
-                estilos, f"{numero}. Representante legal (quem assina o contrato)"))
+            itens.append(
+                _secao(estilos, f"{numero}. Representante legal (quem assina o contrato)")
+            )
             itens.append(_tabela_branco(CAMPOS_REPRESENTANTE_BRANCO, estilos))
             numero += 1
 
@@ -321,8 +341,10 @@ def _documentos_necessarios(eh_pj: bool) -> tuple[str, ...]:
         return (
             *comuns,
             "Certidão de casamento, se casado(a)",
-            ("Comprovante de atividade atual, se houver (contrato de locação, "
-             "contrato de franquia, notas de compra de mercadoria)"),
+            (
+                "Comprovante de atividade atual, se houver (contrato de locação, "
+                "contrato de franquia, notas de compra de mercadoria)"
+            ),
         )
     return (
         *comuns,

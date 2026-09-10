@@ -27,8 +27,11 @@ RENDER_YAML = RAIZ / "render.yaml"
 
 
 def _padroes(arquivo: Path) -> list[str]:
-    return [linha.strip() for linha in arquivo.read_text().splitlines()
-            if linha.strip() and not linha.startswith("#")]
+    return [
+        linha.strip()
+        for linha in arquivo.read_text().splitlines()
+        if linha.strip() and not linha.startswith("#")
+    ]
 
 
 # --------------------------------------------------------------------------- #
@@ -39,7 +42,7 @@ def _origens_copy() -> list[str]:
     origens: list[str] = []
     for linha in re.findall(r"^COPY\s+(.+)$", DOCKERFILE.read_text(), re.MULTILINE):
         partes = [p for p in linha.split() if not p.startswith("--")]
-        origens.extend(partes[:-1])   # descarta o destino
+        origens.extend(partes[:-1])  # descarta o destino
     return origens
 
 
@@ -63,8 +66,9 @@ def test_dockerignore_nao_exclui_o_que_o_dockerfile_copia():
 def test_container_nao_roda_como_root():
     """Root no container transforma qualquer RCE em escalada de privilégio."""
     texto = DOCKERFILE.read_text()
-    assert re.search(r"^USER\s+(?!root)", texto, re.MULTILINE), \
+    assert re.search(r"^USER\s+(?!root)", texto, re.MULTILINE), (
         "falta USER não-root no Dockerfile"
+    )
 
 
 def test_healthcheck_usa_endpoint_do_streamlit():
@@ -102,7 +106,8 @@ def test_driver_do_postgres_fora_do_requirements_principal():
     """
     assert not any("psycopg" in linha for linha in _padroes(REQS)), (
         "psycopg voltou ao requirements.txt — ver o cabeçalho de "
-        "requirements-pg.txt para o motivo de estar separado")
+        "requirements-pg.txt para o motivo de estar separado"
+    )
 
 
 def test_driver_do_postgres_declarado_no_arquivo_proprio():
@@ -112,10 +117,10 @@ def test_driver_do_postgres_declarado_no_arquivo_proprio():
 def test_dockerfile_instala_os_dois_arquivos():
     """A imagem roda onde HÁ Postgres, então lá o driver é obrigatório."""
     texto = DOCKERFILE.read_text()
-    assert "requirements-pg.txt" in texto, \
+    assert "requirements-pg.txt" in texto, (
         "Dockerfile não instala o driver — Postgres falharia em produção"
-    instalacao = next(linha for linha in texto.splitlines()
-                      if "pip install" in linha)
+    )
+    instalacao = next(linha for linha in texto.splitlines() if "pip install" in linha)
     assert "-r requirements.txt" in instalacao
     assert "-r requirements-pg.txt" in instalacao
 
@@ -141,6 +146,7 @@ def test_app_nao_importa_psycopg_sem_database_url(monkeypatch):
 
     import src.config
     import src.services.repository as repo
+
     importlib.reload(src.config)
     importlib.reload(repo)
     repo.criar_repositorio()
@@ -163,13 +169,24 @@ def status_git() -> dict[str, bool]:
         pytest.skip("git indisponível")
 
     amostras = [
-        ".env", ".env.producao", ".env.example",
-        ".streamlit/secrets.toml", ".streamlit/secrets.toml.example",
+        ".env",
+        ".env.producao",
+        ".env.example",
+        ".streamlit/secrets.toml",
+        ".streamlit/secrets.toml.example",
         ".streamlit/config.toml",
-        "data/leads_contabeis.db", "leads.sqlite3",
-        "contrato_cliente.pdf", "planilha.xlsx",
-        "chave.pem", "id_rsa", "service_account.json", "client_secret_1.json",
-        "app.py", "render.yaml", "DEPLOY.md", "requirements.txt",
+        "data/leads_contabeis.db",
+        "leads.sqlite3",
+        "contrato_cliente.pdf",
+        "planilha.xlsx",
+        "chave.pem",
+        "id_rsa",
+        "service_account.json",
+        "client_secret_1.json",
+        "app.py",
+        "render.yaml",
+        "DEPLOY.md",
+        "requirements.txt",
     ]
     with tempfile.TemporaryDirectory() as tmp:
         raiz = Path(tmp)
@@ -185,28 +202,44 @@ def status_git() -> dict[str, bool]:
         # apenas o que está realmente ignorado. Sai com 1 quando nada casa,
         # daí não usar check=True.
         saida = subprocess.run(
-            ["git", "check-ignore", *amostras],
-            cwd=raiz, capture_output=True, text=True).stdout
+            ["git", "check-ignore", *amostras], cwd=raiz, capture_output=True, text=True
+        ).stdout
         ignorados = set(saida.split())
         return {nome: nome in ignorados for nome in amostras}
 
 
-@pytest.mark.parametrize("arquivo", [
-    ".env", ".env.producao", ".streamlit/secrets.toml",
-    "data/leads_contabeis.db", "leads.sqlite3",
-    "contrato_cliente.pdf", "planilha.xlsx",
-    "chave.pem", "id_rsa", "service_account.json", "client_secret_1.json",
-])
+@pytest.mark.parametrize(
+    "arquivo",
+    [
+        ".env",
+        ".env.producao",
+        ".streamlit/secrets.toml",
+        "data/leads_contabeis.db",
+        "leads.sqlite3",
+        "contrato_cliente.pdf",
+        "planilha.xlsx",
+        "chave.pem",
+        "id_rsa",
+        "service_account.json",
+        "client_secret_1.json",
+    ],
+)
 def test_gitignore_bloqueia(arquivo, status_git):
     assert status_git[arquivo], f"{arquivo} NÃO está sendo ignorado"
 
 
-@pytest.mark.parametrize("arquivo", [
-    ".env.example",                      # documenta as variáveis, sem valores
-    ".streamlit/secrets.toml.example",   # idem, formato Streamlit
-    ".streamlit/config.toml",            # tema e config pública do app
-    "app.py", "render.yaml", "DEPLOY.md", "requirements.txt",
-])
+@pytest.mark.parametrize(
+    "arquivo",
+    [
+        ".env.example",  # documenta as variáveis, sem valores
+        ".streamlit/secrets.toml.example",  # idem, formato Streamlit
+        ".streamlit/config.toml",  # tema e config pública do app
+        "app.py",
+        "render.yaml",
+        "DEPLOY.md",
+        "requirements.txt",
+    ],
+)
 def test_gitignore_permite(arquivo, status_git):
     """As negações têm de vencer as regras amplas que vêm antes delas."""
     assert not status_git[arquivo], f"{arquivo} está sendo ignorado por engano"
@@ -248,8 +281,9 @@ def test_render_nao_versiona_nenhum_segredo(render):
     sensiveis = ("SENHA", "SECRET", "KEY", "TOKEN", "PASSWORD")
     for env in render["services"][0]["envVars"]:
         if any(t in env["key"].upper() for t in sensiveis):
-            assert env.get("sync") is False, \
+            assert env.get("sync") is False, (
                 f"{env['key']} sem sync:false — valor iria para o repositório"
+            )
             assert "value" not in env, f"{env['key']} tem valor no arquivo!"
 
 
@@ -263,8 +297,9 @@ def test_render_healthcheck_bate_com_o_dockerfile_da_api(render):
     caminho = render["services"][0]["healthCheckPath"]
     dockerfile_api = RAIZ / "Dockerfile.api"
     assert dockerfile_api.exists(), "Dockerfile.api não existe"
-    assert caminho in dockerfile_api.read_text(), \
+    assert caminho in dockerfile_api.read_text(), (
         "healthCheckPath do Render difere do HEALTHCHECK da imagem da API"
+    )
     # E a rota tem de existir de verdade no código.
     assert caminho.strip("/") in (RAIZ / "api.py").read_text()
 
@@ -272,8 +307,7 @@ def test_render_healthcheck_bate_com_o_dockerfile_da_api(render):
 # --------------------------------------------------------------------------- #
 # Modelos de configuração                                                     #
 # --------------------------------------------------------------------------- #
-@pytest.mark.parametrize("modelo", [
-    ".env.example", ".streamlit/secrets.toml.example"])
+@pytest.mark.parametrize("modelo", [".env.example", ".streamlit/secrets.toml.example"])
 def test_modelo_existe_e_nao_contem_segredo_real(modelo):
     """O .example é versionado; se alguém preencher com valor real, vaza."""
     texto = (RAIZ / modelo).read_text()
@@ -286,7 +320,17 @@ def test_modelo_existe_e_nao_contem_segredo_real(modelo):
         valor = limpa.split("=", 1)[1].strip().strip("'\"")
         if not valor:
             continue
-        marcadores = ("TROCAR", "COLE", "...", "senha", "usuario", "local",
-                      "gere", "INFO", "postgresql://usuario")
+        marcadores = (
+            "TROCAR",
+            "COLE",
+            "...",
+            "senha",
+            "usuario",
+            "local",
+            "gere",
+            "INFO",
+            "postgresql://usuario",
+        )
         assert any(m in valor for m in marcadores), (
-            f"{modelo}:{numero} parece conter valor real: {limpa}")
+            f"{modelo}:{numero} parece conter valor real: {limpa}"
+        )

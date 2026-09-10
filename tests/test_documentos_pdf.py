@@ -22,30 +22,57 @@ from src.exporters.pdf_ficha import (
     gerar_ficha_preenchida as gerar_ficha_cadastral,
 )
 
-END = Endereco(logradouro="Rua Anchieta", numero="204", bairro="Vila Boaventura",
-               municipio="Jundiaí", uf="SP", cep="13201804")
+END = Endereco(
+    logradouro="Rua Anchieta",
+    numero="204",
+    bairro="Vila Boaventura",
+    municipio="Jundiaí",
+    uf="SP",
+    cep="13201804",
+)
 
 PJ = ContratantePJ(
-    razao_social="Mercadinho São João Ltda", nome_fantasia="Mercadinho",
-    cnpj="11222333000181", cnae_principal="4712100 - Minimercados",
-    endereco=END, telefone="(19) 3333-4444", email="a@b.com",
-    inscricao_estadual="123.456.789", regime="Simples Nacional",
+    razao_social="Mercadinho São João Ltda",
+    nome_fantasia="Mercadinho",
+    cnpj="11222333000181",
+    cnae_principal="4712100 - Minimercados",
+    endereco=END,
+    telefone="(19) 3333-4444",
+    email="a@b.com",
+    inscricao_estadual="123.456.789",
+    regime="Simples Nacional",
     representante=RepresentanteLegal(
-        nome="Ana Costa", cpf="52998224725", rg="11.222.333",
-        orgao_emissor="SSP/SP", nacionalidade="brasileira",
-        estado_civil="divorciada", profissao="empresária",
-        qualificacao="sócia administradora", genero_feminino=True),
+        nome="Ana Costa",
+        cpf="52998224725",
+        rg="11.222.333",
+        orgao_emissor="SSP/SP",
+        nacionalidade="brasileira",
+        estado_civil="divorciada",
+        profissao="empresária",
+        qualificacao="sócia administradora",
+        genero_feminino=True,
+    ),
 )
 
 PF = ContratantePF(
-    nome="João Pedro Souza", cpf="11144477735", rg="98.765.432",
-    orgao_emissor="SSP/SP", estado_civil="solteiro", profissao="comerciante",
-    endereco=END, telefone="(19) 99999-8888", email="joao@email.com",
+    nome="João Pedro Souza",
+    cpf="11144477735",
+    rg="98.765.432",
+    orgao_emissor="SSP/SP",
+    estado_civil="solteiro",
+    profissao="comerciante",
+    endereco=END,
+    telefone="(19) 99999-8888",
+    email="joao@email.com",
 )
 
 PARAMS = ParametrosContrato(
-    valor_mensal=550.0, valor_implantacao=350.0, data_inicio=date(2026, 9, 1),
-    vigencia_meses=12, foro="Jundiaí/SP", cidade_assinatura="Jundiaí",
+    valor_mensal=550.0,
+    valor_implantacao=350.0,
+    data_inicio=date(2026, 9, 1),
+    vigencia_meses=12,
+    foro="Jundiaí/SP",
+    cidade_assinatura="Jundiaí",
 )
 
 
@@ -77,8 +104,7 @@ def test_ficha_sem_parametros_nao_quebra():
 
 def test_contratante_totalmente_vazio_nao_quebra():
     """Caso limite: usuário clica em gerar sem preencher nada."""
-    pdf = gerar_contrato(ContratantePF(), contratada_padrao(),
-                         ParametrosContrato())
+    pdf = gerar_contrato(ContratantePF(), contratada_padrao(), ParametrosContrato())
     assert pdf.startswith(b"%PDF")
 
 
@@ -90,12 +116,16 @@ def test_contrato_sem_testemunhas():
 
 def test_clausulas_particulares_aumentam_o_documento():
     p2 = ParametrosContrato(
-        valor_mensal=550.0, foro="Jundiaí/SP",
-        clausulas_particulares=("Desconto de 20% nos três primeiros meses.",
-                                "Atendimento presencial mensal incluído."),
+        valor_mensal=550.0,
+        foro="Jundiaí/SP",
+        clausulas_particulares=(
+            "Desconto de 20% nos três primeiros meses.",
+            "Atendimento presencial mensal incluído.",
+        ),
     )
-    base = gerar_contrato(PJ, contratada_padrao(),
-                          ParametrosContrato(valor_mensal=550.0, foro="Jundiaí/SP"))
+    base = gerar_contrato(
+        PJ, contratada_padrao(), ParametrosContrato(valor_mensal=550.0, foro="Jundiaí/SP")
+    )
     assert len(gerar_contrato(PJ, contratada_padrao(), p2)) > len(base)
 
 
@@ -103,8 +133,10 @@ def test_texto_com_caractere_de_markup_nao_quebra_o_pdf():
     """Razão social com '&' ou '<' viraria marcação inválida no Platypus se
     não fosse escapada."""
     pj = ContratantePJ(
-        razao_social="Silva & Cia <Comércio> Ltda", cnpj="11222333000181",
-        endereco=END, email="a@b.com",
+        razao_social="Silva & Cia <Comércio> Ltda",
+        cnpj="11222333000181",
+        endereco=END,
+        email="a@b.com",
         representante=RepresentanteLegal(nome="Ana", cpf="52998224725"),
     )
     pdf = gerar_contrato(pj, contratada_padrao(), PARAMS)
@@ -151,11 +183,14 @@ def test_mei_e_qualificado_como_empresario_individual():
     """MEI/EI não é 'pessoa jurídica de direito privado' — a qualificação
     precisa refletir isso no contrato assinado."""
     mei = ContratantePJ(
-        razao_social="ANDERSON ANDRADE MONTEIRO", cnpj="63435477000110",
-        regime="MEI", natureza_juridica="Empresário (Individual)", endereco=END,
+        razao_social="ANDERSON ANDRADE MONTEIRO",
+        cnpj="63435477000110",
+        regime="MEI",
+        natureza_juridica="Empresário (Individual)",
+        endereco=END,
         representante=RepresentanteLegal(
-            nome="ANDERSON ANDRADE MONTEIRO", cpf="52998224725",
-            qualificacao="titular"),
+            nome="ANDERSON ANDRADE MONTEIRO", cpf="52998224725", qualificacao="titular"
+        ),
     )
     texto = mei.qualificacao_contratual
     assert "empresário individual" in texto

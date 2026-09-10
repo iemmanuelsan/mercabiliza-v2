@@ -73,7 +73,7 @@ def test_json_invalido_nao_abre_o_gate(monkeypatch):
     app avisa em tela. O que NÃO pode acontecer é engolir o erro em silêncio —
     daí o log de nível ERROR verificado abaixo.
     """
-    monkeypatch.setenv(ENV_SENHAS, "iago:abc")   # esqueceu de usar JSON
+    monkeypatch.setenv(ENV_SENHAS, "iago:abc")  # esqueceu de usar JSON
     assert _senhas_configuradas() == {}
 
 
@@ -87,22 +87,24 @@ def test_json_invalido_registra_erro(monkeypatch, caplog):
 def test_ambiente_tem_prioridade_sobre_secrets(monkeypatch):
     """secrets.toml esquecido na máquina não pode vencer a senha de produção."""
     monkeypatch.setenv(ENV_SENHA_GERAL, "producao")
-    monkeypatch.setattr("src.ui.auth._dos_secrets",
-                        lambda: {"equipe": "local-antiga"})
+    monkeypatch.setattr("src.ui.auth._dos_secrets", lambda: {"equipe": "local-antiga"})
     assert _senhas_configuradas() == {"equipe": "producao"}
 
 
 # --------------------------------------------------------------------------- #
 # Comparação                                                                  #
 # --------------------------------------------------------------------------- #
-@pytest.mark.parametrize("usuario,senha,esperado", [
-    ("iago", SENHA, True),
-    ("iago", SENHA + "x", False),
-    ("iago", SENHA[:-1], False),
-    ("iago", "", False),
-    ("inexistente", SENHA, False),
-    ("", SENHA, False),
-])
+@pytest.mark.parametrize(
+    "usuario,senha,esperado",
+    [
+        ("iago", SENHA, True),
+        ("iago", SENHA + "x", False),
+        ("iago", SENHA[:-1], False),
+        ("iago", "", False),
+        ("inexistente", SENHA, False),
+        ("", SENHA, False),
+    ],
+)
 def test_validar(usuario, senha, esperado):
     assert _validar(usuario, senha, {"iago": SENHA}) is esperado
 
@@ -125,9 +127,11 @@ def test_crm_nao_aparece_antes_do_login(monkeypatch, sem_rede):
     monkeypatch.setenv(ENV_SENHA_GERAL, SENHA)
     app = AppTest.from_file(str(APP), default_timeout=TIMEOUT).run()
 
-    tela = " ".join([m.value for m in app.markdown]
-                    + [c.value for c in app.caption]
-                    + [t.value for t in app.title])
+    tela = " ".join(
+        [m.value for m in app.markdown]
+        + [c.value for c in app.caption]
+        + [t.value for t in app.title]
+    )
     assert "CRM" not in tela
 
 

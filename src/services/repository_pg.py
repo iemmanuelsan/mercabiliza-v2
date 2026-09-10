@@ -55,9 +55,20 @@ CREATE INDEX IF NOT EXISTS idx_leads_consulta ON leads(consultado_em DESC);
 """
 
 _COLUNAS = (
-    "cnpj", "razao_social", "nome_fantasia", "telefone", "email", "municipio",
-    "uf", "regime", "porte", "situacao", "cnae_principal", "anexo",
-    "capital_social", "consultado_em",
+    "cnpj",
+    "razao_social",
+    "nome_fantasia",
+    "telefone",
+    "email",
+    "municipio",
+    "uf",
+    "regime",
+    "porte",
+    "situacao",
+    "cnae_principal",
+    "anexo",
+    "capital_social",
+    "consultado_em",
 )
 
 
@@ -107,12 +118,20 @@ class PostgresLeadRepository:
     def salvar_varios(self, empresas: Iterable[Empresa]) -> int:
         linhas = [
             (
-                e.cnpj, e.razao_social, e.nome_fantasia, e.telefone_str,
-                e.email_str, e.endereco.municipio, e.endereco.uf, e.regime,
-                e.porte, e.situacao.situacao_receita, e.cnae_principal_str,
-                e.atividade_principal.diagnostico.anexo
-                if e.atividade_principal else "",
-                e.capital_social, e.consultado_em,
+                e.cnpj,
+                e.razao_social,
+                e.nome_fantasia,
+                e.telefone_str,
+                e.email_str,
+                e.endereco.municipio,
+                e.endereco.uf,
+                e.regime,
+                e.porte,
+                e.situacao.situacao_receita,
+                e.cnae_principal_str,
+                e.atividade_principal.diagnostico.anexo if e.atividade_principal else "",
+                e.capital_social,
+                e.consultado_em,
             )
             for e in empresas
         ]
@@ -120,8 +139,7 @@ class PostgresLeadRepository:
             return 0
 
         placeholders = ", ".join(["%s"] * len(_COLUNAS))
-        atualiza = ", ".join(f"{c} = EXCLUDED.{c}" for c in _COLUNAS
-                             if c != "cnpj")
+        atualiza = ", ".join(f"{c} = EXCLUDED.{c}" for c in _COLUNAS if c != "cnpj")
         sql = (
             f"INSERT INTO leads ({', '.join(_COLUNAS)}) "
             f"VALUES ({placeholders}) "
@@ -137,8 +155,7 @@ class PostgresLeadRepository:
 
     def listar(self) -> pd.DataFrame:
         with self._conexao() as conn, conn.cursor() as cur:
-            cur.execute(
-                "SELECT * FROM leads ORDER BY consultado_em DESC, razao_social")
+            cur.execute("SELECT * FROM leads ORDER BY consultado_em DESC, razao_social")
             colunas = [d[0] for d in cur.description]
             return pd.DataFrame(cur.fetchall(), columns=colunas)
 

@@ -21,8 +21,7 @@ def test_percentual():
 
 
 def test_sem_acento():
-    assert sem_acento("PRESTAÇÃO DE SERVIÇOS CONTÁBEIS") == \
-        "PRESTACAO DE SERVICOS CONTABEIS"
+    assert sem_acento("PRESTAÇÃO DE SERVIÇOS CONTÁBEIS") == "PRESTACAO DE SERVICOS CONTABEIS"
 
 
 def test_texto_ou_trata_none_e_nan():

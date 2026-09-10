@@ -45,7 +45,7 @@ doze dias antes desta auditoria.
 ```python
 # ANTES — descarta as letras e rejeita o CNPJ como inválido
 def limpar_cnpj(cnpj_raw):
-    cnpj_limpo = re.sub(r'\D', '', str(cnpj_raw))   # "12ABC34501DE35" -> "123450135"
+    cnpj_limpo = re.sub(r"\D", "", str(cnpj_raw))  # "12ABC34501DE35" -> "123450135"
     return cnpj_limpo if len(cnpj_limpo) == 14 else None
 ```
 
@@ -57,10 +57,12 @@ silêncio faz um erro de digitação virar "CNPJ não localizado".
 _PESOS_DV1 = (5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2)
 _PESOS_DV2 = (6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2)
 
+
 def _digito(base: str, pesos: tuple[int, ...]) -> int:
     soma = sum((ord(c) - 48) * p for c, p in zip(base, pesos, strict=True))
     resto = soma % 11
     return 0 if resto < 2 else 11 - resto
+
 
 def validar(bruto: object) -> str:
     """Devolve o CNPJ limpo ou levanta CNPJInvalidoError com o motivo."""
@@ -83,9 +85,11 @@ primeiro alfanumérico real emitido. → `src/core/cnpj.py`
 
 ```python
 # ANTES — se dados_rws for None e os anteriores vierem vazios: AttributeError
-razao = (dados_br.get("razao_social") if dados_br else None) \
-        or (dados_ws.get("razao_social") if dados_ws else None) \
-        or dados_rws.get("nome")          # ← sem guarda
+razao = (
+    (dados_br.get("razao_social") if dados_br else None)
+    or (dados_ws.get("razao_social") if dados_ws else None)
+    or dados_rws.get("nome")
+)  # ← sem guarda
 ```
 
 O padrão se repete em **15 campos** (linhas 420–434). Basta a BrasilAPI
@@ -114,10 +118,10 @@ def comparar_regimes_simples_presumido(fat_mensal, margem_pct=15.0, tipo_lucro="
     if tipo_lucro == "Bruto":
         margem_efetiva_pct = margem_pct * 0.30
     else:
-        margem_efetiva_pct = margem_pct     # ← calculada e NUNCA usada
+        margem_efetiva_pct = margem_pct  # ← calculada e NUNCA usada
 
-    imp_simples = fat_anual * 0.033         # ← alíquota fixa
-    imp_presumido = fat_anual * 0.059       # ← alíquota fixa
+    imp_simples = fat_anual * 0.033  # ← alíquota fixa
+    imp_presumido = fat_anual * 0.059  # ← alíquota fixa
 ```
 
 Dois problemas somados. A UI tem um `radio` de Líquido/Bruto e um campo de
@@ -141,6 +145,7 @@ ANEXO_I = (
     (3_600_000.00, 0.1430, 87_300.00),
     (4_800_000.00, 0.1900, 378_000.00),
 )
+
 
 def aliquota_efetiva(rbt12: float, tabela) -> float:
     """(RBT12 × alíquota nominal − parcela a deduzir) ÷ RBT12"""
@@ -172,7 +177,8 @@ tributos que incidem sobre receita, e manter o parâmetro sugeria o contrário.
 ```python
 # ANTES — série 4390 é "Selic acumulada NO MÊS"; somar ignora juros sobre juros
 soma = sum(float(item["valor"]) for item in dados if "valor" in item)
-if soma > 0: selic_ano = soma
+if soma > 0:
+    selic_ano = soma
 ```
 
 O erro se propagava direto para os encargos de mora do cálculo retroativo do
@@ -198,8 +204,8 @@ def _acumular_composto(valores: list[float]) -> float | None:
 
 ```python
 # ANTES — d['telefone'] é a junção de TODOS os telefones
-num_limpo = re.sub(r'\D', '', str(d['telefone']))   # "(19) 3333-4444, (19) 99999-8888"
-num_wsp = "55" + num_limpo[:11]                     # -> "551933334444199" ❌
+num_limpo = re.sub(r"\D", "", str(d["telefone"]))  # "(19) 3333-4444, (19) 99999-8888"
+num_wsp = "55" + num_limpo[:11]  # -> "551933334444199" ❌
 ```
 
 Empresa com duas linhas → link para um número que não existe. Corrigido com
@@ -230,9 +236,9 @@ widget. Estas três chamadas estão no corpo da aba, fora de qualquer callback:
 
 ```python
 # ANTES — linhas 997, 1007, 1049
-excel_file = gerar_excel_dossie_4abas(st.session_state.historico)   # 4 abas, N empresas
-pdf_bytes = gerar_pdf_dossie_completo(d)                            # PDF completo
-pdf_proposta = gerar_proposta_minimercado_pdf(d, ...)               # outro PDF
+excel_file = gerar_excel_dossie_4abas(st.session_state.historico)  # 4 abas, N empresas
+pdf_bytes = gerar_pdf_dossie_completo(d)  # PDF completo
+pdf_proposta = gerar_proposta_minimercado_pdf(d, ...)  # outro PDF
 ```
 
 Consequência: **mover o slider de "% monofásico" na aba 2 reconstrói uma
@@ -244,7 +250,9 @@ empresas em sessão, cada clique custa segundos de CPU e dezenas de MB.
 @st.cache_data(show_spinner=False, max_entries=32)
 def excel_bytes(chave: str, _empresas: tuple[Empresa, ...]) -> bytes:
     from ..exporters.excel import gerar_dossie_excel
+
     return gerar_dossie_excel(list(_empresas))
+
 
 # chamada: excel_bytes("|".join(sorted(e.cnpj for e in lote)), tuple(lote))
 ```
@@ -300,9 +308,12 @@ permite ~3 req/min). Ganho de ordem de grandeza, com rate limit respeitado.
 ```python
 # ANTES — valores fixos, nenhuma consulta é feita
 return {
-    "cnd_fgts": "🟢 Regularidade Cadastral FGTS", "obs_fgts": "Consulta cadastral ativa.",
-    "cndt_trabalhista": "🟢 CNDT - Regularidade Trabalhista", "obs_cndt": "Sem pendências cadastrais.",
-    "processos_judiciais": "🟢 Sem Apontamentos Públicos", "obs_processos": "Sem registros impeditivos.",
+    "cnd_fgts": "🟢 Regularidade Cadastral FGTS",
+    "obs_fgts": "Consulta cadastral ativa.",
+    "cndt_trabalhista": "🟢 CNDT - Regularidade Trabalhista",
+    "obs_cndt": "Sem pendências cadastrais.",
+    "processos_judiciais": "🟢 Sem Apontamentos Públicos",
+    "obs_processos": "Sem registros impeditivos.",
 }
 ```
 
@@ -335,7 +346,7 @@ explicitamente o que **não** foi verificado. → `src/core/models.py`
 
 ```python
 # ANTES — dados de API entram direto no DOM
-html_code = f"""<td ...>{d['razao_social']}</td>..."""
+html_code = f"""<td ...>{d["razao_social"]}</td>..."""
 st.markdown(html_code, unsafe_allow_html=True)
 ```
 
@@ -404,9 +415,12 @@ app.py (91 linhas)  →  src/config.py · core/ (4) · services/ (4) · exporter
 
 ```python
 # ANTES — 65 linhas de if/elif com dicionários literais repetidos
-if is_minimercado or code_clean.startswith(('45','46','47')): return {...}
-elif code_clean.startswith(('10','11',...,'32')): return {...}
-for prefix in sujeito_fator_r: ...
+if is_minimercado or code_clean.startswith(("45", "46", "47")):
+    return {...}
+elif code_clean.startswith(("10", "11", ..., "32")):
+    return {...}
+for prefix in sujeito_fator_r:
+    ...
 ```
 
 ```python

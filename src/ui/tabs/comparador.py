@@ -19,25 +19,31 @@ def render() -> None:
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        faturamento = st.number_input("Faturamento médio mensal (R$)",
-                                      min_value=0.0, value=35_000.0, step=5_000.0)
+        faturamento = st.number_input(
+            "Faturamento médio mensal (R$)", min_value=0.0, value=35_000.0, step=5_000.0
+        )
     with col2:
         # [CORRIGIDO] Campo novo, e não é detalhe: sem a folha a comparação
         # inverte. No Simples o INSS patronal está dentro do DAS; no Presumido
         # é guia separada de ~27,8% sobre a folha.
         folha = st.number_input(
             "Folha de pagamento mensal (R$)",
-            min_value=0.0, value=6_000.0, step=500.0,
+            min_value=0.0,
+            value=6_000.0,
+            step=500.0,
             help="Salários brutos. No Lucro Presumido, a contribuição patronal "
-                 "(CPP 20% + RAT ~2% + terceiros ~5,8%) é recolhida POR FORA. "
-                 "No Simples ela já está no DAS.",
+            "(CPP 20% + RAT ~2% + terceiros ~5,8%) é recolhida POR FORA. "
+            "No Simples ela já está no DAS.",
         )
     with col3:
         pct_mono = st.slider(
             "Participação de produtos monofásicos nas vendas (%)",
-            min_value=0, max_value=90, value=55, step=5,
+            min_value=0,
+            max_value=90,
+            value=55,
+            step=5,
             help="Bebidas, higiene pessoal e itens com PIS/COFINS recolhido na "
-                 "indústria. Essa parcela sai da base de PIS/COFINS.",
+            "indústria. Essa parcela sai da base de PIS/COFINS.",
         )
 
     if folha <= 0:
@@ -64,21 +70,29 @@ def render() -> None:
     st.divider()
     m1, m2, m3 = st.columns(3)
     with m1:
-        st.metric("Simples com segregação",
-                  f"{moeda(resultado.simples_otimizado / 12)} /mês",
-                  delta=f"{moeda(resultado.simples_otimizado)} /ano",
-                  delta_color="off")
-        st.caption(f"Alíquota efetiva: "
-                   f"{percentual(resultado.aliquota_simples_efetiva)}")
+        st.metric(
+            "Simples com segregação",
+            f"{moeda(resultado.simples_otimizado / 12)} /mês",
+            delta=f"{moeda(resultado.simples_otimizado)} /ano",
+            delta_color="off",
+        )
+        st.caption(f"Alíquota efetiva: {percentual(resultado.aliquota_simples_efetiva)}")
     with m2:
-        st.metric("Lucro Presumido", f"{moeda(resultado.presumido / 12)} /mês",
-                  delta=f"{moeda(resultado.presumido)} /ano", delta_color="off")
-        st.caption(f"Carga efetiva: "
-                   f"{percentual(resultado.aliquota_presumido_efetiva)} (sem ICMS)")
+        st.metric(
+            "Lucro Presumido",
+            f"{moeda(resultado.presumido / 12)} /mês",
+            delta=f"{moeda(resultado.presumido)} /ano",
+            delta_color="off",
+        )
+        st.caption(
+            f"Carga efetiva: {percentual(resultado.aliquota_presumido_efetiva)} (sem ICMS)"
+        )
     with m3:
-        st.metric("Diferença entre regimes",
-                  f"{moeda(resultado.diferenca_anual / 12)} /mês",
-                  delta=f"{moeda(resultado.diferenca_anual)} /ano")
+        st.metric(
+            "Diferença entre regimes",
+            f"{moeda(resultado.diferenca_anual / 12)} /mês",
+            delta=f"{moeda(resultado.diferenca_anual)} /ano",
+        )
         st.caption("A favor do regime vencedor")
 
     st.success(f"🏆 **Regime mais vantajoso:** {resultado.melhor_regime}")
@@ -86,9 +100,11 @@ def render() -> None:
     esq, dir_ = st.columns([1, 1])
     with esq:
         st.markdown("**Ganho com a segregação de monofásicos**")
-        st.metric("Economia no DAS",
-                  f"{moeda(resultado.economia_monofasico / 12)} /mês",
-                  delta=f"{moeda(resultado.economia_monofasico)} /ano")
+        st.metric(
+            "Economia no DAS",
+            f"{moeda(resultado.economia_monofasico / 12)} /mês",
+            delta=f"{moeda(resultado.economia_monofasico)} /ano",
+        )
         st.info(
             f"💬 **Argumento comercial:** a economia de "
             f"{moeda(resultado.economia_monofasico / 12)}/mês na guia do DAS já "
@@ -97,11 +113,14 @@ def render() -> None:
     with dir_:
         st.markdown("**Composição do Lucro Presumido (anual)**")
         st.dataframe(
-            pd.DataFrame({
-                "Tributo": list(resultado.detalhamento_presumido),
-                "Valor": [moeda(v) for v in resultado.detalhamento_presumido.values()],
-            }),
-            hide_index=True, width="stretch",
+            pd.DataFrame(
+                {
+                    "Tributo": list(resultado.detalhamento_presumido),
+                    "Valor": [moeda(v) for v in resultado.detalhamento_presumido.values()],
+                }
+            ),
+            hide_index=True,
+            width="stretch",
         )
         st.caption(
             "Inclui o INSS patronal sobre a folha (~27,8%), que no Presumido é "

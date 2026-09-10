@@ -37,7 +37,7 @@ def _extrair_cnpjs(df: pd.DataFrame) -> tuple[list[str], list[tuple[str, str]]]:
         except CNPJInvalidoError as exc:
             invalidos.append((bruto, str(exc)))
             continue
-        if cnpj not in vistos:          # [MELHORIA] deduplicação
+        if cnpj not in vistos:  # [MELHORIA] deduplicação
             vistos.add(cnpj)
             validos.append(cnpj)
     return validos, invalidos
@@ -75,9 +75,10 @@ def _processar(cnpjs: list[str]) -> list:
                 resultados.append(empresa)
             else:
                 falhas.append(f"{cnpj}: não localizado nas bases públicas")
-            barra.progress(concluidos / total,
-                           text=f"{concluidos}/{total} processados · "
-                                f"{len(resultados)} encontrados")
+            barra.progress(
+                concluidos / total,
+                text=f"{concluidos}/{total} processados · {len(resultados)} encontrados",
+            )
 
     barra.empty()
     if falhas:
@@ -98,8 +99,11 @@ def render() -> None:
     arquivo = st.file_uploader("Planilha de CNPJs", type=["xlsx", "csv"])
     if arquivo is not None:
         try:
-            df = (pd.read_csv(arquivo) if arquivo.name.lower().endswith(".csv")
-                  else pd.read_excel(arquivo))
+            df = (
+                pd.read_csv(arquivo)
+                if arquivo.name.lower().endswith(".csv")
+                else pd.read_excel(arquivo)
+            )
         except Exception as exc:
             st.error(f"❌ Não foi possível ler a planilha: {exc}")
             return
@@ -117,8 +121,11 @@ def render() -> None:
 
         if invalidos:
             with st.expander("Ver linhas descartadas"):
-                st.dataframe(pd.DataFrame(invalidos, columns=["Valor", "Motivo"]),
-                             hide_index=True, width="stretch")
+                st.dataframe(
+                    pd.DataFrame(invalidos, columns=["Valor", "Motivo"]),
+                    hide_index=True,
+                    width="stretch",
+                )
 
         if not validos:
             st.warning("Nenhum CNPJ válido na planilha.")
@@ -136,8 +143,10 @@ def render() -> None:
             if empresas:
                 try:
                     gravados = obter_repositorio().salvar_varios(empresas)
-                    st.success(f"✅ {len(empresas)} empresa(s) processada(s) · "
-                               f"{gravados} gravada(s) no CRM.")
+                    st.success(
+                        f"✅ {len(empresas)} empresa(s) processada(s) · "
+                        f"{gravados} gravada(s) no CRM."
+                    )
                 except Exception as exc:
                     st.warning(f"Processado, mas a gravação no CRM falhou: {exc}")
             else:
@@ -172,5 +181,7 @@ def render() -> None:
             "📄 PDF da empresa selecionada",
             data=pdf_dossie_bytes(empresa.cnpj, empresa),
             file_name=f"dossie_{empresa.cnpj}.pdf",
-            mime="application/pdf", type="primary", width="stretch",
+            mime="application/pdf",
+            type="primary",
+            width="stretch",
         )

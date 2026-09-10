@@ -130,11 +130,12 @@ class RepresentanteLegal:
     def documento_str(self) -> str:
         flex = _flexao(self.genero_feminino)
         if self.rg and self.orgao_emissor:
-            return (f"{flex['portador']} da cédula de identidade RG nº "
-                    f"{n(self.rg)} expedida pelo {n(self.orgao_emissor)}")
+            return (
+                f"{flex['portador']} da cédula de identidade RG nº "
+                f"{n(self.rg)} expedida pelo {n(self.orgao_emissor)}"
+            )
         if self.rg:
-            return (f"{flex['portador']} da cédula de identidade RG nº "
-                    f"{n(self.rg)}")
+            return f"{flex['portador']} da cédula de identidade RG nº {n(self.rg)}"
         return ""
 
     @property
@@ -144,21 +145,23 @@ class RepresentanteLegal:
         CPF sob o nº 529.982.247-25, na qualidade de sócia administradora'."""
         flex = _flexao(self.genero_feminino)
         partes = [n(self.nome.strip().upper()) or "(REPRESENTANTE NÃO INFORMADO)"]
-        for item in (_flexionar_livre(self.nacionalidade, self.genero_feminino),
-                     _flexionar_livre(self.estado_civil, self.genero_feminino),
-                     _flexionar_livre(self.profissao, self.genero_feminino)):
+        for item in (
+            _flexionar_livre(self.nacionalidade, self.genero_feminino),
+            _flexionar_livre(self.estado_civil, self.genero_feminino),
+            _flexionar_livre(self.profissao, self.genero_feminino),
+        ):
             if item:
                 partes.append(item)
         if doc := self.documento_str:
             partes.append(doc)
         if self.cpf:
-            partes.append(f"{flex['inscrito']} no CPF sob o nº "
-                          f"{n(formatar_cpf(self.cpf))}")
+            partes.append(f"{flex['inscrito']} no CPF sob o nº {n(formatar_cpf(self.cpf))}")
         else:
             partes.append(f"{flex['inscrito']} no CPF sob o nº ______________")
         if self.qualificacao:
-            partes.append("na qualidade de "
-                          f"{_flexionar_livre(self.qualificacao, self.genero_feminino)}")
+            partes.append(
+                f"na qualidade de {_flexionar_livre(self.qualificacao, self.genero_feminino)}"
+            )
         return ", ".join(partes)
 
 
@@ -215,40 +218,46 @@ class ContratantePF:
     def qualificacao_contratual(self) -> str:
         flex = _flexao(self.genero_feminino)
         partes = [n(self.nome.strip().upper()) or "(NOME NÃO INFORMADO)"]
-        for item in (_flexionar_livre(self.nacionalidade, self.genero_feminino),
-                     _flexionar_livre(self.estado_civil, self.genero_feminino),
-                     _flexionar_livre(self.profissao, self.genero_feminino)):
+        for item in (
+            _flexionar_livre(self.nacionalidade, self.genero_feminino),
+            _flexionar_livre(self.estado_civil, self.genero_feminino),
+            _flexionar_livre(self.profissao, self.genero_feminino),
+        ):
             if item:
                 partes.append(item)
         if self.rg and self.orgao_emissor:
-            partes.append(f"{flex['portador']} da cédula de identidade RG nº "
-                          f"{n(self.rg)} expedida pelo {n(self.orgao_emissor)}")
+            partes.append(
+                f"{flex['portador']} da cédula de identidade RG nº "
+                f"{n(self.rg)} expedida pelo {n(self.orgao_emissor)}"
+            )
         elif self.rg:
-            partes.append(f"{flex['portador']} da cédula de identidade RG nº "
-                          f"{n(self.rg)}")
+            partes.append(f"{flex['portador']} da cédula de identidade RG nº {n(self.rg)}")
         if self.cpf:
-            partes.append(f"{flex['inscrito']} no CPF sob o nº "
-                          f"{n(formatar_cpf(self.cpf))}")
+            partes.append(f"{flex['inscrito']} no CPF sob o nº {n(formatar_cpf(self.cpf))}")
         if self.endereco.esta_preenchido:
-            partes.append(f"{flex['residente']} na "
-                          f"{self.endereco.linha_juridica_negrito}")
+            partes.append(f"{flex['residente']} na {self.endereco.linha_juridica_negrito}")
         partes.append(
-            f"doravante {_denominacao(self.genero_feminino)} simplesmente CONTRATANTE")
+            f"doravante {_denominacao(self.genero_feminino)} simplesmente CONTRATANTE"
+        )
         return ", ".join(partes)
 
     def linhas_ficha(self) -> list[tuple[str, str]]:
         return [
             ("Nome completo", self.nome_exibicao),
             ("CPF", self.documento_principal),
-            ("RG / Órgão emissor",
-             " / ".join(p for p in (self.rg, self.orgao_emissor) if p) or "—"),
+            (
+                "RG / Órgão emissor",
+                " / ".join(p for p in (self.rg, self.orgao_emissor) if p) or "—",
+            ),
             ("Nacionalidade", self.nacionalidade or "—"),
             ("Estado civil", self.estado_civil or "—"),
             ("Profissão", self.profissao or "—"),
             ("Endereço", self.endereco.logradouro_numero or "—"),
             ("Bairro", self.endereco.bairro or "—"),
-            ("Município / UF",
-             f"{self.endereco.municipio}/{self.endereco.uf}".strip("/") or "—"),
+            (
+                "Município / UF",
+                f"{self.endereco.municipio}/{self.endereco.uf}".strip("/") or "—",
+            ),
             ("CEP", self.endereco.cep_formatado or "—"),
             ("Telefone / WhatsApp", self.telefone or "—"),
             ("E-mail", self.email or "—"),
@@ -324,8 +333,7 @@ class ContratantePJ:
         ]
         flexao = "inscrito" if eh_ei else "inscrita"
         if self.cnpj:
-            partes.append(f"{flexao} no CNPJ sob o nº "
-                          f"{n(formatar_cnpj(self.cnpj))}")
+            partes.append(f"{flexao} no CNPJ sob o nº {n(formatar_cnpj(self.cnpj))}")
         if self.inscricao_estadual:
             partes.append(f"inscrição estadual nº {n(self.inscricao_estadual)}")
         if self.endereco.esta_preenchido:
@@ -339,15 +347,16 @@ class ContratantePJ:
                 == self.razao_social.strip().casefold()
             )
             if eh_ei and mesmo_titular:
-                partes.append(f"neste ato assinando na qualidade de "
-                              f"{self.representante.qualificacao}")
+                partes.append(
+                    f"neste ato assinando na qualidade de {self.representante.qualificacao}"
+                )
                 if self.representante.cpf:
-                    partes.append("inscrito no CPF sob o nº "
-                                  f"{n(formatar_cpf(self.representante.cpf))}")
+                    partes.append(
+                        f"inscrito no CPF sob o nº {n(formatar_cpf(self.representante.cpf))}"
+                    )
             else:
                 verbo = "representado por" if eh_ei else "representada por"
-                partes.append(f"neste ato {verbo} "
-                              f"{self.representante.qualificacao_texto}")
+                partes.append(f"neste ato {verbo} {self.representante.qualificacao_texto}")
         denominado = "denominado" if eh_ei else "denominada"
         partes.append(f"doravante {denominado} simplesmente CONTRATANTE")
         return ", ".join(partes)
@@ -364,8 +373,10 @@ class ContratantePJ:
             ("Inscrição municipal", self.inscricao_municipal or "—"),
             ("Endereço", self.endereco.logradouro_numero or "—"),
             ("Bairro", self.endereco.bairro or "—"),
-            ("Município / UF",
-             f"{self.endereco.municipio}/{self.endereco.uf}".strip("/") or "—"),
+            (
+                "Município / UF",
+                f"{self.endereco.municipio}/{self.endereco.uf}".strip("/") or "—",
+            ),
             ("CEP", self.endereco.cep_formatado or "—"),
             ("Telefone comercial", self.telefone or "—"),
             ("E-mail financeiro", self.email or "—"),
@@ -376,8 +387,7 @@ class ContratantePJ:
         return [
             ("Nome", r.nome or "—"),
             ("CPF", formatar_cpf(r.cpf) if r.cpf else "—"),
-            ("RG / Órgão emissor",
-             " / ".join(p for p in (r.rg, r.orgao_emissor) if p) or "—"),
+            ("RG / Órgão emissor", " / ".join(p for p in (r.rg, r.orgao_emissor) if p) or "—"),
             ("Estado civil", r.estado_civil or "—"),
             ("Profissão", r.profissao or "—"),
             ("Qualificação", r.qualificacao or "—"),
@@ -410,7 +420,8 @@ def de_empresa(empresa: Empresa, socio_escolhido: str | None = None) -> Contrata
         else:
             # Nome digitado manualmente (procurador que não consta do QSA).
             representante = RepresentanteLegal(
-                nome=socio_escolhido, qualificacao="procurador(a)")
+                nome=socio_escolhido, qualificacao="procurador(a)"
+            )
 
     return ContratantePJ(
         razao_social=empresa.razao_social,
@@ -420,11 +431,13 @@ def de_empresa(empresa: Empresa, socio_escolhido: str | None = None) -> Contrata
         endereco=replace(empresa.endereco),
         telefone=empresa.telefone_principal,
         email=empresa.emails[0] if empresa.emails else "",
-        inscricao_estadual=(empresa.inscricoes_estaduais[0]
-                            if empresa.inscricoes_estaduais else ""),
+        inscricao_estadual=(
+            empresa.inscricoes_estaduais[0] if empresa.inscricoes_estaduais else ""
+        ),
         inscricao_municipal=(
             empresa.inscricao_municipal
-            if "não identificada" not in empresa.inscricao_municipal.lower() else ""
+            if "não identificada" not in empresa.inscricao_municipal.lower()
+            else ""
         ),
         representante=representante,
         regime=empresa.regime,
@@ -460,7 +473,8 @@ class Contratada:
     def esta_configurada(self) -> bool:
         """Mínimo para emitir: identificação da pessoa jurídica e signatário."""
         return bool(
-            self.razao_social and self.cnpj
+            self.razao_social
+            and self.cnpj
             and self.endereco.esta_preenchido
             and self.representante.esta_preenchido
         )
@@ -489,17 +503,18 @@ class Contratada:
             "pessoa jurídica de direito privado",
         ]
         if self.cnpj:
-            partes.append(f"inscrita no CNPJ sob o nº "
-                          f"{n(formatar_cnpj(self.cnpj))}")
+            partes.append(f"inscrita no CNPJ sob o nº {n(formatar_cnpj(self.cnpj))}")
         partes.append(
-            f"registrada no CRC sob o nº {n(self.crc)}" if self.crc
+            f"registrada no CRC sob o nº {n(self.crc)}"
+            if self.crc
             else "registrada no CRC sob o nº ______________"
         )
         if self.endereco.esta_preenchido:
             partes.append(f"com sede na {self.endereco.linha_juridica_negrito}")
         if self.representante.nome:
-            partes.append("neste ato representada por "
-                          f"{self.representante.qualificacao_texto}")
+            partes.append(
+                f"neste ato representada por {self.representante.qualificacao_texto}"
+            )
         partes.append("doravante denominada simplesmente CONTRATADA")
         return ", ".join(partes)
 

@@ -41,18 +41,17 @@ def _primeira_existente(caminhos) -> Path | None:
 
 # Blocos Unicode de emoji, símbolos e pictogramas.
 _FAIXAS_EMOJI = (
-    (0x1F300, 0x1FAFF),   # pictogramas, emoticons, símbolos suplementares
-    (0x2190, 0x21FF),     # setas
-    (0x2600, 0x27BF),     # símbolos diversos e dingbats
-    (0x2B00, 0x2BFF),     # símbolos e setas adicionais
-    (0xFE00, 0xFE0F),     # seletores de variação (o "️" invisível pós-emoji)
+    (0x1F300, 0x1FAFF),  # pictogramas, emoticons, símbolos suplementares
+    (0x2190, 0x21FF),  # setas
+    (0x2600, 0x27BF),  # símbolos diversos e dingbats
+    (0x2B00, 0x2BFF),  # símbolos e setas adicionais
+    (0xFE00, 0xFE0F),  # seletores de variação (o "️" invisível pós-emoji)
 )
 
 
 def _sem_emoji(texto: str) -> str:
     limpo = "".join(
-        c for c in texto
-        if not any(inicio <= ord(c) <= fim for inicio, fim in _FAIXAS_EMOJI)
+        c for c in texto if not any(inicio <= ord(c) <= fim for inicio, fim in _FAIXAS_EMOJI)
     )
     # Colapsa espaços duplos deixados pela remoção, PRESERVANDO as quebras de
     # linha — o multi_cell depende delas para separar os tópicos das dicas.
@@ -102,8 +101,14 @@ class DocumentoPDF(FPDF):
 
     def linha(self, altura: float, texto: object, **kwargs) -> None:
         """Substitui ``cell(..., ln=True)``, depreciado no fpdf2 ≥ 2.7.6."""
-        self.cell(kwargs.pop("largura", 0), altura, self.txt(texto),
-                  new_x=XPos.LMARGIN, new_y=YPos.NEXT, **kwargs)
+        self.cell(
+            kwargs.pop("largura", 0),
+            altura,
+            self.txt(texto),
+            new_x=XPos.LMARGIN,
+            new_y=YPos.NEXT,
+            **kwargs,
+        )
 
     def paragrafo(self, altura: float, texto: object, **kwargs) -> None:
         """Bloco de texto com quebra automática.
@@ -113,8 +118,14 @@ class DocumentoPDF(FPDF):
         cursor encostado na borda — o parágrafo seguinte então falha com
         "Not enough horizontal space to render a single character".
         """
-        self.multi_cell(kwargs.pop("largura", 0), altura, self.txt(texto),
-                        new_x=XPos.LMARGIN, new_y=YPos.NEXT, **kwargs)
+        self.multi_cell(
+            kwargs.pop("largura", 0),
+            altura,
+            self.txt(texto),
+            new_x=XPos.LMARGIN,
+            new_y=YPos.NEXT,
+            **kwargs,
+        )
 
     def secao(self, titulo: str, tamanho: int = 10) -> None:
         self.fonte("B", tamanho)
@@ -124,5 +135,8 @@ class DocumentoPDF(FPDF):
 
     def bytes(self) -> bytes:
         saida = self.output()
-        return bytes(saida) if isinstance(saida, (bytes, bytearray)) \
+        return (
+            bytes(saida)
+            if isinstance(saida, (bytes, bytearray))
             else bytes(saida, encoding="latin-1")
+        )

@@ -44,11 +44,11 @@ def indicadores_bacen() -> Indicadores:
     return _obter_indicadores()
 
 
-@st.cache_data(ttl=settings.cache.ibge_ttl, show_spinner="Consultando CEP…",
-               max_entries=512)
+@st.cache_data(ttl=settings.cache.ibge_ttl, show_spinner="Consultando CEP…", max_entries=512)
 def consultar_cep_cached(cep: str):
     """CEP é praticamente imutável — cache longo evita bater no ViaCEP à toa."""
     from ..services.cep import consultar_cep
+
     return consultar_cep(cep)
 
 
@@ -78,18 +78,21 @@ def excel_bytes(chave: str, _empresas: tuple[Empresa, ...]) -> bytes:
     objetos ``Empresa``; ``chave`` é o identificador estável do conteúdo.
     """
     from ..exporters.excel import gerar_dossie_excel
+
     return gerar_dossie_excel(list(_empresas))
 
 
 @st.cache_data(show_spinner=False, max_entries=32)
 def pdf_dossie_bytes(chave: str, _empresa: Empresa) -> bytes:
     from ..exporters.pdf_dossie import gerar_dossie
+
     return gerar_dossie(_empresa)
 
 
 @st.cache_data(show_spinner=False, max_entries=32)
 def pdf_cartao_bytes(chave: str, _empresa: Empresa) -> bytes:
     from ..exporters.pdf_dossie import gerar_cartao_cnpj
+
     return gerar_cartao_cnpj(_empresa)
 
 

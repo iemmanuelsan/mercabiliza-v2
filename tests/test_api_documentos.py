@@ -24,16 +24,23 @@ PJ = {
     "cnpj": "11222333000181",
     "cnae_principal": "4712-1/00",
     "endereco": {
-        "logradouro": "RUA ANCHIETA", "numero": "204",
-        "bairro": "VILA BOAVENTURA", "municipio": "Jundiaí",
-        "uf": "SP", "cep": "13201804",
+        "logradouro": "RUA ANCHIETA",
+        "numero": "204",
+        "bairro": "VILA BOAVENTURA",
+        "municipio": "Jundiaí",
+        "uf": "SP",
+        "cep": "13201804",
     },
     "telefone": "(19) 3327-0038",
     "email": "contato@mercadoteste.com.br",
     "representante": {
-        "nome": "Fulano de Tal", "cpf": "11144477735", "rg": "123456789",
-        "orgao_emissor": "SSP/SP", "estado_civil": "casado",
-        "profissao": "empresário", "qualificacao": "sócio administrador",
+        "nome": "Fulano de Tal",
+        "cpf": "11144477735",
+        "rg": "123456789",
+        "orgao_emissor": "SSP/SP",
+        "estado_civil": "casado",
+        "profissao": "empresário",
+        "qualificacao": "sócio administrador",
     },
 }
 
@@ -47,8 +54,11 @@ PF = {
     "profissao": "comerciante",
     "genero_feminino": True,
     "endereco": {
-        "logradouro": "RUA DAS FLORES", "numero": "50",
-        "bairro": "CENTRO", "municipio": "Campinas", "uf": "SP",
+        "logradouro": "RUA DAS FLORES",
+        "numero": "50",
+        "bairro": "CENTRO",
+        "municipio": "Campinas",
+        "uf": "SP",
         "cep": "13010000",
     },
 }
@@ -75,8 +85,7 @@ def test_sem_chave_recusa(cliente):
 
 
 def test_chave_errada_recusa(cliente):
-    r = cliente.post("/v1/ficha", json={"contratante": PJ},
-                     headers={"X-API-Key": "chute"})
+    r = cliente.post("/v1/ficha", json={"contratante": PJ}, headers={"X-API-Key": "chute"})
     assert r.status_code == 401
 
 
@@ -88,8 +97,7 @@ def test_chave_nao_configurada_falha_FECHADA(monkeypatch):
     """
     monkeypatch.delenv("DOCUMENTOS_API_KEY", raising=False)
     c = TestClient(modulo_api.app)
-    r = c.post("/v1/ficha", json={"contratante": PJ},
-               headers={"X-API-Key": "qualquer"})
+    r = c.post("/v1/ficha", json={"contratante": PJ}, headers={"X-API-Key": "qualquer"})
     assert r.status_code == 503
 
 
@@ -143,20 +151,26 @@ def test_acento_no_nome_do_arquivo_e_normalizado(autorizado):
 # Contrato                                                                    #
 # --------------------------------------------------------------------------- #
 def test_contrato_pj_devolve_pdf(autorizado):
-    r = autorizado.post("/v1/contrato", json={
-        "contratante": PJ,
-        "parametros": {"valor_mensal": 350.0, "foro": "Campinas/SP"},
-    })
+    r = autorizado.post(
+        "/v1/contrato",
+        json={
+            "contratante": PJ,
+            "parametros": {"valor_mensal": 350.0, "foro": "Campinas/SP"},
+        },
+    )
     assert r.status_code == 200, r.text
     assert r.content.startswith(b"%PDF")
     assert len(r.content) > 10_000
 
 
 def test_contrato_pf_devolve_pdf(autorizado):
-    r = autorizado.post("/v1/contrato", json={
-        "contratante": PF,
-        "parametros": {"valor_mensal": 350.0},
-    })
+    r = autorizado.post(
+        "/v1/contrato",
+        json={
+            "contratante": PF,
+            "parametros": {"valor_mensal": 350.0},
+        },
+    )
     assert r.status_code == 200, r.text
     assert r.content.startswith(b"%PDF")
 
@@ -172,10 +186,13 @@ def test_contrato_traz_os_dados_do_cliente_no_texto(autorizado):
     pdfplumber = pytest.importorskip("pdfplumber")
     import io
 
-    r = autorizado.post("/v1/contrato", json={
-        "contratante": PJ,
-        "parametros": {"valor_mensal": 350.0, "foro": "Campinas/SP"},
-    })
+    r = autorizado.post(
+        "/v1/contrato",
+        json={
+            "contratante": PJ,
+            "parametros": {"valor_mensal": 350.0, "foro": "Campinas/SP"},
+        },
+    )
     with pdfplumber.open(io.BytesIO(r.content)) as pdf:
         texto = "\n".join((p.extract_text() or "") for p in pdf.pages)
 
@@ -275,24 +292,29 @@ def test_campo_desconhecido_da_422_e_nao_e_ignorado(autorizado):
     padrão e ninguém descobriria até o cliente questionar a cobrança. É a
     mesma classe de falha do `incluir_dp`.
     """
-    r = autorizado.post("/v1/contrato", json={
-        "contratante": PJ,
-        "parametros": {"valor_mesal": 350.0},   # 'mensal' escrito errado
-    })
+    r = autorizado.post(
+        "/v1/contrato",
+        json={
+            "contratante": PJ,
+            "parametros": {"valor_mesal": 350.0},  # 'mensal' escrito errado
+        },
+    )
     assert r.status_code == 422
     assert "valor_mesal" in r.text
 
 
 def test_campo_desconhecido_no_contratante_tambem_estoura(autorizado):
-    r = autorizado.post("/v1/ficha", json={
-        "contratante": {**PJ, "campo_inventado": "x"},
-    })
+    r = autorizado.post(
+        "/v1/ficha",
+        json={
+            "contratante": {**PJ, "campo_inventado": "x"},
+        },
+    )
     assert r.status_code == 422
 
 
 def test_perfil_invalido_da_422(autorizado):
-    r = autorizado.post("/v1/formulario",
-                        json={"contratante": PJ, "perfil": "XPTO"})
+    r = autorizado.post("/v1/formulario", json={"contratante": PJ, "perfil": "XPTO"})
     assert r.status_code == 422
 
 
@@ -335,8 +357,7 @@ def test_todo_campo_do_dataclass_existe_no_schema():
     do_dominio = {f.name for f in dataclasses.fields(ParametrosContrato)}
     do_schema = set(ParametrosIn.model_fields)
     assert do_dominio == do_schema, (
-        f"só no domínio: {do_dominio - do_schema} | "
-        f"só no schema: {do_schema - do_dominio}"
+        f"só no domínio: {do_dominio - do_schema} | só no schema: {do_schema - do_dominio}"
     )
 
 
@@ -385,10 +406,13 @@ def test_clausulas_particulares_entram_no_contrato(autorizado):
     import io
 
     clausula = "Os três primeiros meses terão desconto de 20% sobre os honorários."
-    r = autorizado.post("/v1/contrato", json={
-        "contratante": PJ,
-        "parametros": {"valor_mensal": 350.0, "clausulas_particulares": [clausula]},
-    })
+    r = autorizado.post(
+        "/v1/contrato",
+        json={
+            "contratante": PJ,
+            "parametros": {"valor_mensal": 350.0, "clausulas_particulares": [clausula]},
+        },
+    )
     assert r.status_code == 200, r.text
 
     with pdfplumber.open(io.BytesIO(r.content)) as pdf:
@@ -416,14 +440,19 @@ def test_varias_clausulas_saem_todas(autorizado):
     pdfplumber = pytest.importorskip("pdfplumber")
     import io
 
-    r = autorizado.post("/v1/contrato", json={
-        "contratante": PJ,
-        "parametros": {"clausulas_particulares": [
-            "Primeira condição especial acordada entre as partes.",
-            "Segunda condição especial acordada entre as partes.",
-            "Terceira condição especial acordada entre as partes.",
-        ]},
-    })
+    r = autorizado.post(
+        "/v1/contrato",
+        json={
+            "contratante": PJ,
+            "parametros": {
+                "clausulas_particulares": [
+                    "Primeira condição especial acordada entre as partes.",
+                    "Segunda condição especial acordada entre as partes.",
+                    "Terceira condição especial acordada entre as partes.",
+                ]
+            },
+        },
+    )
     with pdfplumber.open(io.BytesIO(r.content)) as pdf:
         texto = "\n".join((p.extract_text() or "") for p in pdf.pages)
 
@@ -436,9 +465,12 @@ def test_inscricao_estadual_entra_na_qualificacao(autorizado):
     pdfplumber = pytest.importorskip("pdfplumber")
     import io
 
-    r = autorizado.post("/v1/contrato", json={
-        "contratante": {**PJ, "inscricao_estadual": "159384180119"},
-    })
+    r = autorizado.post(
+        "/v1/contrato",
+        json={
+            "contratante": {**PJ, "inscricao_estadual": "159384180119"},
+        },
+    )
     with pdfplumber.open(io.BytesIO(r.content)) as pdf:
         texto = "\n".join((p.extract_text() or "") for p in pdf.pages)
 
@@ -450,10 +482,13 @@ def test_complemento_sujo_da_receita_sai_limpo_pela_api(autorizado):
     pdfplumber = pytest.importorskip("pdfplumber")
     import io
 
-    sujo = {**PJ, "endereco": {
-        **PJ["endereco"],
-        "complemento": "CASA CASA CASA CASA ;CASA TERREO ;CASA TERREO",
-    }}
+    sujo = {
+        **PJ,
+        "endereco": {
+            **PJ["endereco"],
+            "complemento": "CASA CASA CASA CASA ;CASA TERREO ;CASA TERREO",
+        },
+    }
     r = autorizado.post("/v1/ficha", json={"contratante": sujo})
     with pdfplumber.open(io.BytesIO(r.content)) as pdf:
         texto = "\n".join((p.extract_text() or "") for p in pdf.pages)
@@ -501,17 +536,19 @@ def test_transicao_com_contratante_preenche_o_cadastral(autorizado):
 
 
 def test_transicao_leva_as_respostas_da_tela(autorizado):
-    r = autorizado.post("/v1/transicao", json={
-        "contratante": PJ,
-        "iniciais": {"competencia": "09/2026", "segmento": "MiniMercado Autônomo"},
-        "pessoal": {"tem_funcionarios": "Não"},
-        "fiscal": {"sistema_notas": "Bling"},
-        "sucessao": {"email_anterior": "contato@agilize.com.br"},
-    })
+    r = autorizado.post(
+        "/v1/transicao",
+        json={
+            "contratante": PJ,
+            "iniciais": {"competencia": "09/2026", "segmento": "MiniMercado Autônomo"},
+            "pessoal": {"tem_funcionarios": "Não"},
+            "fiscal": {"sistema_notas": "Bling"},
+            "sucessao": {"email_anterior": "contato@agilize.com.br"},
+        },
+    )
     assert r.status_code == 200
     texto = _texto_docx(r.content)
-    for esperado in ("09/2026", "MiniMercado Autônomo", "Bling",
-                     "contato@agilize.com.br"):
+    for esperado in ("09/2026", "MiniMercado Autônomo", "Bling", "contato@agilize.com.br"):
         assert esperado in texto
 
 
@@ -519,10 +556,13 @@ def test_transicao_a_tela_vence_o_prefill(autorizado):
     """Se a equipe corrigiu um dado na tela, a correção manda. O contrário
     faria a consulta de CNPJ sobrescrever a conferência humana — que é
     justamente o que o documento existe para registrar."""
-    r = autorizado.post("/v1/transicao", json={
-        "contratante": PJ,
-        "iniciais": {"razao_social": "NOME CORRIGIDO NA JUNTA LTDA"},
-    })
+    r = autorizado.post(
+        "/v1/transicao",
+        json={
+            "contratante": PJ,
+            "iniciais": {"razao_social": "NOME CORRIGIDO NA JUNTA LTDA"},
+        },
+    )
     texto = _texto_docx(r.content)
     assert "NOME CORRIGIDO NA JUNTA LTDA" in texto
     assert "MERCADO TESTE LTDA" not in texto
@@ -533,9 +573,12 @@ def test_transicao_campo_digitado_errado_e_422_e_nao_documento_em_branco(autoriz
     menos em ``tem_funcionarios`` geraria um documento com o campo em branco e
     resposta 200 — indistinguível de um formulário legitimamente não
     preenchido."""
-    r = autorizado.post("/v1/transicao", json={
-        "pessoal": {"tem_funcionario": "Não"},
-    })
+    r = autorizado.post(
+        "/v1/transicao",
+        json={
+            "pessoal": {"tem_funcionario": "Não"},
+        },
+    )
     assert r.status_code == 422
     assert "tem_funcionario" in r.text
 
@@ -569,8 +612,12 @@ def test_schema_da_transicao_nao_pode_ter_padrao_proprio():
     Streamlit, e os contratos gerados pela web saíram sem a cláusula
     trabalhista.
     """
-    for modelo in (modulo_api.IniciaisIn, modulo_api.PessoalIn,
-                   modulo_api.FiscalIn, modulo_api.SucessaoIn):
+    for modelo in (
+        modulo_api.IniciaisIn,
+        modulo_api.PessoalIn,
+        modulo_api.FiscalIn,
+        modulo_api.SucessaoIn,
+    ):
         for nome, campo in modelo.model_fields.items():
             assert campo.default is None, (
                 f"{modelo.__name__}.{nome} tem padrão próprio "

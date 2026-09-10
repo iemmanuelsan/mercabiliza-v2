@@ -44,9 +44,7 @@ def _buscar(cnpj_bruto: str, rbt12: float) -> None:
         obter_repositorio().salvar(empresa)
         st.session_state["ok_dossie"] = "Dossiê gerado e lead gravado no CRM."
     except Exception as exc:
-        st.session_state["ok_dossie"] = (
-            f"Dossiê gerado, mas a gravação no CRM falhou: {exc}"
-        )
+        st.session_state["ok_dossie"] = f"Dossiê gerado, mas a gravação no CRM falhou: {exc}"
 
 
 def render() -> None:
@@ -59,17 +57,20 @@ def render() -> None:
                 "CNPJ do cliente",
                 placeholder="00.000.000/0001-91 ou 12.ABC.345/01DE-35",
                 help="Aceita o formato numérico tradicional e o novo CNPJ "
-                     "alfanumérico (vigente desde julho/2026).",
+                "alfanumérico (vigente desde julho/2026).",
             )
         with col_fat:
             rbt12 = st.number_input(
                 "Faturamento dos últimos 12 meses (RBT12)",
-                min_value=0.0, step=10_000.0, value=0.0,
+                min_value=0.0,
+                step=10_000.0,
+                value=0.0,
                 help="Opcional. Informando o RBT12, a alíquota exibida passa a ser "
-                     "a efetiva da faixa da empresa, e não a da 1ª faixa.",
+                "a efetiva da faixa da empresa, e não a da 1ª faixa.",
             )
-        enviado = st.form_submit_button("Gerar dossiê inteligente", type="primary",
-                                        width="stretch")
+        enviado = st.form_submit_button(
+            "Gerar dossiê inteligente", type="primary", width="stretch"
+        )
 
     if enviado:
         _buscar(cnpj_input, rbt12)
@@ -86,13 +87,14 @@ def render() -> None:
 
     # [MELHORIA] O original guardava o histórico mas só exibia ``historico[0]``.
     rotulos = {f"{e.razao_social} — {e.cnpj}": e for e in historico}
-    escolha = st.selectbox("Empresa consultada nesta sessão:", list(rotulos),
-                           key="sel_hist")
+    escolha = st.selectbox("Empresa consultada nesta sessão:", list(rotulos), key="sel_hist")
     empresa = rotulos[escolha]
 
     if eh_alfanumerico(empresa.cnpj):
-        st.info("🆕 Este é um CNPJ alfanumérico. Confirme se os sistemas de "
-                "emissão fiscal do cliente já foram atualizados para o novo layout.")
+        st.info(
+            "🆕 Este é um CNPJ alfanumérico. Confirme se os sistemas de "
+            "emissão fiscal do cliente já foram atualizados para o novo layout."
+        )
 
     renderizar_dossie(empresa)
 
@@ -102,8 +104,7 @@ def render() -> None:
     with col_xls:
         st.download_button(
             f"📊 Excel — {len(historico)} empresa(s) desta sessão",
-            data=excel_bytes(
-                "|".join(sorted(e.cnpj for e in historico)), tuple(historico)),
+            data=excel_bytes("|".join(sorted(e.cnpj for e in historico)), tuple(historico)),
             file_name=f"dossie_sessao_{len(historico)}_empresas.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             width="stretch",
@@ -113,7 +114,9 @@ def render() -> None:
             "📄 PDF — dossiê da empresa selecionada",
             data=pdf_dossie_bytes(empresa.cnpj, empresa),
             file_name=f"dossie_{empresa.cnpj}.pdf",
-            mime="application/pdf", type="primary", width="stretch",
+            mime="application/pdf",
+            type="primary",
+            width="stretch",
         )
 
     st.divider()
@@ -136,15 +139,19 @@ def _bloco_proposta(empresa) -> None:
             f"Desenquadramento de MEI ({moeda(precos.desenquadramento_mei)})",
             #  em vez de : o campo agora é
             # tri-estado e o checkbox do Streamlit não aceita None.
-            value=empresa.mei_confirmado)
+            value=empresa.mei_confirmado,
+        )
         inc_abertura = st.checkbox(
-            f"Constituição / abertura ({moeda(precos.abertura_empresa)})")
+            f"Constituição / abertura ({moeda(precos.abertura_empresa)})"
+        )
     with col_b:
         st.markdown("**Serviços recorrentes**")
-        qtd_cnpjs = st.number_input("Unidades / CNPJs (matriz + filiais)",
-                                    min_value=1, max_value=50, value=1)
-        qtd_pessoas = st.number_input("Vínculos (funcionários + pró-labore)",
-                                      min_value=0, max_value=200, value=1)
+        qtd_cnpjs = st.number_input(
+            "Unidades / CNPJs (matriz + filiais)", min_value=1, max_value=50, value=1
+        )
+        qtd_pessoas = st.number_input(
+            "Vínculos (funcionários + pró-labore)", min_value=0, max_value=200, value=1
+        )
 
     pontuais = []
     if inc_desenq:
@@ -167,11 +174,15 @@ def _bloco_proposta(empresa) -> None:
     # Gerado sob demanda: o PDF só é montado quando o usuário clica.
     if st.button("Montar proposta em PDF", width="stretch"):
         st.session_state["proposta_pdf"] = gerar_proposta(
-            empresa, honorarios, incluir_dp=qtd_pessoas > 0)
+            empresa, honorarios, incluir_dp=qtd_pessoas > 0
+        )
 
     if pdf := st.session_state.get("proposta_pdf"):
         st.download_button(
-            "📄 Baixar proposta comercial (PDF)", data=pdf,
+            "📄 Baixar proposta comercial (PDF)",
+            data=pdf,
             file_name=f"proposta_mercabiliza_{empresa.cnpj}.pdf",
-            mime="application/pdf", type="primary", width="stretch",
+            mime="application/pdf",
+            type="primary",
+            width="stretch",
         )
