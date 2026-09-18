@@ -306,8 +306,15 @@ class ContratantePJ:
             faltando.append("CNPJ")
         if not self.endereco.esta_preenchido:
             faltando.append("endereço da sede")
-        if not self.representante.esta_preenchido:
-            faltando.append("representante legal (nome e CPF)")
+        # Nome e CPF são pendências SEPARADAS de propósito. Antes vinham
+        # juntas num item só, e isso escondia a diferença que importa: sem
+        # nome não há quem assine e a qualificação sai sem representante
+        # nenhum; sem CPF ela sai completa, com uma linha para preencher à
+        # mão. Uma coisa impede, a outra atrasa.
+        if not self.representante.nome.strip():
+            faltando.append("nome do representante legal")
+        elif not self.representante.cpf:
+            faltando.append("CPF do representante legal (o contrato sai com lacuna)")
         if not self.email:
             faltando.append("e-mail financeiro")
         return tuple(faltando)
@@ -339,7 +346,17 @@ class ContratantePJ:
         if self.endereco.esta_preenchido:
             sede = "com estabelecimento na" if eh_ei else "com sede na"
             partes.append(f"{sede} {self.endereco.linha_juridica_negrito}")
-        if self.representante.esta_preenchido:
+        # ⚠️ A condição é o NOME, não `esta_preenchido` — que exige nome E CPF.
+        #
+        # Com `esta_preenchido`, digitar o representante sem o CPF fazia o
+        # bloco INTEIRO desaparecer: o contrato saía sem "neste ato
+        # representado por", sem aviso nenhum, e quem preencheu o nome na tela
+        # concluía que o campo não era usado. Some dado que a pessoa forneceu.
+        #
+        # E era desnecessário: `qualificacao_texto` já trata a falta do CPF,
+        # imprimindo "inscrito no CPF sob o nº ______________" para preencher
+        # à mão. O portão estava mais rígido do que o texto que ele protegia.
+        if self.representante.nome.strip():
             # Para EI, quem assina é o próprio titular — não faz sentido dizer
             # "neste ato representada por" se for a mesma pessoa.
             mesmo_titular = (

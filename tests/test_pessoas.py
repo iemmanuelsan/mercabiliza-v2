@@ -550,3 +550,66 @@ def test_negativa_afirmativa_continua_valendo():
     )
     assert e.regime == "Lucro Presumido / Real"
     assert not e.regime_incerto
+
+
+# --------------------------------------------------------------------------- #
+# Representante informado só com o nome                                        #
+# --------------------------------------------------------------------------- #
+# O defeito: na aba Documentos dava para digitar "Gilberto Villela" no
+# Representante legal, gerar o contrato, e a qualificação da CONTRATANTE sair
+# SEM nenhuma menção a ele. Nenhum aviso, nenhum campo em branco — o nome
+# simplesmente não aparecia, e a leitura natural era "esse campo não é usado".
+#
+# Causa: o portão era `representante.esta_preenchido`, que exige nome E CPF.
+# Sem o CPF, o bloco inteiro era pulado. E era desnecessário: o texto que ele
+# protegia já sabia lidar com CPF ausente, imprimindo uma lacuna.
+def test_representante_so_com_nome_entra_na_qualificacao():
+    pj = ContratantePJ(
+        razao_social="63.506.742 LARISSA RIBEIRO DE SOUZA",
+        cnpj="63506742000103",
+        natureza_juridica="Empresário (Individual)",
+        endereco=END,
+        representante=RepresentanteLegal(nome="Gilberto Villela"),
+    )
+    texto = pj.qualificacao_contratual
+
+    assert "GILBERTO VILLELA" in texto
+    assert "neste ato representado por" in texto
+    # A lacuna do CPF fica visível, para preencher à mão na assinatura.
+    assert "______" in texto
+
+
+def test_sem_nome_nenhum_o_bloco_continua_fora():
+    """O portão ficou mais frouxo, não inexistente: sem nome não há quem
+    assine, e inventar 'representado por (não informado)' seria pior."""
+    pj = ContratantePJ(
+        razao_social="Mercadinho São João Ltda",
+        cnpj="11222333000181",
+        endereco=END,
+        representante=RepresentanteLegal(cpf="52998224725"),
+    )
+    assert "neste ato" not in pj.qualificacao_contratual
+
+
+def test_nome_em_branco_nao_conta_como_preenchido():
+    pj = ContratantePJ(
+        razao_social="Mercadinho São João Ltda",
+        cnpj="11222333000181",
+        endereco=END,
+        representante=RepresentanteLegal(nome="   "),
+    )
+    assert "neste ato" not in pj.qualificacao_contratual
+
+
+def test_falta_do_cpf_vira_pendencia_propria():
+    """Nome e CPF são pendências separadas: uma impede, a outra só atrasa."""
+    pj = ContratantePJ(
+        razao_social="Mercadinho São João Ltda",
+        cnpj="11222333000181",
+        endereco=END,
+        email="a@b.com",
+        representante=RepresentanteLegal(nome="Gilberto Villela"),
+    )
+    pendencias = pj.pendencias
+    assert any("CPF do representante" in p for p in pendencias)
+    assert not any("nome do representante" in p for p in pendencias)
