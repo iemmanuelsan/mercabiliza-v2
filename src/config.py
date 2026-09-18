@@ -101,8 +101,8 @@ class TabelaPrecos:
 class DadosEmissor:
     nome: str = "Luis Felipe"
     cargo: str = "Sócio - Mercabiliza Contabilidade"
-    telefone: str = "+55 19 99285-3550"
-    email: str = "luisfelipe@contabilidadeclassea.com.br"
+    telefone: str = "(19) 99775-6094"
+    email: str = "comercial@mercabiliza.com.br"
     cor_marca: tuple[int, int, int] = (220, 50, 80)
 
 
