@@ -154,10 +154,22 @@ class RepresentanteLegal:
                 partes.append(item)
         if doc := self.documento_str:
             partes.append(doc)
+        # Campo não preenchido é campo que NÃO aparece — nem como lacuna.
+        #
+        # A versão anterior imprimia "inscrito no CPF sob o nº ______________"
+        # quando o CPF faltava, com a ideia de preencher à caneta na
+        # assinatura. Na prática vira um contrato com cara de rascunho indo
+        # para o cliente, e a lacuna sugere que alguém pode completá-la depois
+        # da assinatura — que é justamente o que não se quer num instrumento
+        # particular. Regra desta qualificação: o que foi informado entra, o
+        # que não foi não é mencionado.
         if self.cpf:
             partes.append(f"{flex['inscrito']} no CPF sob o nº {n(formatar_cpf(self.cpf))}")
+<<<<<<< Updated upstream
         else:
             partes.append(f"{flex['inscrito']} no CPF sob o nº ______________")
+=======
+>>>>>>> Stashed changes
         if self.qualificacao:
             partes.append(
                 f"na qualidade de {_flexionar_livre(self.qualificacao, self.genero_feminino)}"
@@ -521,11 +533,19 @@ class Contratada:
         ]
         if self.cnpj:
             partes.append(f"inscrita no CNPJ sob o nº {n(formatar_cnpj(self.cnpj))}")
+<<<<<<< Updated upstream
         partes.append(
             f"registrada no CRC sob o nº {n(self.crc)}"
             if self.crc
             else "registrada no CRC sob o nº ______________"
         )
+=======
+        # Mesma regra da qualificação do representante: sem dado, sem lacuna.
+        # O CRC segue opcional porque a qualificação usada NO CONTRATO é o
+        # texto fixo da diretoria, que já traz o registro por extenso.
+        if self.crc:
+            partes.append(f"registrada no CRC sob o nº {n(self.crc)}")
+>>>>>>> Stashed changes
         if self.endereco.esta_preenchido:
             partes.append(f"com sede na {self.endereco.linha_juridica_negrito}")
         if self.representante.nome:

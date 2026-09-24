@@ -10,6 +10,7 @@ from ..core.formatters import moeda, texto_ou
 from ..core.models import Empresa
 from ..core.tributario import Honorarios
 from .pdf_base import DocumentoPDF
+from .pdf_cartao import gerar_cartao_cnpj as _gerar_cartao_cnpj
 
 AVISO_COMPLIANCE = (
     "Este documento reflete exclusivamente dados cadastrais públicos (CNPJ). "
@@ -18,6 +19,7 @@ AVISO_COMPLIANCE = (
 )
 
 
+<<<<<<< Updated upstream
 def gerar_cartao_cnpj(empresa: Empresa) -> bytes:
     pdf = DocumentoPDF()
     pdf.add_page()
@@ -79,6 +81,13 @@ def gerar_cartao_cnpj(empresa: Empresa) -> bytes:
         "oficial emitido pela Receita Federal.",
     )
     return pdf.bytes()
+=======
+# O Cartão CNPJ mudou de casa: o leiaute da Receita tem grade própria e
+# precisou de helpers de caixa que não fazem sentido para o dossiê. Fica em
+# pdf_cartao.py, e este nome segue exportado para não quebrar quem já
+# importava daqui (src/ui/state.py e a API).
+gerar_cartao_cnpj = _gerar_cartao_cnpj
+>>>>>>> Stashed changes
 
 
 def gerar_dossie(empresa: Empresa) -> bytes:

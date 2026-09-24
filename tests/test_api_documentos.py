@@ -661,3 +661,86 @@ def test_bloco_removido_nao_e_aceito_em_silencio(autorizado):
         r = autorizado.post("/v1/transicao", json={bloco: {"x": "y"}})
         assert r.status_code == 422, bloco
         assert bloco in r.text
+<<<<<<< Updated upstream
+=======
+
+
+# --------------------------------------------------------------------------- #
+# /v1/cartao-cnpj                                                              #
+# --------------------------------------------------------------------------- #
+CARTAO = {
+    "cnpj": "62350925000110",
+    "razao_social": "MERCABILIZA SOLUCOES FISCAIS E CONTABEIS LTDA",
+    "nome_fantasia": "MERCABILIZA",
+    "data_abertura": "2025-08-22",
+    "natureza_juridica": "206-2 - Sociedade Empresária Limitada",
+    "porte": "DEMAIS",
+    "email": "contato@mercabiliza.com.br",
+    "telefone": "1933270038",
+    "situacao": "ATIVA",
+    "data_situacao": "2025-08-22",
+    "endereco": {
+        "logradouro": "RUA ANCHIETA",
+        "numero": "204",
+        "complemento": "SALA 102",
+        "bairro": "VILA BOAVENTURA",
+        "municipio": "JUNDIAI",
+        "uf": "SP",
+        "cep": "13201804",
+    },
+    "atividade_principal": {"codigo": "6920601", "descricao": "Atividades de contabilidade"},
+    "atividades_secundarias": [
+        {"codigo": "8211300", "descricao": "Serviços combinados de escritório"}
+    ],
+    "fontes": ["BrasilAPI", "CNPJ.ws"],
+}
+
+
+def test_cartao_exige_chave(cliente):
+    assert cliente.post("/v1/cartao-cnpj", json=CARTAO).status_code == 401
+
+
+def test_cartao_sai_em_pdf_com_nome_util(autorizado):
+    r = autorizado.post("/v1/cartao-cnpj", json=CARTAO)
+
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "application/pdf"
+    # O nome do arquivo é o que o contador vai achar na pasta de Downloads
+    # daqui a três semanas.
+    assert "cartao-cnpj-mercabiliza" in r.headers["content-disposition"]
+
+
+def test_cartao_so_precisa_do_cnpj(autorizado):
+    """CNPJ recém-aberto vem com metade dos campos em branco nas APIs
+    públicas. O comprovante tem que sair mesmo assim."""
+    r = autorizado.post("/v1/cartao-cnpj", json={"cnpj": "62350925000110"})
+    assert r.status_code == 200
+    assert len(r.content) > 1000
+
+
+def test_cartao_recusa_campo_digitado_errado(autorizado):
+    """`extra="forbid"`: campo com nome errado vira 422 na hora, em vez de um
+    documento com o campo em branco que ninguém percebe."""
+    r = autorizado.post("/v1/cartao-cnpj", json={**CARTAO, "razao_sozial": "X"})
+    assert r.status_code == 422
+
+
+def test_cartao_nao_aceita_diagnostico_vindo_do_navegador(autorizado):
+    """A classificação tributária do CNAE é calculada no servidor.
+
+    Aceitá-la pronta deixaria o navegador decidir anexo e alíquota — e esse
+    número vira proposta comercial.
+    """
+    r = autorizado.post(
+        "/v1/cartao-cnpj",
+        json={
+            **CARTAO,
+            "atividade_principal": {
+                "codigo": "6920601",
+                "descricao": "Atividades de contabilidade",
+                "diagnostico": {"anexo": "I", "aliquota": 0.04},
+            },
+        },
+    )
+    assert r.status_code == 422
+>>>>>>> Stashed changes

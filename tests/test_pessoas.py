@@ -157,10 +157,28 @@ def test_pj_qualificacao_traz_cnpj_formatado_e_representante():
     assert texto.endswith("doravante denominada simplesmente CONTRATANTE")
 
 
-def test_representante_sem_cpf_deixa_linha_para_preencher():
-    """Melhor um espaço visível que um contrato aparentemente completo."""
+def test_representante_sem_cpf_nao_deixa_lacuna():
+    """Campo não preenchido não aparece — nem como linha para preencher.
+
+    A versão anterior imprimia "inscrito no CPF sob o nº ______________". Um
+    contrato com lacuna tem cara de rascunho indo para o cliente, e sugere que
+    alguém pode completá-la DEPOIS da assinatura — que é exatamente o que não
+    se quer num instrumento particular.
+    """
     rep = RepresentanteLegal(nome="Ana")
-    assert "______" in rep.qualificacao_texto
+    texto = rep.qualificacao_texto
+
+    assert "______" not in texto
+    assert "CPF" not in texto
+    # O que foi informado continua saindo.
+    assert "ANA" in texto
+    assert "na qualidade de sócio administrador" in texto
+
+
+def test_representante_com_cpf_mostra_o_cpf():
+    """O outro lado da mesma regra: informado, aparece."""
+    rep = RepresentanteLegal(nome="Ana", cpf="52998224725")
+    assert "529.982.247-25" in rep.qualificacao_texto
 
 
 # --------------------------------------------------------------------------- #
@@ -248,9 +266,15 @@ def test_contratada_sinaliza_pendencias_de_crc_e_cpf():
     assert any("CPF" in p for p in pend)
 
 
-def test_contratada_sem_crc_deixa_linha_no_contrato():
+def test_contratada_sem_crc_omite_o_trecho():
+    """Mesma regra da qualificação do representante, aplicada à CONTRATADA.
+
+    Lembrando que a qualificação usada NO CONTRATO é o texto fixo da
+    diretoria, que já traz o CRC por extenso. Esta propriedade alimenta a
+    ficha cadastral.
+    """
     texto = contratada_padrao().qualificacao_contratual
-    assert "CRC sob o nº ______" in texto
+    assert "______" not in texto
 
 
 # --------------------------------------------------------------------------- #
@@ -575,8 +599,14 @@ def test_representante_so_com_nome_entra_na_qualificacao():
 
     assert "GILBERTO VILLELA" in texto
     assert "neste ato representado por" in texto
+<<<<<<< Updated upstream
     # A lacuna do CPF fica visível, para preencher à mão na assinatura.
     assert "______" in texto
+=======
+    # E sem lacuna: o CPF que ele não preencheu simplesmente não é mencionado.
+    assert "______" not in texto
+    assert "CPF" not in texto.split("representado por")[1]
+>>>>>>> Stashed changes
 
 
 def test_sem_nome_nenhum_o_bloco_continua_fora():

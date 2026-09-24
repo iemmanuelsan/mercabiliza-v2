@@ -46,7 +46,16 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.core.contrato import ParametrosContrato, TemplateContratoAusente
+<<<<<<< Updated upstream
 from src.core.models import Endereco
+=======
+from src.core.models import (
+    AtividadeCNAE,
+    Empresa,
+    Endereco,
+    SituacaoCadastral,
+)
+>>>>>>> Stashed changes
 from src.core.pessoas import (
     Contratada,
     ContratantePF,
@@ -64,6 +73,11 @@ from src.exporters.docx_transicao import (
 from src.exporters.docx_transicao import (
     gerar_formulario_transicao,
 )
+<<<<<<< Updated upstream
+=======
+from src.core.tributario import classificar_cnae
+from src.exporters.pdf_cartao import gerar_cartao_cnpj
+>>>>>>> Stashed changes
 from src.exporters.pdf_documentos import gerar_contrato, gerar_ficha_cadastral
 
 logging.basicConfig(level=os.getenv("MERCABILIZA_LOG_LEVEL", "INFO"))
@@ -410,6 +424,82 @@ class PedidoTransicao(Estrito):
     sucessao: SucessaoIn = Field(default_factory=SucessaoIn)
 
 
+<<<<<<< Updated upstream
+=======
+class AtividadeIn(Estrito):
+    codigo: str = ""
+    descricao: str = ""
+
+    def para_dominio(self) -> AtividadeCNAE:
+        return AtividadeCNAE(
+            codigo=self.codigo,
+            descricao=self.descricao,
+            # O diagnóstico não vem do cliente: é calculado aqui, a partir do
+            # código. Aceitá-lo pronto seria deixar a classificação tributária
+            # ser decidida pelo navegador.
+            diagnostico=classificar_cnae(self.codigo),
+        )
+
+
+class PedidoCartaoCnpj(Estrito):
+    """Comprovante de Inscrição e de Situação Cadastral.
+
+    Recebe a empresa já consolidada pelo front (que funde BrasilAPI, CNPJ.ws
+    e ReceitaWS) em vez de consultar de novo: a consulta já foi feita e
+    refazê-la aqui gastaria o limite de requisição das APIs públicas — a
+    CNPJ.ws permite cerca de 3 por minuto — e poderia devolver dados
+    diferentes dos que a pessoa está vendo na tela.
+
+    Todo campo é opcional: CNPJ recém-aberto costuma vir com metade em
+    branco, e o comprovante tem que sair mesmo assim, com ``********`` onde
+    o dado não existe — que é o que a Receita imprime.
+    """
+
+    cnpj: str
+    razao_social: str = ""
+    nome_fantasia: str = ""
+    matriz_filial: str = "MATRIZ"
+    data_abertura: str = ""
+    natureza_juridica: str = ""
+    porte: str = ""
+    email: str = ""
+    telefone: str = ""
+    situacao: str = ""
+    data_situacao: str = ""
+    endereco: EnderecoIn = Field(default_factory=EnderecoIn)
+    atividade_principal: AtividadeIn | None = None
+    atividades_secundarias: list[AtividadeIn] = Field(default_factory=list)
+    fontes: list[str] = Field(default_factory=list)
+
+    def para_dominio(self) -> Empresa:
+        return Empresa(
+            cnpj=self.cnpj,
+            razao_social=self.razao_social,
+            nome_fantasia=self.nome_fantasia,
+            matriz_filial=self.matriz_filial or "MATRIZ",
+            data_abertura=self.data_abertura,
+            natureza_juridica=self.natureza_juridica,
+            porte=self.porte,
+            emails=(self.email,) if self.email else (),
+            telefones=(self.telefone,) if self.telefone else (),
+            endereco=self.endereco.para_dominio(),
+            situacao=SituacaoCadastral(
+                situacao_receita=self.situacao or "DESCONHECIDA",
+                data_situacao=self.data_situacao,
+            ),
+            atividade_principal=(
+                self.atividade_principal.para_dominio()
+                if self.atividade_principal
+                else None
+            ),
+            atividades_secundarias=tuple(
+                a.para_dominio() for a in self.atividades_secundarias
+            ),
+            fontes=tuple(self.fontes),
+        )
+
+
+>>>>>>> Stashed changes
 # --------------------------------------------------------------------------- #
 # Auxiliares                                                                  #
 # --------------------------------------------------------------------------- #
@@ -567,3 +657,26 @@ def transicao(pedido: PedidoTransicao) -> Response:
     )
     logger.info("Formulário de transição gerado para %s (%d bytes)", nome, len(docx))
     return _arquivo(docx, f"transicao-contabil-{_slug(nome)}.docx", DOCX)
+<<<<<<< Updated upstream
+=======
+
+
+@app.post("/v1/cartao-cnpj", dependencies=[Protegido])
+def cartao_cnpj(pedido: PedidoCartaoCnpj) -> Response:
+    """Comprovante de Inscrição e de Situação Cadastral, no leiaute da Receita.
+
+    ⚠️ O PDF sai com tarja de reprodução e nomeia as bases consultadas. Isso
+    é requisito do documento, não opção de exibição: um papel que copia a
+    grade do comprovante oficial e não diz de onde veio circula como se fosse
+    o oficial.
+    """
+    empresa = pedido.para_dominio()
+    try:
+        pdf = gerar_cartao_cnpj(empresa)
+    except ValueError as exc:
+        raise HTTPException(422, f"Dados insuficientes para o cartão: {exc}") from exc
+
+    nome = empresa.razao_social or empresa.cnpj
+    logger.info("Cartão CNPJ gerado para %s (%d bytes)", nome, len(pdf))
+    return _arquivo(pdf, f"cartao-cnpj-{_slug(nome)}.pdf", PDF)
+>>>>>>> Stashed changes
