@@ -19,75 +19,11 @@ AVISO_COMPLIANCE = (
 )
 
 
-<<<<<<< Updated upstream
-def gerar_cartao_cnpj(empresa: Empresa) -> bytes:
-    pdf = DocumentoPDF()
-    pdf.add_page()
-
-    pdf.fonte("B", 10)
-    pdf.linha(5, "REPÚBLICA FEDERATIVA DO BRASIL", align="C")
-    pdf.fonte("B", 12)
-    pdf.linha(6, "CADASTRO NACIONAL DA PESSOA JURÍDICA", align="C")
-    pdf.fonte("B", 9)
-    pdf.linha(5, "COMPROVANTE DE INSCRIÇÃO E DE SITUAÇÃO CADASTRAL", align="C")
-    pdf.ln(4)
-
-    pdf.fonte("", 8)
-    largura = pdf.w - 20
-    pdf.cell(
-        largura * 0.63,
-        9,
-        pdf.txt(
-            f"NÚMERO DE INSCRIÇÃO: {formatar_cnpj(empresa.cnpj)} ({empresa.matriz_filial})"
-        ),
-        border=1,
-    )
-    pdf.linha(
-        9, f"DATA DE ABERTURA: {empresa.data_abertura}", largura=largura * 0.37, border=1
-    )
-
-    for rotulo, valor in (
-        ("NOME EMPRESARIAL", empresa.razao_social),
-        ("NOME FANTASIA", empresa.nome_fantasia),
-        ("ATIVIDADE ECONÔMICA PRINCIPAL", empresa.cnae_principal_str),
-    ):
-        pdf.paragrafo(6, f"{rotulo}: {valor}", border=1)
-
-    secundarias = "; ".join(str(a) for a in empresa.atividades_secundarias) or "Não informada"
-    pdf.paragrafo(5, f"ATIVIDADES ECONÔMICAS SECUNDÁRIAS: {secundarias}", border=1)
-    pdf.paragrafo(6, f"NATUREZA JURÍDICA: {empresa.natureza_juridica}", border=1)
-    pdf.paragrafo(
-        6,
-        f"ENDEREÇO: {empresa.endereco.linha_completa} [IBGE: {empresa.endereco.cod_ibge}]",
-        border=1,
-    )
-
-    pdf.cell(largura * 0.63, 9, pdf.txt(f"E-MAIL: {empresa.email_str}"), border=1)
-    pdf.linha(9, f"TELEFONE: {empresa.telefone_str}", largura=largura * 0.37, border=1)
-    pdf.cell(
-        largura * 0.63,
-        9,
-        pdf.txt(f"SITUAÇÃO CADASTRAL: {empresa.situacao.situacao_receita}"),
-        border=1,
-    )
-    pdf.linha(9, f"PORTE: {empresa.porte}", largura=largura * 0.37, border=1)
-
-    pdf.ln(3)
-    pdf.fonte("I", 7)
-    pdf.paragrafo(
-        4,
-        "Documento gerado a partir de bases públicas "
-        f"({', '.join(empresa.fontes)}). Não substitui o comprovante "
-        "oficial emitido pela Receita Federal.",
-    )
-    return pdf.bytes()
-=======
 # O Cartão CNPJ mudou de casa: o leiaute da Receita tem grade própria e
 # precisou de helpers de caixa que não fazem sentido para o dossiê. Fica em
 # pdf_cartao.py, e este nome segue exportado para não quebrar quem já
 # importava daqui (src/ui/state.py e a API).
 gerar_cartao_cnpj = _gerar_cartao_cnpj
->>>>>>> Stashed changes
 
 
 def gerar_dossie(empresa: Empresa) -> bytes:

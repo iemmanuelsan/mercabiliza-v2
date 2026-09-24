@@ -661,8 +661,6 @@ def test_bloco_removido_nao_e_aceito_em_silencio(autorizado):
         r = autorizado.post("/v1/transicao", json={bloco: {"x": "y"}})
         assert r.status_code == 422, bloco
         assert bloco in r.text
-<<<<<<< Updated upstream
-=======
 
 
 # --------------------------------------------------------------------------- #
@@ -743,4 +741,3 @@ def test_cartao_nao_aceita_diagnostico_vindo_do_navegador(autorizado):
         },
     )
     assert r.status_code == 422
->>>>>>> Stashed changes

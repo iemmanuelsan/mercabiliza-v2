@@ -46,16 +46,12 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.core.contrato import ParametrosContrato, TemplateContratoAusente
-<<<<<<< Updated upstream
-from src.core.models import Endereco
-=======
 from src.core.models import (
     AtividadeCNAE,
     Empresa,
     Endereco,
     SituacaoCadastral,
 )
->>>>>>> Stashed changes
 from src.core.pessoas import (
     Contratada,
     ContratantePF,
@@ -73,11 +69,8 @@ from src.exporters.docx_transicao import (
 from src.exporters.docx_transicao import (
     gerar_formulario_transicao,
 )
-<<<<<<< Updated upstream
-=======
 from src.core.tributario import classificar_cnae
 from src.exporters.pdf_cartao import gerar_cartao_cnpj
->>>>>>> Stashed changes
 from src.exporters.pdf_documentos import gerar_contrato, gerar_ficha_cadastral
 
 logging.basicConfig(level=os.getenv("MERCABILIZA_LOG_LEVEL", "INFO"))
@@ -424,8 +417,6 @@ class PedidoTransicao(Estrito):
     sucessao: SucessaoIn = Field(default_factory=SucessaoIn)
 
 
-<<<<<<< Updated upstream
-=======
 class AtividadeIn(Estrito):
     codigo: str = ""
     descricao: str = ""
@@ -499,7 +490,6 @@ class PedidoCartaoCnpj(Estrito):
         )
 
 
->>>>>>> Stashed changes
 # --------------------------------------------------------------------------- #
 # Auxiliares                                                                  #
 # --------------------------------------------------------------------------- #
@@ -657,8 +647,6 @@ def transicao(pedido: PedidoTransicao) -> Response:
     )
     logger.info("Formulário de transição gerado para %s (%d bytes)", nome, len(docx))
     return _arquivo(docx, f"transicao-contabil-{_slug(nome)}.docx", DOCX)
-<<<<<<< Updated upstream
-=======
 
 
 @app.post("/v1/cartao-cnpj", dependencies=[Protegido])
@@ -679,4 +667,3 @@ def cartao_cnpj(pedido: PedidoCartaoCnpj) -> Response:
     nome = empresa.razao_social or empresa.cnpj
     logger.info("Cartão CNPJ gerado para %s (%d bytes)", nome, len(pdf))
     return _arquivo(pdf, f"cartao-cnpj-{_slug(nome)}.pdf", PDF)
->>>>>>> Stashed changes

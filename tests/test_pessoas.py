@@ -599,14 +599,9 @@ def test_representante_so_com_nome_entra_na_qualificacao():
 
     assert "GILBERTO VILLELA" in texto
     assert "neste ato representado por" in texto
-<<<<<<< Updated upstream
-    # A lacuna do CPF fica visível, para preencher à mão na assinatura.
-    assert "______" in texto
-=======
     # E sem lacuna: o CPF que ele não preencheu simplesmente não é mencionado.
     assert "______" not in texto
     assert "CPF" not in texto.split("representado por")[1]
->>>>>>> Stashed changes
 
 
 def test_sem_nome_nenhum_o_bloco_continua_fora():
