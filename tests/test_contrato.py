@@ -400,3 +400,78 @@ def test_testemunhas_so_aparecem_se_pedidas_explicitamente():
     """O padrão virou False; o bloco continua existindo para outros modelos."""
     assert "Testemunhas" not in _texto_do_contrato()
     assert "Testemunhas" in _texto_do_contrato(com_testemunhas=True)
+
+
+# --------------------------------------------------------------------------- #
+# Numeração da CLÁUSULA 2                                                      #
+# --------------------------------------------------------------------------- #
+def _subitens_da_clausula_2(**kw) -> list[str]:
+    """Itens 2.x e 2.x.y na ordem em que aparecem, sem repetição."""
+    import re
+
+    texto = " ".join(renderizar_minuta(_pj(), contratada_padrao(), _params(**kw)).split())
+    vistos: set[str] = set()
+    ordem: list[str] = []
+    for item in re.findall(r"(?<![\d.])2\.\d(?:\.\d)?\.", texto):
+        if item not in vistos:
+            vistos.add(item)
+            ordem.append(item)
+    return ordem
+
+
+def test_numeracao_da_clausula_2_nao_tem_buraco():
+    """A minuta pulava de 2.1.1 para 2.1.3 — não existia 2.1.2.
+
+    O item que faltava era o do honorário adicional anual do modelo original,
+    removido em algum momento. Ficou o buraco, e ficou a 2.1.3 falando de "a
+    parcela adicional" sem antecedente. Um contrato com numeração salteada é
+    a primeira coisa que o advogado do outro lado comenta.
+    """
+    assert _subitens_da_clausula_2(valor_implantacao=500.0) == [
+        "2.1.", "2.1.1.", "2.1.2.", "2.1.3.",
+        "2.2.", "2.3.", "2.3.1.", "2.4.", "2.5.",
+    ]
+
+
+def test_sem_implantacao_a_numeracao_continua_sequencial():
+    """⚠️ O caso que a correção do buraco fixo NÃO resolvia sozinha.
+
+    O 2.1.1 (implantação) vive dentro de um `{% if %}`: só existe quando há
+    valor de implantação — e na maioria dos contratos não há. Com números
+    escritos à mão, esses contratos voltavam a pular de 2.1 para 2.1.2.
+
+    Era pior que o buraco original, porque aparecia num contrato e sumia no
+    seguinte, dependendo de um campo do formulário. Por isso a numeração dos
+    subitens é calculada no template.
+    """
+    itens = _subitens_da_clausula_2(valor_implantacao=0.0)
+
+    assert itens == ["2.1.", "2.1.1.", "2.1.2.", "2.2.", "2.3.", "2.3.1.", "2.4.", "2.5."]
+    # E o texto da implantação realmente não está lá.
+    texto = renderizar_minuta(
+        _pj(), contratada_padrao(), _params(valor_implantacao=0.0)
+    )
+    assert "título de implantação" not in texto
+
+
+def test_a_clausula_de_mora_continua_apontando_para_a_2_1():
+    """A renumeração não pode quebrar a referência cruzada: a cláusula de
+    multa cita "o item 2.1", que é o do valor mensal e não mudou de número."""
+    texto = renderizar_minuta(_pj(), contratada_padrao(), _params())
+    assert "data avençada no item 2.1 acarretarão" in " ".join(texto.split())
+
+
+def test_demonstracoes_intermediarias_nas_duas_minutas():
+    """Redação nova do item c) e da 2.3.1, pedida pela diretoria."""
+    from src.core.contrato import TEMPLATE_CONTRATO
+
+    for template in (TEMPLATE_CONTRATO, "contrato_servicos_contabeis.md.j2"):
+        texto = " ".join(
+            renderizar_minuta(
+                _pj(), contratada_padrao(), _params(), template=template
+            ).split()
+        )
+        assert "demonstrações intermediárias quando necessárias ou solicitadas" in texto
+        assert "preferencialmente com prazo não inferior a 60 (sessenta) dias" in texto
+        # A redação antiga não pode ter sobrado em nenhuma das duas.
+        assert "balanço anual de demonstrativo" not in texto
