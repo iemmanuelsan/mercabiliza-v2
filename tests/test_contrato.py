@@ -161,13 +161,17 @@ def test_minuta_renderiza_com_as_partes():
 
 def test_minuta_tem_todas_as_clausulas_essenciais():
     texto = renderizar_minuta(_pj(), contratada_padrao(), _params())
+    # Títulos da versão final da diretoria (out/2026), com 10 cláusulas.
     for termo in (
-        "DO OBJETO",
-        "DOS DEVERES DA CONTRATADA",
+        "DO OBJETO E DO ESCOPO DOS SERVIÇOS",
+        "DOS HONORÁRIOS E DAS CONDIÇÕES DE EXECUÇÃO",
+        "DOS DEVERES E DA RESPONSABILIDADE DA CONTRATADA",
         "DOS DEVERES DA CONTRATANTE",
-        "DOS VALORES",
-        "DA VIGÊNCIA E RESCISÃO",
-        "PROTEÇÃO DE DADOS",
+        "DA REVISÃO DE HONORÁRIOS",
+        "DA VIGÊNCIA, SUSPENSÃO E RESCISÃO",
+        "DA PROTEÇÃO DE DADOS E CONFIDENCIALIDADE",
+        "DAS OBRIGAÇÕES LEGAIS E REGULATÓRIAS",
+        "DAS COMUNICAÇÕES",
         "DO FORO",
     ):
         assert termo in texto, f"cláusula ausente: {termo}"
@@ -216,10 +220,10 @@ def test_clausulas_particulares_criam_secao_e_renumeram_o_foro():
         _pj(), contratada_padrao(), _params(clausulas_particulares=("Desconto de 20%.",))
     )
     assert "DISPOSIÇÕES PARTICULARES" not in sem
-    assert "CLÁUSULA 7 - DO FORO" in sem
+    assert "CLÁUSULA 10 - DO FORO" in sem
     assert "DISPOSIÇÕES PARTICULARES" in com
     assert "Desconto de 20%." in com
-    assert "CLÁUSULA 8 - DO FORO" in com
+    assert "CLÁUSULA 11 - DO FORO" in com
 
 
 def test_minuta_funciona_para_pessoa_fisica():
@@ -283,8 +287,11 @@ def test_escopo_de_dp_e_monofasico_e_opcional():
 
     com_mono = renderizar_minuta(_pj(), contratada_padrao(), _params(incluir_monofasico=True))
     sem_mono = renderizar_minuta(_pj(), contratada_padrao(), _params(incluir_monofasico=False))
-    assert "monofásica" in com_mono
-    assert "monofásica" not in sem_mono
+    # A SEÇÃO de escopo é que some. A palavra "monofásica" continua no
+    # contrato, na cláusula de acesso aos sistemas (7.3.2), onde descreve uma
+    # das finalidades do acesso — não o escopo contratado.
+    assert "SEGREGAÇÃO DE RECEITAS" in com_mono
+    assert "SEGREGAÇÃO DE RECEITAS" not in sem_mono
 
 
 def test_nota_de_rodape_cita_o_codigo_civil_correto():
@@ -406,13 +413,13 @@ def test_testemunhas_so_aparecem_se_pedidas_explicitamente():
 # Numeração da CLÁUSULA 2                                                      #
 # --------------------------------------------------------------------------- #
 def _subitens_da_clausula_2(**kw) -> list[str]:
-    """Itens 2.x e 2.x.y na ordem em que aparecem, sem repetição."""
+    """Itens 2.1.x na ordem em que aparecem, sem repetição."""
     import re
 
     texto = " ".join(renderizar_minuta(_pj(), contratada_padrao(), _params(**kw)).split())
     vistos: set[str] = set()
     ordem: list[str] = []
-    for item in re.findall(r"(?<![\d.])2\.\d(?:\.\d)?\.", texto):
+    for item in re.findall(r"(?<![\d.])2\.1(?:\.\d)?\.", texto):
         if item not in vistos:
             vistos.add(item)
             ordem.append(item)
@@ -429,7 +436,6 @@ def test_numeracao_da_clausula_2_nao_tem_buraco():
     """
     assert _subitens_da_clausula_2(valor_implantacao=500.0) == [
         "2.1.", "2.1.1.", "2.1.2.", "2.1.3.",
-        "2.2.", "2.3.", "2.3.1.", "2.4.", "2.5.",
     ]
 
 
@@ -446,7 +452,7 @@ def test_sem_implantacao_a_numeracao_continua_sequencial():
     """
     itens = _subitens_da_clausula_2(valor_implantacao=0.0)
 
-    assert itens == ["2.1.", "2.1.1.", "2.1.2.", "2.2.", "2.3.", "2.3.1.", "2.4.", "2.5."]
+    assert itens == ["2.1.", "2.1.1.", "2.1.2."]
     # E o texto da implantação realmente não está lá.
     texto = renderizar_minuta(
         _pj(), contratada_padrao(), _params(valor_implantacao=0.0)
@@ -454,15 +460,32 @@ def test_sem_implantacao_a_numeracao_continua_sequencial():
     assert "título de implantação" not in texto
 
 
-def test_a_clausula_de_mora_continua_apontando_para_a_2_1():
-    """A renumeração não pode quebrar a referência cruzada: a cláusula de
-    multa cita "o item 2.1", que é o do valor mensal e não mudou de número."""
-    texto = renderizar_minuta(_pj(), contratada_padrao(), _params())
-    assert "data avençada no item 2.1 acarretarão" in " ".join(texto.split())
+def test_as_referencias_cruzadas_do_contrato_existem():
+    """Cláusula que cita outra pelo número tem de citar número que existe.
+
+    A versão final amarra a cláusula de acesso aos sistemas (7.3) nos itens
+    2.2.5, 4.2.8, 2.4.3 e 2.4.4 — e essa amarração não é decorativa: sem ela,
+    autorizar o acesso ao PDV do cliente poderia ser lido como transferência à
+    CONTRATADA do ônus de descobrir o que ele não informou.
+    """
+    texto = " ".join(renderizar_minuta(_pj(), contratada_padrao(), _params()).split())
+
+    for citado in ("2.2.5", "4.2.8", "2.4.3", "2.4.4", "2.1-A", "cláusula 4.7"):
+        assert citado in texto, f"referência cruzada a {citado} sumiu"
+    assert "Anexo II" in texto
+
+    # E os itens citados realmente existem como itens do contrato.
+    for item in ("2.2.5.", "4.2.8.", "2.4.3.", "2.4.4."):
+        assert item in texto, f"o item {item} é citado mas não existe"
 
 
-def test_demonstracoes_intermediarias_nas_duas_minutas():
-    """Redação nova do item c) e da 2.3.1, pedida pela diretoria."""
+def test_demonstracoes_intermediarias_exigem_60_dias_nas_duas_minutas():
+    """O prazo de 60 dias para demonstração intermediária vale nas duas.
+
+    A redação difere: a minuta principal, na versão final da diretoria, diz
+    "antecedência mínima"; a segunda minuta mantém "preferencialmente com
+    prazo não inferior a". O que não pode faltar em nenhuma é o prazo.
+    """
     from src.core.contrato import TEMPLATE_CONTRATO
 
     for template in (TEMPLATE_CONTRATO, "contrato_servicos_contabeis.md.j2"):
@@ -471,7 +494,90 @@ def test_demonstracoes_intermediarias_nas_duas_minutas():
                 _pj(), contratada_padrao(), _params(), template=template
             ).split()
         )
-        assert "demonstrações intermediárias quando necessárias ou solicitadas" in texto
-        assert "preferencialmente com prazo não inferior a 60 (sessenta) dias" in texto
+        assert "60 (sessenta) dias" in texto, f"prazo ausente em {template}"
+        assert "períodos intermediários" in texto, f"regra ausente em {template}"
         # A redação antiga não pode ter sobrado em nenhuma das duas.
         assert "balanço anual de demonstrativo" not in texto
+
+
+def test_o_termo_de_acesso_e_anexo_e_nao_clausula_do_corpo():
+    """Decisão da diretoria: o termo de aceite fica SEPARADO do contrato.
+
+    A primeira versão trazia o texto como cláusula 7.3, no meio do corpo. O
+    gerente pediu para recuar: como anexo com aceite próprio, o cliente é
+    obrigado a ler e assinar aquele bloco, em vez de o consentimento passar
+    despercebido entre as cláusulas de proteção de dados.
+    """
+    texto = " ".join(renderizar_minuta(_pj(), contratada_padrao(), _params()).split())
+
+    # O corpo só REMETE ao anexo.
+    assert "constante do **Anexo II**" in texto
+    assert "ANEXO II - TERMO DE AUTORIZAÇÃO E ACEITE DE ACESSO" in texto
+
+    # E o conteúdo está no anexo, não na cláusula 7.
+    corpo, anexo = texto.split("ANEXO II", 1)
+    assert "TouchPay" not in corpo, "o termo voltou para o corpo do contrato"
+    assert "TouchPay" in anexo and "AMLabs" in anexo
+
+
+def test_o_anexo_tem_aceite_proprio():
+    """É o que faz o cliente ter de ler e assinar — o pedido do gerente."""
+    texto = " ".join(renderizar_minuta(_pj(), contratada_padrao(), _params()).split())
+    anexo = texto.split("ANEXO II", 1)[1]
+
+    assert "DO ACEITE" in anexo
+    assert "li o presente Termo" in anexo
+    assert "**aceito**" in anexo
+    # Assinatura própria, além da do contrato.
+    assert "responsável legal ou administrador de sistemas" in anexo
+
+
+def test_o_anexo_comeca_em_pagina_nova():
+    """Anexo que começa no meio da página do contrato não parece anexo."""
+    texto = renderizar_minuta(_pj(), contratada_padrao(), _params())
+    assert "[[QUEBRA]]" in texto
+    assert texto.index("[[QUEBRA]]") < texto.index("ANEXO II")
+
+
+def test_o_anexo_mantem_as_amarras_com_o_contrato():
+    """Mudar de cláusula para anexo não pode soltar as referências cruzadas.
+
+    Sem os itens 2.2.5 e 4.2.8, autorizar o acesso ao PDV poderia ser lido
+    como transferência à CONTRATADA do ônus de descobrir o que o cliente não
+    informou — exatamente o que aqueles itens afastam.
+    """
+    texto = " ".join(renderizar_minuta(_pj(), contratada_padrao(), _params()).split())
+    anexo = texto.split("ANEXO II", 1)[1]
+
+    for citado in ("2.2.5", "4.2.8", "2.4.3", "2.4.4"):
+        assert citado in anexo, f"o anexo perdeu a referência ao item {citado}"
+    assert "13.709/2018" in anexo
+
+
+def test_carta_de_responsabilidade_e_condicao_do_fechamento():
+    """A cláusula 4.6 é o que dá efeito prático à carta: sem ela, as
+    demonstrações não são assinadas."""
+    texto = " ".join(renderizar_minuta(_pj(), contratada_padrao(), _params()).split())
+
+    assert "CARTA DE RESPONSABILIDADE DA ADMINISTRAÇÃO" in texto
+    assert "ficarão condicionadas" in texto
+    assert "não se presumindo renovada" in texto
+
+
+def test_limite_de_responsabilidade_de_doze_mensalidades():
+    texto = " ".join(renderizar_minuta(_pj(), contratada_padrao(), _params()).split())
+
+    assert "12 (doze) mensalidades" in texto
+    # A ressalva importa tanto quanto o limite: ele não afasta o que a lei não
+    # deixa limitar.
+    assert "não afasta responsabilidades profissionais" in texto
+
+
+def test_faixas_de_honorario_saem_como_exemplo():
+    """Decisão do Iago: as faixas entram para o cliente ficar ciente de como o
+    valor se move, sem fixar total — que varia por competência."""
+    texto = " ".join(renderizar_minuta(_pj(), contratada_padrao(), _params()).split())
+
+    assert "valores apresentados são exemplificativos" in texto
+    assert "1 a 3 pessoas, R$ 50,00" in texto
+    assert "uma nova unidade representará acréscimo de R$ 50,00" in texto

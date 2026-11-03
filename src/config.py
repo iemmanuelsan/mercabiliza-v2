@@ -191,3 +191,24 @@ class Settings:
 
 
 settings = Settings()
+
+
+# --------------------------------------------------------------------------- #
+# Carta de Responsabilidade da Administração                                   #
+# --------------------------------------------------------------------------- #
+# Bloco de destinatário da carta. É literal e separado da qualificação do
+# contrato de propósito: aqui a Mercabiliza aparece como DESTINATÁRIA de uma
+# declaração do cliente, não como parte contratante — e o CRC que importa
+# nesse papel é o da ORGANIZAÇÃO contábil (começa com 2), não o do
+# responsável técnico pessoa física.
+#
+# Os dois números vieram do modelo oficial aprovado pela diretoria
+# (`Carta_Responsabilidade_Administracao_Anual_Mercabiliza_Final.docx`).
+CARTA_DESTINATARIO_FIXO = (
+    "À **MERCABILIZA SOLUCOES FISCAIS E CONTABEIS LTDA.**, CNPJ "
+    "**62.350.925/0001-10**, CRC/SP nº **2SP053162/O-1**, com sede na Rua "
+    "Anchieta, 204 — Sala 102 — Vila Boaventura — CEP 13201-804 — Jundiaí/SP."
+)
+
+#: CRC da organização contábil, como consta do modelo da carta.
+CONTRATADA_CRC_ORGANIZACAO = "2SP053162/O-1"

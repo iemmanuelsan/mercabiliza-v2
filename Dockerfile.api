@@ -50,8 +50,23 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD curl -fsS "http://localhost:${PORT}/health" || exit 1
 
-# --workers 2: gerar PDF é CPU-bound e bloqueia o processo. Com um worker só,
-# duas pessoas pedindo contrato ao mesmo tempo esperam em fila. Dois cabem
-# folgados nos 512 MB do plano Starter do Render.
-# Forma shell para o ${PORT} ser expandido em tempo de execução.
-CMD uvicorn api:app --host 0.0.0.0 --port ${PORT} --workers 2
+# Número de workers: configurável, com padrão 1.
+#
+# ⚠️ Antes era `--workers 2` fixo, com o comentário "dois cabem folgados nos
+#    512 MB do plano Starter". O raciocínio estava certo para o Starter e
+#    ERRADO para o Free — e o serviço acabou rodando no Free.
+#
+#    Os dois planos têm 512 MB, mas a CPU difere em 5x: Starter tem 0.5 e
+#    Free tem **0.1**. Dois workers carregando ReportLab e as fontes DejaVu
+#    ao mesmo tempo, com um décimo de CPU, não sobem a tempo — e o log do
+#    Render mostrou exatamente isso: "Child process [9] died", "Child process
+#    [10] died", e só na terceira tentativa a aplicação completou o startup,
+#    46 segundos depois de começar.
+#
+#    Com 1 worker o arranque é mais rápido e não há disputa de CPU. Gerar PDF
+#    é CPU-bound e bloqueia o processo, então no plano pago vale subir para 2
+#    — daí a variável em vez de outro número fixo.
+#
+# Forma shell para ${PORT} e ${WEB_CONCURRENCY} serem expandidos em execução.
+ENV WEB_CONCURRENCY=1
+CMD uvicorn api:app --host 0.0.0.0 --port ${PORT} --workers ${WEB_CONCURRENCY}

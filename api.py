@@ -45,6 +45,7 @@ from typing import Annotated, Literal
 from fastapi import Depends, FastAPI, Header, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.core.carta import ParametrosCarta
 from src.core.contrato import ParametrosContrato, TemplateContratoAusente
 from src.core.models import (
     AtividadeCNAE,
@@ -70,6 +71,7 @@ from src.exporters.docx_transicao import (
     gerar_formulario_transicao,
 )
 from src.core.tributario import classificar_cnae
+from src.exporters.pdf_carta import gerar_carta_responsabilidade
 from src.exporters.pdf_cartao import gerar_cartao_cnpj
 from src.exporters.pdf_documentos import gerar_contrato, gerar_ficha_cadastral
 
@@ -667,3 +669,43 @@ def cartao_cnpj(pedido: PedidoCartaoCnpj) -> Response:
     nome = empresa.razao_social or empresa.cnpj
     logger.info("Cartão CNPJ gerado para %s (%d bytes)", nome, len(pdf))
     return _arquivo(pdf, f"cartao-cnpj-{_slug(nome)}.pdf", PDF)
+
+
+class PedidoCarta(Estrito):
+    """Carta de Responsabilidade da Administração de um exercício.
+
+    O `contratante` é o mesmo schema do contrato — e é de lá que saem o
+    administrador que assina e o município. A carta não inventa signatário:
+    se o representante legal não estiver preenchido, o pedido é recusado com
+    422, porque declaração de responsabilidade sem declarante identificado
+    não declara nada.
+    """
+
+    contratante: ContratanteIn
+    exercicio: int
+    cidade: str = ""
+    uf: str = "SP"
+
+
+@app.post("/v1/carta-responsabilidade", dependencies=[Protegido])
+def carta_responsabilidade(pedido: PedidoCarta) -> Response:
+    contratante = pedido.contratante.para_dominio()
+    try:
+        pdf = gerar_carta_responsabilidade(
+            contratante,
+            ParametrosCarta(
+                exercicio=pedido.exercicio,
+                cidade=pedido.cidade,
+                uf=pedido.uf,
+            ),
+        )
+    except TemplateContratoAusente as exc:
+        raise HTTPException(500, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, f"Dados insuficientes para a carta: {exc}") from exc
+
+    nome = getattr(contratante, "razao_social", None) or getattr(contratante, "nome", "")
+    logger.info("Carta de responsabilidade %s gerada para %s", pedido.exercicio, nome)
+    return _arquivo(
+        pdf, f"carta-responsabilidade-{pedido.exercicio}-{_slug(nome)}.pdf", PDF
+    )
