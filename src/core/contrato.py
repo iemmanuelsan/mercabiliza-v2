@@ -290,7 +290,14 @@ def renderizar_minuta(
 
 
 def listar_minutas() -> list[str]:
-    """Templates disponíveis — permite ter mais de um modelo de contrato."""
+    """Modelos de CONTRATO disponíveis.
+
+    ⚠️ O filtro é ``contrato_*`` e não ``*``: a pasta ``templates/`` guarda
+    outros documentos em Jinja — a Carta de Responsabilidade, por exemplo. Com
+    o glob aberto, a carta apareceria no seletor "Modelo de minuta" da aba de
+    contratos, e escolhê-la geraria um "contrato" que é uma declaração do
+    cliente, com os blocos de assinatura trocados.
+    """
     if not Path(TEMPLATES_DIR).is_dir():
         return []
-    return sorted(p.name for p in TEMPLATES_DIR.glob("*.md.j2"))
+    return sorted(p.name for p in TEMPLATES_DIR.glob("contrato_*.md.j2"))

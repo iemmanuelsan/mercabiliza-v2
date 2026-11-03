@@ -1,0 +1,81 @@
+{#
+  CARTA DE RESPONSABILIDADE DA ADMINISTRAÇÃO
+  ==========================================
+
+  Fiel ao modelo oficial `Carta_Responsabilidade_Administracao_Anual_
+  Mercabiliza_Final.docx`. As dez alíneas (a–j) são texto FIXO: não são
+  parametrizadas nem reescritas, porque é justamente a redação delas que
+  delimita o que a Administração está declarando. Só os identificadores
+  variam.
+
+  CONVENÇÕES LIDAS PELO GERADOR DE PDF  (iguais às do contrato)
+    ## TÍTULO           título centralizado em negrito
+    ### SUBTÍTULO       subtítulo à esquerda
+    linha comum         parágrafo justificado
+    a) item             item de lista alfabética (parágrafo recuado)
+    **texto**           negrito
+    [[ASSINATURAS]]     blocos de assinatura
+    [[QUEBRA]]          quebra de página
+
+  VARIÁVEIS
+    contratada_fixa     bloco literal de identificação da Mercabiliza
+    e.*                 empresa (razão social, CNPJ formatado, município)
+    adm.*               administrador: nome, cpf_formatado, qualificacao
+    c.*                 carta: exercicio, periodo_inicio, periodo_fim,
+                        cidade, uf, data_extenso
+
+  ⚠️ `exercicio` é string e não int de propósito: ela entra no texto do
+     período-base e no título, e converter número para texto no template é
+     onde nascem divergências como "2025" x "2.025".
+#}
+## CARTA DE RESPONSABILIDADE DA ADMINISTRAÇÃO
+
+Referente ao exercício social **{{ c.exercicio }}**
+
+### IDENTIFICAÇÃO
+
+**EMPRESA:** {{ e.razao_social }} — CNPJ {{ e.cnpj_formatado }}
+
+**EXERCÍCIO:** {{ c.exercicio }}
+
+**PERÍODO-BASE:** {{ c.periodo_inicio }} a {{ c.periodo_fim }}
+
+**ADMINISTRADOR:** {{ adm.linha_qualificacao }}
+
+### DECLARAÇÃO
+
+{{ contratada_fixa }}
+
+Na qualidade de administrador e representante da empresa acima identificada, e para fins de encerramento contábil do exercício indicado, declaro, sob minha responsabilidade, que as informações, documentos e esclarecimentos disponibilizados à contabilidade refletem, de forma completa e fidedigna, as operações e fatos relevantes da empresa no período.
+
+Declaro, ainda, que:
+
+a) os controles internos, a guarda de documentos e a organização das informações da empresa são de responsabilidade da Administração;
+
+b) foram disponibilizados à contabilidade os documentos e informações relevantes relativos às movimentações financeiras, patrimoniais, fiscais e trabalhistas do período, inclusive extratos bancários, movimentações de caixa, aplicações, contratos, empréstimos, financiamentos, aquisições e alienações de bens, contas a pagar e a receber, documentos fiscais de compras, vendas e serviços e demais operações aplicáveis;
+
+c) não foram omitidas operações, contas bancárias, movimentações em dinheiro, vendas, prestações de serviços, aquisições, obrigações, ativos, passivos, receitas, despesas, aportes, retiradas, empréstimos entre sócios e empresa, distribuições de lucros ou outros fatos com potencial efeito sobre a escrituração ou as demonstrações contábeis, exceto aqueles expressamente informados à contabilidade;
+
+d) quando aplicável, os estoques informados representam os saldos apurados e validados pela Administração, a quem compete sua contagem, identificação e avaliação física, salvo contratação específica em sentido diverso;
+
+e) as informações e documentos fornecidos são autênticos, íntegros e correspondem às operações efetivamente realizadas, tendo sido observadas, sob responsabilidade da Administração, as obrigações aplicáveis quanto à emissão, obtenção e guarda dos documentos fiscais e comprobatórios;
+
+f) as operações sujeitas à documentação fiscal foram regularmente documentadas e não foi solicitada à CONTRATADA a omissão, redução, alteração ou registro de valores em desacordo com as operações efetivamente realizadas;
+
+g) não tenho conhecimento de fraude, irregularidade, operação ilícita, contingência relevante ou fato material que devesse ser refletido ou divulgado contabilmente e que não tenha sido comunicado à contabilidade;
+
+h) eventuais operações com partes relacionadas, sócios, administradores ou empresas vinculadas foram devidamente informadas;
+
+i) tenho ciência de que a escrituração e as demonstrações contábeis são elaboradas com base nas informações e documentos disponibilizados pela Administração e de que a ausência, atraso ou insuficiência de elementos pode impedir, atrasar ou comprometer o encerramento contábil;
+
+j) comprometo-me a comunicar prontamente qualquer informação adicional ou correção referente ao período-base que venha a ser identificada após a assinatura desta carta.
+
+Confirmo, por fim, que tive oportunidade de revisar as informações e saldos apresentados para o encerramento do período e que eventuais divergências conhecidas foram comunicadas à CONTRATADA antes da assinatura das demonstrações contábeis.
+
+A presente carta refere-se exclusivamente ao exercício indicado e não se renova automaticamente para períodos posteriores. Uma nova Carta de Responsabilidade deverá ser emitida para cada exercício social.
+
+Esta declaração tem por finalidade delimitar as responsabilidades da Administração quanto aos controles, documentos e informações fornecidos, sem afastar as obrigações profissionais legalmente atribuídas à CONTRATADA.
+
+{{ c.cidade }}/{{ c.uf }}, {{ c.data_extenso }}.
+
+[[ASSINATURAS]]

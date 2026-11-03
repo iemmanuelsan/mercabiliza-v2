@@ -420,11 +420,12 @@ def test_clausulas_particulares_entram_no_contrato(autorizado):
 
     assert "DISPOSIÇÕES PARTICULARES" in texto
     assert "desconto de 20%" in texto
-    # E o foro é renumerado: sem cláusula é a 7, com cláusula vira a 8.
-    assert "CLÁUSULA 8 - DO FORO" in texto
+    # E o foro é renumerado: sem cláusula é a 10, com cláusula vira a 11.
+    # (Eram 7 e 8 na minuta anterior, de 8 cláusulas.)
+    assert "CLÁUSULA 11 - DO FORO" in texto
 
 
-def test_sem_clausulas_o_foro_continua_sendo_a_7(autorizado):
+def test_sem_clausulas_o_foro_continua_sendo_a_10(autorizado):
     pdfplumber = pytest.importorskip("pdfplumber")
     import io
 
@@ -433,7 +434,7 @@ def test_sem_clausulas_o_foro_continua_sendo_a_7(autorizado):
         texto = "\n".join((p.extract_text() or "") for p in pdf.pages)
 
     assert "DISPOSIÇÕES PARTICULARES" not in texto
-    assert "CLÁUSULA 7 - DO FORO" in texto
+    assert "CLÁUSULA 10 - DO FORO" in texto
 
 
 def test_varias_clausulas_saem_todas(autorizado):
@@ -739,5 +740,42 @@ def test_cartao_nao_aceita_diagnostico_vindo_do_navegador(autorizado):
                 "diagnostico": {"anexo": "I", "aliquota": 0.04},
             },
         },
+    )
+    assert r.status_code == 422
+
+
+# --------------------------------------------------------------------------- #
+# /v1/carta-responsabilidade                                                   #
+# --------------------------------------------------------------------------- #
+def test_carta_exige_chave(cliente):
+    corpo = {"contratante": PJ, "exercicio": 2025}
+    assert cliente.post("/v1/carta-responsabilidade", json=corpo).status_code == 401
+
+
+def test_carta_sai_com_o_exercicio_no_nome_do_arquivo(autorizado):
+    """Quem emite a carteira inteira no fechamento vai ter 40 PDFs na pasta de
+    Downloads. O ano no nome é o que faz achar o certo depois."""
+    r = autorizado.post(
+        "/v1/carta-responsabilidade", json={"contratante": PJ, "exercicio": 2025}
+    )
+
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "application/pdf"
+    assert "carta-responsabilidade-2025" in r.headers["content-disposition"]
+
+
+def test_carta_sem_administrador_recusa_com_explicacao(autorizado):
+    sem_rep = {**PJ, "representante": {"nome": "", "cpf": ""}}
+    r = autorizado.post(
+        "/v1/carta-responsabilidade", json={"contratante": sem_rep, "exercicio": 2025}
+    )
+
+    assert r.status_code == 422
+    assert "administrador" in str(r.json()["detail"])
+
+
+def test_carta_recusa_exercicio_impossivel(autorizado):
+    r = autorizado.post(
+        "/v1/carta-responsabilidade", json={"contratante": PJ, "exercicio": 1999}
     )
     assert r.status_code == 422

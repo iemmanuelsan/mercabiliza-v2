@@ -22,9 +22,27 @@ services:
     # Não é o Dockerfile padrão: este repositório tem dois, um para o
     # Streamlit e um para a API.
     dockerfilePath: ./Dockerfile.api
-    plan: starter        # free hiberna após 15 min e o primeiro pedido depois
-                         # disso demora ~50s — ruim para gerar contrato na
-                         # frente de um cliente. starter ($7/mês) não hiberna.
+    # ⚠️ O serviço em produção está no plano FREE, não neste. Este arquivo
+    #    declara starter desde o início, mas o serviço foi criado à mão — e
+    #    blueprint não altera serviço existente. A diferença não é só o
+    #    hibernar:
+    #
+    #      free    0.1 CPU · 512 MB · hiberna após 15 min · ~1 min para acordar
+    #      starter 0.5 CPU · 512 MB · sempre de pé
+    #
+    #    No free, o primeiro pedido depois de ocioso demora cerca de um
+    #    minuto — ruim para gerar contrato na frente de um cliente — e a
+    #    borda chegou a recusar o pedido com 429 enquanto a instância subia.
+    #
+    #    DECISÃO (out/2026): fica no free por enquanto. Este arquivo passa a
+    #    declarar `free` para espelhar a produção — blueprint que declara um
+    #    plano pago é como o deploy vira cobrança que ninguém pediu, caso o
+    #    serviço seja recriado um dia.
+    #
+    #    Para subir depois: Settings → Instance Type no painel, e trocar aqui
+    #    para `starter`. Valendo a pena também subir WEB_CONCURRENCY para 2,
+    #    já que a CPU passa a comportar.
+    plan: free
     region: oregon
     branch: main
     autoDeploy: true     # push no template do contrato = API atualizada
