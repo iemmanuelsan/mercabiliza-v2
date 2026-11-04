@@ -779,3 +779,72 @@ def test_carta_recusa_exercicio_impossivel(autorizado):
         "/v1/carta-responsabilidade", json={"contratante": PJ, "exercicio": 1999}
     )
     assert r.status_code == 422
+
+
+# --------------------------------------------------------------------------- #
+# Cartão CNPJ — campos que o schema deixava cair                               #
+# --------------------------------------------------------------------------- #
+# Estes seis campos e o QSA não existiam em PedidoCartaoCnpj. Como o schema é
+# `extra="forbid"`, o front nem podia mandá-los: o cartão saía SEMPRE com
+# "NÃO INFORMADO" na opção pelo Simples/MEI e sem quadro de sócios, mesmo
+# quando os provedores tinham a resposta. A informação morria na fronteira da
+# API, e o tri-estado reportava com fidelidade uma ausência que o próprio
+# contrato da API estava criando.
+
+
+def _texto_pdf(conteudo: bytes) -> str:
+    import io
+
+    pdfplumber = pytest.importorskip("pdfplumber")
+    with pdfplumber.open(io.BytesIO(conteudo)) as pdf:
+        return "\n".join((p.extract_text() or "") for p in pdf.pages)
+
+
+def _pedido_cartao(**troca) -> dict:
+    base = {
+        "cnpj": "68506528000170",
+        "razao_social": "DAMARA SETE COMERCIO DE MERCADORIAS LTDA",
+        "situacao": "ATIVA",
+        "fontes": ["BrasilAPI"],
+    }
+    base.update(troca)
+    return base
+
+
+def test_cartao_aceita_opcao_pelo_simples_e_mei(autorizado):
+    r = autorizado.post(
+        "/v1/cartao-cnpj",
+        json=_pedido_cartao(
+            optante_simples=True,
+            optante_mei=False,
+            simples_desde="2026-08-11",
+        ),
+    )
+
+    assert r.status_code == 200, r.text
+    texto = _texto_pdf(r.content)
+    assert "11/08/2026" in texto
+    assert "NÃO INFORMADO" not in texto
+
+
+def test_cartao_aceita_o_qsa(autorizado):
+    r = autorizado.post(
+        "/v1/cartao-cnpj",
+        json=_pedido_cartao(
+            socios=[
+                {"nome": "NATHALIA BONDEZAN NASCIMENTO", "qualificacao": "Sócio-Administrador"},
+            ]
+        ),
+    )
+
+    assert r.status_code == 200, r.text
+    texto = _texto_pdf(r.content)
+    assert "QUADRO DE SÓCIOS" in texto
+    assert "NATHALIA BONDEZAN NASCIMENTO" in texto
+
+
+def test_cartao_sem_qsa_nao_imprime_o_quadro(autorizado):
+    r = autorizado.post("/v1/cartao-cnpj", json=_pedido_cartao())
+
+    assert r.status_code == 200
+    assert "QUADRO DE SÓCIOS" not in _texto_pdf(r.content)

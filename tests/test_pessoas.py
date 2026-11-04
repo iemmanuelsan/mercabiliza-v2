@@ -643,48 +643,100 @@ def test_falta_do_cpf_vira_pendencia_propria():
 # --------------------------------------------------------------------------- #
 # Opção tributária na ficha cadastral                                          #
 # --------------------------------------------------------------------------- #
-def test_ficha_omite_a_linha_quando_a_data_nao_veio():
-    """Linha ausente diz "não sei". Um "—" ao lado de "Desenquadrado do MEI em"
-    seria lido como "nunca fui desenquadrado" — afirmação diferente, e que
-    ninguém fez."""
+def test_sem_informacao_nenhuma_as_duas_linhas_ainda_saem():
+    """O STATUS sai sempre, inclusive como "não informado".
+
+    A ficha é conferida e assinada pelo cliente — campo que não aparece é
+    campo que ninguém confere, e "é optante?" é o que se quer conferir.
+    """
     from src.core.pessoas import ContratantePJ
 
-    pj = ContratantePJ(razao_social="X Ltda", cnpj="11222333000181")
-    assert pj.linhas_opcao_tributaria() == []
-
-    rotulos = [r for r, _ in pj.linhas_ficha()]
-    assert not any("MEI" in r for r in rotulos)
-
-
-def test_ficha_mostra_so_as_datas_informadas():
-    from src.core.pessoas import ContratantePJ
-
-    pj = ContratantePJ(
-        razao_social="X Ltda",
-        cnpj="11222333000181",
-        simples_desde="2021-03-15",
-        mei_desde="2019-01-10",
-        mei_ate="2021-03-14",
+    linhas = dict(
+        ContratantePJ(razao_social="X Ltda", cnpj="11222333000181")
+        .linhas_opcao_tributaria()
     )
-    linhas = dict(pj.linhas_opcao_tributaria())
 
-    assert linhas["Simples Nacional desde"] == "2021-03-15"
-    assert linhas["MEI desde"] == "2019-01-10"
-    assert linhas["Desenquadrado do MEI em"] == "2021-03-14"
-    assert "Excluído do Simples em" not in linhas
+    assert linhas["Optante pelo Simples Nacional"] == "Não informado pelas bases consultadas"
+    assert linhas["Optante pelo MEI (SIMEI)"] == "Não informado pelas bases consultadas"
 
 
-def test_as_datas_entram_logo_abaixo_do_regime():
-    """Posição importa: regime diz o que é hoje, as datas dizem desde quando."""
+def test_a_data_vai_junto_do_status_nao_em_linha_separada():
+    """Como no cartão: a pergunta é uma só — "é optante, e desde quando?"."""
+    from src.core.pessoas import ContratantePJ
+
+    linhas = dict(
+        ContratantePJ(
+            razao_social="DAMARA", cnpj="68506528000170",
+            optante_simples=True, optante_mei=False, simples_desde="2026-08-11",
+        ).linhas_opcao_tributaria()
+    )
+
+    assert linhas["Optante pelo Simples Nacional"] == "Sim — desde 11/08/2026"
+    # Nunca foi MEI: não há período a mostrar, e não se inventa um.
+    assert linhas["Optante pelo MEI (SIMEI)"] == "Não"
+    assert len(linhas) == 2, "status e data na MESMA linha, não em linhas separadas"
+
+
+def test_desenquadramento_aparece_como_periodo_fechado():
+    """O caso que justifica o campo: foi MEI, hoje é Simples."""
+    from src.core.pessoas import ContratantePJ
+
+    linhas = dict(
+        ContratantePJ(
+            razao_social="X Ltda", cnpj="11222333000181",
+            optante_simples=True, optante_mei=False,
+            simples_desde="2021-03-15", mei_desde="2019-01-10", mei_ate="2021-03-14",
+        ).linhas_opcao_tributaria()
+    )
+
+    assert linhas["Optante pelo Simples Nacional"] == "Sim — desde 15/03/2021"
+    assert linhas["Optante pelo MEI (SIMEI)"] == "Não — de 10/01/2019 a 14/03/2021"
+
+
+def test_saida_sem_entrada_nao_vira_periodo_inventado():
+    """Base que registrou a exclusão e perdeu a opção: diz o que se sabe."""
+    from src.core.pessoas import ContratantePJ
+
+    linhas = dict(
+        ContratantePJ(
+            razao_social="X Ltda", cnpj="11222333000181",
+            optante_mei=False, mei_ate="2021-03-14",
+        ).linhas_opcao_tributaria()
+    )
+
+    assert linhas["Optante pelo MEI (SIMEI)"] == "Não — até 14/03/2021"
+
+
+def test_data_sai_em_formato_brasileiro():
+    """ISO na ficha é o mesmo defeito que já existiu no cartão."""
+    from src.core.pessoas import ContratantePJ
+
+    valor = dict(
+        ContratantePJ(
+            razao_social="X", cnpj="11222333000181",
+            optante_simples=True, simples_desde="2021-03-15",
+        ).linhas_opcao_tributaria()
+    )["Optante pelo Simples Nacional"]
+
+    assert "15/03/2021" in valor
+    assert "2021-03-15" not in valor
+
+
+def test_o_bloco_tributario_entra_logo_abaixo_do_regime():
+    """Posição importa: regime diz o que é hoje, o bloco diz desde quando."""
     from src.core.pessoas import ContratantePJ
 
     pj = ContratantePJ(
         razao_social="X Ltda", cnpj="11222333000181", regime="Simples Nacional",
-        simples_desde="2021-03-15",
+        optante_simples=True, simples_desde="2021-03-15",
     )
     rotulos = [r for r, _ in pj.linhas_ficha()]
+    depois_do_regime = rotulos.index("Regime tributário") + 1
 
-    assert rotulos.index("Simples Nacional desde") == rotulos.index("Regime tributário") + 1
+    assert rotulos[depois_do_regime] == "Optante pelo Simples Nacional"
+    assert rotulos[depois_do_regime + 1] == "Optante pelo MEI (SIMEI)"
+    # e as duas antes das inscrições
+    assert depois_do_regime + 1 < rotulos.index("Inscrição estadual")
 
 
 def test_datas_vem_da_empresa_consultada():
@@ -705,3 +757,19 @@ def test_datas_vem_da_empresa_consultada():
 
     assert pj.simples_desde == "2021-03-15"
     assert pj.mei_ate == "2021-03-14"
+
+
+def test_data_de_abertura_na_ficha_sai_em_pt_br():
+    """Duas datas na mesma tabela, dois formatos, é defeito visível.
+
+    O campo guardado continua ISO — é o que o resto do sistema consome. A
+    conversão é só na exibição.
+    """
+    from src.core.pessoas import ContratantePJ
+
+    pj = ContratantePJ(
+        razao_social="X", cnpj="11222333000181", data_abertura="2026-08-10"
+    )
+
+    assert dict(pj.linhas_ficha())["Data de abertura"] == "10/08/2026"
+    assert pj.data_abertura == "2026-08-10", "o campo guardado não muda"

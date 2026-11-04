@@ -14,7 +14,12 @@ import pytest
 
 from src.core.models import AtividadeCNAE, Empresa, Endereco, SituacaoCadastral
 from src.core.tributario import classificar_cnae
-from src.exporters.pdf_cartao import _cep_br, _data_br, _telefone_br, gerar_cartao_cnpj
+from src.exporters.pdf_cartao import (
+    _cep_br,
+    _telefone_br,
+    data_br_cartao,
+    gerar_cartao_cnpj,
+)
 
 warnings.filterwarnings("ignore")
 
@@ -140,16 +145,16 @@ def test_sem_atividade_secundaria_diz_nao_informada():
 # --------------------------------------------------------------------------- #
 def test_data_sai_no_formato_brasileiro():
     # A versão anterior imprimia o ISO cru vindo da API.
-    assert _data_br("2025-08-22") == "22/08/2025"
-    assert _data_br("2025-08-22T10:30:00") == "22/08/2025"
-    assert _data_br("22/08/2025") == "22/08/2025"
+    assert data_br_cartao("2025-08-22") == "22/08/2025"
+    assert data_br_cartao("2025-08-22T10:30:00") == "22/08/2025"
+    assert data_br_cartao("22/08/2025") == "22/08/2025"
     texto = _texto(gerar_cartao_cnpj(_empresa()))
     assert "22/08/2025" in texto
     assert "2025-08-22" not in texto
 
 
 def test_data_ausente_vira_asteriscos_como_no_original():
-    assert _data_br("") == "********"
+    assert data_br_cartao("") == "********"
 
 
 def test_telefone_e_cep_formatados():
@@ -319,3 +324,38 @@ def test_instrucao_aparece_se_faltar_so_o_mei():
     texto = _texto(gerar_cartao_cnpj(_empresa(optante_simples=True, optante_mei=None)))
 
     assert "aplicacoes.aspx?id=21" in texto
+
+
+def test_qsa_nao_pendura_placeholder_de_faixa_etaria():
+    """`Socio.faixa_etaria` tem default "N/A", não vazio.
+
+    Um teste ingênuo (`if s.faixa_etaria`) considera isso preenchido e o
+    documento sai com "— N/A" pendurado no nome do sócio: ruído com cara de
+    dado, num papel que o cliente lê.
+    """
+    from src.core.models import Socio
+
+    texto = _texto(
+        gerar_cartao_cnpj(
+            _empresa(socios=(Socio(nome="FULANA DE TAL", qualificacao="Sócia"),))
+        )
+    )
+
+    assert "FULANA DE TAL — Sócia" in texto
+    assert "N/A" not in texto
+
+
+def test_qsa_mostra_a_faixa_etaria_quando_existe():
+    from src.core.models import Socio
+
+    texto = _texto(
+        gerar_cartao_cnpj(
+            _empresa(
+                socios=(
+                    Socio(nome="FULANA", qualificacao="Sócia", faixa_etaria="41 a 50 anos"),
+                )
+            )
+        )
+    )
+
+    assert "41 a 50 anos" in texto
