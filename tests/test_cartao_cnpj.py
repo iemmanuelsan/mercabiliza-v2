@@ -26,17 +26,17 @@ def _cnae(codigo: str, descricao: str) -> AtividadeCNAE:
 
 
 def _empresa(**troca) -> Empresa:
-    base = dict(
-        cnpj="62350925000110",
-        razao_social="MERCABILIZA SOLUCOES FISCAIS E CONTABEIS LTDA",
-        nome_fantasia="MERCABILIZA",
-        matriz_filial="MATRIZ",
-        data_abertura="2025-08-22",
-        natureza_juridica="206-2 - Sociedade Empresária Limitada",
-        porte="DEMAIS",
-        emails=("contato@mercabiliza.com.br",),
-        telefones=("1933270038",),
-        endereco=Endereco(
+    base = {
+        "cnpj": "62350925000110",
+        "razao_social": "MERCABILIZA SOLUCOES FISCAIS E CONTABEIS LTDA",
+        "nome_fantasia": "MERCABILIZA",
+        "matriz_filial": "MATRIZ",
+        "data_abertura": "2025-08-22",
+        "natureza_juridica": "206-2 - Sociedade Empresária Limitada",
+        "porte": "DEMAIS",
+        "emails": ("contato@mercabiliza.com.br",),
+        "telefones": ("1933270038",),
+        "endereco": Endereco(
             logradouro="RUA ANCHIETA",
             numero="204",
             complemento="SALA 102",
@@ -45,10 +45,10 @@ def _empresa(**troca) -> Empresa:
             uf="SP",
             cep="13201804",
         ),
-        situacao=SituacaoCadastral(situacao_receita="ATIVA", data_situacao="2025-08-22"),
-        atividade_principal=_cnae("6920601", "Atividades de contabilidade"),
-        fontes=("BrasilAPI", "CNPJ.ws"),
-    )
+        "situacao": SituacaoCadastral(situacao_receita="ATIVA", data_situacao="2025-08-22"),
+        "atividade_principal": _cnae("6920601", "Atividades de contabilidade"),
+        "fontes": ("BrasilAPI", "CNPJ.ws"),
+    }
     base.update(troca)
     return Empresa(**base)
 
@@ -288,3 +288,34 @@ def test_cartao_sem_data_nao_inventa_data():
     bloco = bloco.split("Documento gerado pela Mercabiliza", 1)[0]
     assert hoje not in bloco, "data de hoje vazou para um campo sem informação"
     assert "NÃO INFORMADO" in bloco
+
+
+def test_cartao_indica_onde_confirmar_quando_a_base_nao_informou():
+    """"NÃO INFORMADO" sem saída é beco; com o endereço da consulta, é passo.
+
+    Foi o caso real de um Empresário Individual aberto em fev/2026: os três
+    provedores responderam e nenhum trouxe a marcação do Simples/SIMEI, que
+    vem do dump mensal da Receita e demora em cadastro novo e em MEI.
+    """
+    texto = _texto(gerar_cartao_cnpj(_empresa(optante_simples=None, optante_mei=None)))
+
+    assert "Opção não informada pelas bases consultadas" in texto
+    assert "aplicacoes.aspx?id=21" in texto
+
+
+def test_cartao_completo_nao_recebe_a_instrucao():
+    """Quem já tem a resposta não precisa ler onde buscá-la."""
+    texto = _texto(
+        gerar_cartao_cnpj(_empresa(optante_simples=True, optante_mei=False))
+    )
+
+    assert "Opção não informada pelas bases consultadas" not in texto
+    assert "aplicacoes.aspx" not in texto
+
+
+def test_instrucao_aparece_se_faltar_so_o_mei():
+    """Simples confirmado e MEI em aberto é o formato que um MEI assume
+    quando a base está atrasada — justamente quando confirmar importa mais."""
+    texto = _texto(gerar_cartao_cnpj(_empresa(optante_simples=True, optante_mei=None)))
+
+    assert "aplicacoes.aspx?id=21" in texto

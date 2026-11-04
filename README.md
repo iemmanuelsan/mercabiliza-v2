@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.61-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Tests](https://img.shields.io/badge/tests-489%20passing-success)](tests/)
+[![Tests](https://img.shields.io/badge/tests-492%20passing-success)](tests/)
 [![Ruff](https://img.shields.io/badge/lint-ruff-261230?logo=ruff)](https://docs.astral.sh/ruff/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 

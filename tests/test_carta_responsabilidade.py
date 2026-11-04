@@ -35,16 +35,16 @@ END = Endereco(
 
 
 def _pj(**troca) -> ContratantePJ:
-    base = dict(
-        razao_social="PHL ALIMENTOS LTDA",
-        cnpj="66490201000122",
-        endereco=END,
-        representante=RepresentanteLegal(
+    base = {
+        "razao_social": "PHL ALIMENTOS LTDA",
+        "cnpj": "66490201000122",
+        "endereco": END,
+        "representante": RepresentanteLegal(
             nome="Pedro Henrique Lima",
             cpf="52998224725",
             qualificacao="sócio administrador",
         ),
-    )
+    }
     base.update(troca)
     return ContratantePJ(**base)
 
