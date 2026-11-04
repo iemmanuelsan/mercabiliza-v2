@@ -286,6 +286,13 @@ class ContratantePJ:
     inscricao_municipal: str = ""
     representante: RepresentanteLegal = field(default_factory=RepresentanteLegal)
     regime: str = ""
+    # Datas de opção/exclusão do Simples e do MEI, como vieram do provedor.
+    # Vazio = não informado, e a linha some da ficha — melhor do que um "—"
+    # que o cliente leria como "não é optante".
+    simples_desde: str = ""
+    simples_ate: str = ""
+    mei_desde: str = ""
+    mei_ate: str = ""
     data_abertura: str = ""
     natureza_juridica: str = ""
 
@@ -385,6 +392,26 @@ class ContratantePJ:
         partes.append(f"doravante {denominado} simplesmente CONTRATANTE")
         return ", ".join(partes)
 
+    def linhas_opcao_tributaria(self) -> list[tuple[str, str]]:
+        """Datas de opção e exclusão do Simples e do MEI.
+
+        Só entra o que o provedor informou. Linha ausente diz "não sei";
+        um "—" ao lado de "Data de exclusão do MEI" seria lido pelo cliente
+        como "nunca fui excluído", que é afirmação diferente — e que a
+        Mercabiliza não tem como fazer.
+
+        Fica logo abaixo de "Regime tributário" porque é a mesma pergunta:
+        o regime responde "o que é hoje", as datas respondem "desde quando,
+        e o que era antes".
+        """
+        rotulos = (
+            ("Simples Nacional desde", self.simples_desde),
+            ("Excluído do Simples em", self.simples_ate),
+            ("MEI desde", self.mei_desde),
+            ("Desenquadrado do MEI em", self.mei_ate),
+        )
+        return [(rotulo, valor) for rotulo, valor in rotulos if valor.strip()]
+
     def linhas_ficha(self) -> list[tuple[str, str]]:
         return [
             ("Razão social", self.nome_exibicao),
@@ -393,6 +420,7 @@ class ContratantePJ:
             ("Data de abertura", self.data_abertura or "—"),
             ("CNAE principal", self.cnae_principal or "—"),
             ("Regime tributário", self.regime or "—"),
+            *self.linhas_opcao_tributaria(),
             ("Inscrição estadual", self.inscricao_estadual or "Isento / não informado"),
             ("Inscrição municipal", self.inscricao_municipal or "—"),
             ("Endereço", self.endereco.logradouro_numero or "—"),
@@ -465,6 +493,10 @@ def de_empresa(empresa: Empresa, socio_escolhido: str | None = None) -> Contrata
         ),
         representante=representante,
         regime=empresa.regime,
+        simples_desde=empresa.simples_desde,
+        simples_ate=empresa.simples_ate,
+        mei_desde=empresa.mei_desde,
+        mei_ate=empresa.mei_ate,
         data_abertura=empresa.data_abertura,
         natureza_juridica=empresa.natureza_juridica,
     )

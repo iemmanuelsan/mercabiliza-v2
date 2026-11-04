@@ -10,6 +10,7 @@ from __future__ import annotations
 from ..core.contrato import ParametrosContrato, renderizar_minuta
 from ..core.pessoas import Contratada, ContratantePF, ContratantePJ
 from .pdf_juridico import (
+    bloco_assinatura_unica,
     blocos_assinatura_contrato,
     construir_estilos,
     markdown_para_flowables,
@@ -64,7 +65,16 @@ def gerar_contrato(
             rotulo_esquerda=f"CONTRATADA\nCNPJ: {cnpj_contratada}",
             rotulo_direita=rotulo_contratante,
         )
-        return markdown_para_flowables(texto, estilos, assinaturas)
+        # O Anexo II é autorização UNILATERAL da CONTRATANTE: só ela
+        # assina ali. O nome é o mesmo que vai sob a assinatura do contrato.
+        assinatura_anexo = bloco_assinatura_unica(
+            signatario_contratante,
+            "CONTRATANTE — responsável legal ou administrador de sistemas",
+            estilos,
+        )
+        return markdown_para_flowables(
+            texto, estilos, assinaturas, [assinatura_anexo]
+        )
 
     return render_documento(
         "Contrato de Prestação de Serviços Contábeis",

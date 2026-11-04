@@ -232,6 +232,19 @@ class Empresa:
     # ``_booleano_ou_nulo`` em services/cnpj_providers.py.
     optante_simples: bool | None = None
     optante_mei: bool | None = None
+    # Datas de opção e de exclusão, como os provedores devolvem (ISO ou
+    # dd/mm/aaaa — quem formata é o exportador). Vazio = o provedor não
+    # informou, e nesse caso a linha simplesmente não é impressa: inventar
+    # data em documento que o cliente lê é pior do que omitir.
+    #
+    # ⚠️ Não dá para derivar o booleano da data nem o contrário. Empresa
+    # excluída do Simples continua com `data_opcao` preenchida, e empresa
+    # optante tem `data_exclusao` vazia. São quatro informações
+    # independentes.
+    simples_desde: str = ""
+    simples_ate: str = ""
+    mei_desde: str = ""
+    mei_ate: str = ""
     endereco: Endereco = field(default_factory=Endereco)
     situacao: SituacaoCadastral = field(default_factory=SituacaoCadastral)
     atividade_principal: AtividadeCNAE | None = None

@@ -638,3 +638,70 @@ def test_falta_do_cpf_vira_pendencia_propria():
     pendencias = pj.pendencias
     assert any("CPF do representante" in p for p in pendencias)
     assert not any("nome do representante" in p for p in pendencias)
+
+
+# --------------------------------------------------------------------------- #
+# Opção tributária na ficha cadastral                                          #
+# --------------------------------------------------------------------------- #
+def test_ficha_omite_a_linha_quando_a_data_nao_veio():
+    """Linha ausente diz "não sei". Um "—" ao lado de "Desenquadrado do MEI em"
+    seria lido como "nunca fui desenquadrado" — afirmação diferente, e que
+    ninguém fez."""
+    from src.core.pessoas import ContratantePJ
+
+    pj = ContratantePJ(razao_social="X Ltda", cnpj="11222333000181")
+    assert pj.linhas_opcao_tributaria() == []
+
+    rotulos = [r for r, _ in pj.linhas_ficha()]
+    assert not any("MEI" in r for r in rotulos)
+
+
+def test_ficha_mostra_so_as_datas_informadas():
+    from src.core.pessoas import ContratantePJ
+
+    pj = ContratantePJ(
+        razao_social="X Ltda",
+        cnpj="11222333000181",
+        simples_desde="2021-03-15",
+        mei_desde="2019-01-10",
+        mei_ate="2021-03-14",
+    )
+    linhas = dict(pj.linhas_opcao_tributaria())
+
+    assert linhas["Simples Nacional desde"] == "2021-03-15"
+    assert linhas["MEI desde"] == "2019-01-10"
+    assert linhas["Desenquadrado do MEI em"] == "2021-03-14"
+    assert "Excluído do Simples em" not in linhas
+
+
+def test_as_datas_entram_logo_abaixo_do_regime():
+    """Posição importa: regime diz o que é hoje, as datas dizem desde quando."""
+    from src.core.pessoas import ContratantePJ
+
+    pj = ContratantePJ(
+        razao_social="X Ltda", cnpj="11222333000181", regime="Simples Nacional",
+        simples_desde="2021-03-15",
+    )
+    rotulos = [r for r, _ in pj.linhas_ficha()]
+
+    assert rotulos.index("Simples Nacional desde") == rotulos.index("Regime tributário") + 1
+
+
+def test_datas_vem_da_empresa_consultada():
+    """Sem este repasse, a ficha nunca recebe o que a consulta trouxe."""
+    from datetime import date
+
+    from src.core.models import Empresa
+    from src.core.pessoas import de_empresa
+
+    empresa = Empresa(
+        cnpj="11222333000181",
+        razao_social="X Ltda",
+        simples_desde="2021-03-15",
+        mei_ate="2021-03-14",
+        consultado_em=date.today(),
+    )
+    pj = de_empresa(empresa)
+
+    assert pj.simples_desde == "2021-03-15"
+    assert pj.mei_ate == "2021-03-14"

@@ -129,6 +129,10 @@ def _de_brasilapi(d: Canonico) -> Canonico:
         # traz a marcação do Simples — CNPJ aberto neste mês cai nisso.
         "optante_simples": _booleano_ou_nulo(d.get("opcao_pelo_simples")),
         "optante_mei": _booleano_ou_nulo(d.get("opcao_pelo_mei")),
+        "simples_desde": _limpo(d.get("data_opcao_pelo_simples")),
+        "simples_ate": _limpo(d.get("data_exclusao_do_simples")),
+        "mei_desde": _limpo(d.get("data_opcao_pelo_mei")),
+        "mei_ate": _limpo(d.get("data_exclusao_do_mei")),
         "cnae_codigo": _limpo(d.get("cnae_fiscal")),
         "cnae_descricao": _limpo(d.get("cnae_fiscal_descricao")),
         "cnaes_secundarios": [
@@ -188,6 +192,12 @@ def _de_cnpjws(d: Canonico) -> Canonico:
         # devolvia False. Ausência virava negativa.
         "optante_simples": _booleano_ou_nulo((d.get("simples") or {}).get("simples")),
         "optante_mei": _booleano_ou_nulo((d.get("simples") or {}).get("mei")),
+        # Aqui os quatro campos moram todos dentro de `simples` — inclusive
+        # os do MEI, que na BrasilAPI ficam no primeiro nível.
+        "simples_desde": _limpo((d.get("simples") or {}).get("data_opcao_simples")),
+        "simples_ate": _limpo((d.get("simples") or {}).get("data_exclusao_simples")),
+        "mei_desde": _limpo((d.get("simples") or {}).get("data_opcao_mei")),
+        "mei_ate": _limpo((d.get("simples") or {}).get("data_exclusao_mei")),
         "cnae_codigo": _limpo(atividade.get("subclasse")),
         "cnae_descricao": _limpo(atividade.get("descricao")),
         "cnaes_secundarios": [
@@ -230,6 +240,14 @@ def _de_receitaws(d: Canonico) -> Canonico:
         "telefones": [t.strip() for t in _limpo(d.get("telefone")).split("/") if t.strip()],
         "optante_simples": _booleano_ou_nulo((d.get("simples") or {}).get("optante")),
         "optante_mei": _booleano_ou_nulo((d.get("simei") or {}).get("optante")),
+        # A ReceitaWS separa MEI em `simei`, e usa `data_opcao`/`data_exclusao`
+        # dentro de cada objeto. Ela é a terceira na ordem de prioridade, então
+        # na prática só entra quando as outras duas falham. Se o formato mudar,
+        # os campos vêm vazios e as linhas não são impressas — nunca erradas.
+        "simples_desde": _limpo((d.get("simples") or {}).get("data_opcao")),
+        "simples_ate": _limpo((d.get("simples") or {}).get("data_exclusao")),
+        "mei_desde": _limpo((d.get("simei") or {}).get("data_opcao")),
+        "mei_ate": _limpo((d.get("simei") or {}).get("data_exclusao")),
         "cnae_codigo": _limpo(principais[0].get("code")),
         "cnae_descricao": _limpo(principais[0].get("text")),
         "cnaes_secundarios": [
@@ -349,6 +367,14 @@ def consolidar(cnpj: str, fontes: list[Canonico], rbt12: float = 0.0) -> Empresa
         telefones=tuple(telefones),
         optante_simples=_consolidar(fontes, "optante_simples"),
         optante_mei=_consolidar(fontes, "optante_mei"),
+        # Primeiro provedor que informar a data ganha, na mesma ordem de
+        # prioridade dos demais campos. Não cruzo com o booleano de propósito:
+        # provedor que diz "optante: sim" mas não manda a data continua certo
+        # no que afirmou, e forçar coerência aqui inventaria informação.
+        simples_desde=_primeiro_preenchido(fontes, "simples_desde"),
+        simples_ate=_primeiro_preenchido(fontes, "simples_ate"),
+        mei_desde=_primeiro_preenchido(fontes, "mei_desde"),
+        mei_ate=_primeiro_preenchido(fontes, "mei_ate"),
         endereco=endereco,
         situacao=SituacaoCadastral(
             situacao_receita=_primeiro_preenchido(fontes, "situacao", "DESCONHECIDA").upper(),

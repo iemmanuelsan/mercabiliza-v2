@@ -131,3 +131,85 @@ def test_consolidar_ninguem_informou_devolve_none():
     disseram que não"."""
     assert _consolidar([{"optante_mei": None}, {"optante_mei": None}], "optante_mei") is None
     assert _consolidar([{}, {}], "optante_mei") is None
+
+
+# --------------------------------------------------------------------------- #
+# Datas de opção pelo Simples / MEI                                            #
+# --------------------------------------------------------------------------- #
+# Os três provedores guardam isto em lugares diferentes. Os nomes de campo da
+# BrasilAPI e da CNPJ.ws foram conferidos na documentação de cada uma; os da
+# ReceitaWS seguem o formato documentado dela. Se algum mudar, estes testes
+# acusam — e, em produção, o campo vem vazio e a linha não é impressa, nunca
+# com valor errado.
+
+
+def test_brasilapi_le_as_datas_de_opcao_e_exclusao():
+    from src.services.cnpj_providers import _de_brasilapi
+
+    d = _de_brasilapi(
+        {
+            "opcao_pelo_simples": True,
+            "data_opcao_pelo_simples": "2021-03-15",
+            "data_exclusao_do_simples": None,
+            "opcao_pelo_mei": False,
+            "data_opcao_pelo_mei": "2019-01-10",
+            "data_exclusao_do_mei": "2021-03-14",
+        }
+    )
+
+    assert d["simples_desde"] == "2021-03-15"
+    assert d["simples_ate"] == ""
+    assert d["mei_desde"] == "2019-01-10"
+    assert d["mei_ate"] == "2021-03-14"
+
+
+def test_cnpjws_guarda_as_datas_do_mei_dentro_de_simples():
+    """Detalhe que engana: na CNPJ.ws os campos do MEI ficam dentro do
+    objeto `simples`, e não no primeiro nível como na BrasilAPI."""
+    from src.services.cnpj_providers import _de_cnpjws
+
+    d = _de_cnpjws(
+        {
+            "estabelecimento": {},
+            "simples": {
+                "simples": "Sim",
+                "data_opcao_simples": "2021-03-15",
+                "data_exclusao_simples": None,
+                "mei": "Não",
+                "data_opcao_mei": "2019-01-10",
+                "data_exclusao_mei": "2021-03-14",
+            },
+        }
+    )
+
+    assert d["simples_desde"] == "2021-03-15"
+    assert d["mei_desde"] == "2019-01-10"
+    assert d["mei_ate"] == "2021-03-14"
+
+
+def test_receitaws_separa_mei_em_simei():
+    from src.services.cnpj_providers import _de_receitaws
+
+    d = _de_receitaws(
+        {
+            "atividade_principal": [{}],
+            "simples": {"optante": True, "data_opcao": "15/03/2021", "data_exclusao": None},
+            "simei": {
+                "optante": False,
+                "data_opcao": "10/01/2019",
+                "data_exclusao": "14/03/2021",
+            },
+        }
+    )
+
+    assert d["simples_desde"] == "15/03/2021"
+    assert d["mei_ate"] == "14/03/2021"
+
+
+def test_provedor_sem_as_datas_devolve_vazio_e_nao_quebra():
+    """Provedor que não manda os campos não pode derrubar a consulta."""
+    from src.services.cnpj_providers import _de_brasilapi, _de_cnpjws, _de_receitaws
+
+    assert _de_brasilapi({})["simples_desde"] == ""
+    assert _de_cnpjws({"estabelecimento": {}, "simples": None})["mei_ate"] == ""
+    assert _de_receitaws({"atividade_principal": [{}]})["mei_desde"] == ""
