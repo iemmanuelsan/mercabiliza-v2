@@ -36,8 +36,6 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fpdf.enums import XPos, YPos
-
 from ..core.cnpj import formatar as formatar_cnpj
 from ..core.models import Empresa
 from .pdf_base import DocumentoPDF
@@ -226,8 +224,9 @@ class _Cartao(DocumentoPDF):
         linhas = list(itens) or ["Não informada"]
         if len(linhas) > maximo:
             sobra = len(linhas) - (maximo - 1)
-            linhas = linhas[: maximo - 1] + [
-                f"(+{sobra} atividade(s) — lista completa no dossiê)"
+            linhas = [
+                *linhas[: maximo - 1],
+                f"(+{sobra} atividade(s) — lista completa no dossiê)",
             ]
 
         x, y = self.get_x(), self.get_y()
@@ -403,6 +402,26 @@ def gerar_cartao_cnpj(empresa: Empresa) -> bytes:
         "DATA DE EXCLUSÃO DO MEI",
         _data_br(empresa.mei_ate),
     )
+
+    # Quando nenhuma das bases marcou a opção, o campo acima fica em
+    # "NÃO INFORMADO" — honesto, mas um beco sem saída para quem está
+    # conferindo. Esta linha transforma o beco em próximo passo.
+    #
+    # Aparece só quando falta informação: cartão com os dados completos não
+    # ganha instrução que ninguém precisa ler.
+    if empresa.optante_simples is None or empresa.optante_mei is None:
+        pdf.ln(0.5)
+        pdf.fonte("", 6)
+        pdf.set_text_color(90, 90, 90)
+        pdf.paragrafo(
+            3.0,
+            "Opção não informada pelas bases consultadas — é comum em CNPJ recente "
+            "e em MEI, porque essa marcação vem do dump mensal da Receita. Para "
+            "confirmar, use a Consulta Optantes do Portal do Simples Nacional "
+            "(pública, exige apenas o CNPJ): "
+            "www8.receita.fazenda.gov.br/simplesnacional/aplicacoes.aspx?id=21",
+        )
+        pdf.set_text_color(0, 0, 0)
 
     # ---- Procedência --------------------------------------------------- #
     pdf.ln(3)
