@@ -13,6 +13,7 @@ from dataclasses import dataclass, field, replace
 
 from .cnpj import formatar as formatar_cnpj
 from .cpf import formatar as formatar_cpf
+from .formatters import data_br
 from .models import Empresa, Endereco
 
 ESTADOS_CIVIS: tuple[str, ...] = (
@@ -286,6 +287,11 @@ class ContratantePJ:
     inscricao_municipal: str = ""
     representante: RepresentanteLegal = field(default_factory=RepresentanteLegal)
     regime: str = ""
+    # Tri-estado, igual ao da Empresa: None = nenhum provedor informou.
+    # `bool` puro faria "não sei" virar "não é optante" — que na ficha o
+    # cliente lê e assina como declaração.
+    optante_simples: bool | None = None
+    optante_mei: bool | None = None
     # Datas de opção/exclusão do Simples e do MEI, como vieram do provedor.
     # Vazio = não informado, e a linha some da ficha — melhor do que um "—"
     # que o cliente leria como "não é optante".
@@ -393,31 +399,75 @@ class ContratantePJ:
         return ", ".join(partes)
 
     def linhas_opcao_tributaria(self) -> list[tuple[str, str]]:
-        """Datas de opção e exclusão do Simples e do MEI.
+        """Opção pelo Simples e pelo MEI, cada uma com o seu período.
 
-        Só entra o que o provedor informou. Linha ausente diz "não sei";
-        um "—" ao lado de "Data de exclusão do MEI" seria lido pelo cliente
-        como "nunca fui excluído", que é afirmação diferente — e que a
-        Mercabiliza não tem como fazer.
+        Duas linhas, sempre — inclusive como "não informado". A ficha é
+        conferida e assinada pelo cliente, e campo que não aparece é campo
+        que ninguém confere.
 
-        Fica logo abaixo de "Regime tributário" porque é a mesma pergunta:
-        o regime responde "o que é hoje", as datas respondem "desde quando,
-        e o que era antes".
+        A data vai JUNTO do status, não em linha separada, porque a pergunta
+        é uma só: "é optante, e desde quando?". Separadas, a pessoa lê "Não"
+        numa linha e uma data três linhas abaixo, e precisa remontar a
+        relação na cabeça.
+
+        O caso que isto existe para mostrar é o desenquadramento:
+
+            Optante pelo Simples Nacional   Sim — desde 15/03/2021
+            Optante pelo MEI (SIMEI)        Não — de 10/01/2019 a 14/03/2021
+
+        Numa olhada: é Simples hoje, foi MEI até março de 2021. Esse é o
+        histórico que decide a conversa com um minimercado.
         """
-        rotulos = (
-            ("Simples Nacional desde", self.simples_desde),
-            ("Excluído do Simples em", self.simples_ate),
-            ("MEI desde", self.mei_desde),
-            ("Desenquadrado do MEI em", self.mei_ate),
-        )
-        return [(rotulo, valor) for rotulo, valor in rotulos if valor.strip()]
+
+        def periodo(desde: str, ate: str) -> str:
+            inicio, fim = data_br(desde), data_br(ate)
+            if inicio and fim:
+                return f"de {inicio} a {fim}"
+            if inicio:
+                return f"desde {inicio}"
+            # Fim sem início acontece quando a base registrou a saída e
+            # perdeu a entrada. Dizer "até X" é o que se pode afirmar.
+            if fim:
+                return f"até {fim}"
+            return ""
+
+        def linha(
+            rotulo: str, optante: bool | None, desde: str, ate: str
+        ) -> tuple[str, str]:
+            if optante is True:
+                estado = "Sim"
+            elif optante is False:
+                estado = "Não"
+            else:
+                estado = "Não informado pelas bases consultadas"
+            quando = periodo(desde, ate)
+            return (rotulo, f"{estado} — {quando}" if quando else estado)
+
+        return [
+            linha(
+                "Optante pelo Simples Nacional",
+                self.optante_simples,
+                self.simples_desde,
+                self.simples_ate,
+            ),
+            linha(
+                "Optante pelo MEI (SIMEI)",
+                self.optante_mei,
+                self.mei_desde,
+                self.mei_ate,
+            ),
+        ]
 
     def linhas_ficha(self) -> list[tuple[str, str]]:
         return [
             ("Razão social", self.nome_exibicao),
             ("Nome fantasia", self.nome_fantasia or "—"),
             ("CNPJ", self.documento_principal),
-            ("Data de abertura", self.data_abertura or "—"),
+            # Formatada só aqui, na exibição. O campo guardado segue como o
+            # provedor mandou (ISO), que é o que o resto do sistema consome.
+            # Sem isto a ficha mostrava "2026-08-10" duas linhas acima de
+            # "desde 11/08/2026" — dois formatos na mesma tabela.
+            ("Data de abertura", data_br(self.data_abertura, vazio="—")),
             ("CNAE principal", self.cnae_principal or "—"),
             ("Regime tributário", self.regime or "—"),
             *self.linhas_opcao_tributaria(),
@@ -493,6 +543,8 @@ def de_empresa(empresa: Empresa, socio_escolhido: str | None = None) -> Contrata
         ),
         representante=representante,
         regime=empresa.regime,
+        optante_simples=empresa.optante_simples,
+        optante_mei=empresa.optante_mei,
         simples_desde=empresa.simples_desde,
         simples_ate=empresa.simples_ate,
         mei_desde=empresa.mei_desde,

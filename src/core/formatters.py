@@ -3,7 +3,31 @@
 from __future__ import annotations
 
 import unicodedata
+from datetime import datetime
 from urllib.parse import quote_plus
+
+
+def data_br(valor: str, vazio: str = "") -> str:
+    """``2026-08-11`` → ``11/08/2026``.
+
+    Aceita os três formatos que os provedores devolvem (ISO, ISO com hora e
+    já em pt-BR) porque cada um escreve de um jeito, e o documento é um só.
+    Texto que não casa com nenhum volta como veio: melhor mostrar o original
+    do que engolir o dado numa conversão que falhou.
+
+    Estava privada em ``exporters/pdf_cartao``. Subiu para cá quando a ficha
+    passou a precisar da mesma formatação — a alternativa era a segunda cópia,
+    e é assim que cartão e ficha começam a divergir no formato da data.
+    """
+    texto = (valor or "").strip()
+    if not texto:
+        return vazio
+    for formato in ("%Y-%m-%d", "%d/%m/%Y", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            return datetime.strptime(texto[:19], formato).strftime("%d/%m/%Y")
+        except ValueError:
+            continue
+    return texto
 
 
 def moeda(valor: float | None) -> str:

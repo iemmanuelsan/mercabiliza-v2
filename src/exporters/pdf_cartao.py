@@ -37,6 +37,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from ..core.cnpj import formatar as formatar_cnpj
+from ..core.formatters import data_br
 from ..core.models import Empresa
 from .pdf_base import DocumentoPDF
 
@@ -47,22 +48,27 @@ LARGURA = 190.0
 VAZIO = "*" * 8
 
 
-def _data_br(iso: str) -> str:
-    """``2025-08-22`` → ``22/08/2025``.
+def data_br_cartao(valor: str) -> str:
+    """Data no formato do comprovante: ``********`` quando não há dado.
 
-    As APIs devolvem ISO; o comprovante usa o formato brasileiro. A versão
-    anterior imprimia o ISO cru, que é a diferença que mais salta aos olhos
-    de quem está acostumado com o documento.
+    A conversão é a de ``core.formatters.data_br``; o que muda aqui é só o
+    símbolo do vazio, que no comprovante da Receita são oito asteriscos e
+    não um traço.
     """
-    texto = (iso or "").strip()
-    if not texto:
-        return VAZIO
-    for formato in ("%Y-%m-%d", "%d/%m/%Y", "%Y-%m-%dT%H:%M:%S"):
-        try:
-            return datetime.strptime(texto[:19], formato).strftime("%d/%m/%Y")
-        except ValueError:
-            continue
-    return texto
+    return data_br(valor, vazio=VAZIO)
+
+
+def _linha_socio(socio) -> str:
+    """``NOME — Qualificação — Faixa etária``, sem os pedaços que faltam.
+
+    O padrão de ``Socio.faixa_etaria`` é a string ``"N/A"``, não vazio: um
+    teste de verdade (`if s.faixa_etaria`) considera isso preenchido e o
+    documento sai com "— N/A" pendurado no fim do nome, que é ruído com
+    cara de dado.
+    """
+    vazios = {"", "n/a", "não informada", "nao informada", "não informado"}
+    partes = [socio.nome, socio.qualificacao, socio.faixa_etaria]
+    return " — ".join(p for p in partes if p and p.strip().lower() not in vazios)
 
 
 def _optante_br(valor: bool | None) -> str:
@@ -273,7 +279,7 @@ def gerar_cartao_cnpj(empresa: Empresa) -> bytes:
     pdf.cabecalho_tripartite(
         formatar_cnpj(empresa.cnpj),
         empresa.matriz_filial,
-        _data_br(empresa.data_abertura),
+        data_br_cartao(empresa.data_abertura),
     )
 
     # ---- Identificação ----------------------------------------------- #
@@ -344,7 +350,7 @@ def gerar_cartao_cnpj(empresa: Empresa) -> bytes:
     pdf.caixa(
         LARGURA * 0.38,
         "DATA DA SITUAÇÃO CADASTRAL",
-        _data_br(empresa.situacao.data_situacao),
+        data_br_cartao(empresa.situacao.data_situacao),
     )
 
     pdf.caixa(LARGURA, "MOTIVO DE SITUAÇÃO CADASTRAL", VAZIO)
@@ -376,13 +382,13 @@ def gerar_cartao_cnpj(empresa: Empresa) -> bytes:
     pdf.caixa(
         LARGURA * 0.28,
         "DATA DE OPÇÃO PELO SIMPLES",
-        _data_br(empresa.simples_desde),
+        data_br_cartao(empresa.simples_desde),
         fim_da_linha=False,
     )
     pdf.caixa(
         LARGURA * 0.28,
         "DATA DE EXCLUSÃO DO SIMPLES",
-        _data_br(empresa.simples_ate),
+        data_br_cartao(empresa.simples_ate),
     )
 
     pdf.caixa(
@@ -394,14 +400,26 @@ def gerar_cartao_cnpj(empresa: Empresa) -> bytes:
     pdf.caixa(
         LARGURA * 0.28,
         "DATA DE OPÇÃO PELO MEI",
-        _data_br(empresa.mei_desde),
+        data_br_cartao(empresa.mei_desde),
         fim_da_linha=False,
     )
     pdf.caixa(
         LARGURA * 0.28,
         "DATA DE EXCLUSÃO DO MEI",
-        _data_br(empresa.mei_ate),
+        data_br_cartao(empresa.mei_ate),
     )
+
+    # QSA. Também não consta do comprovante oficial — lá o quadro de sócios é
+    # consulta à parte. Entra aqui, no mesmo bloco complementar, porque é a
+    # informação que decide quem assina o contrato, e abrir outra tela para
+    # descobrir isso é o atrito que este documento existe para remover.
+    if empresa.socios:
+        pdf.caixa_lista(
+            LARGURA,
+            "QUADRO DE SÓCIOS E ADMINISTRADORES (QSA)",
+            [_linha_socio(s) for s in empresa.socios],
+            maximo=8,
+        )
 
     # Quando nenhuma das bases marcou a opção, o campo acima fica em
     # "NÃO INFORMADO" — honesto, mas um beco sem saída para quem está

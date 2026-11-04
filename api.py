@@ -52,6 +52,7 @@ from src.core.models import (
     Empresa,
     Endereco,
     SituacaoCadastral,
+    Socio,
 )
 from src.core.pessoas import (
     Contratada,
@@ -60,6 +61,7 @@ from src.core.pessoas import (
     RepresentanteLegal,
     contratada_padrao,
 )
+from src.core.tributario import classificar_cnae
 from src.exporters.docx_abertura import (
     dados_de_contratante,
     gerar_formulario_abertura,
@@ -70,7 +72,6 @@ from src.exporters.docx_transicao import (
 from src.exporters.docx_transicao import (
     gerar_formulario_transicao,
 )
-from src.core.tributario import classificar_cnae
 from src.exporters.pdf_carta import gerar_carta_responsabilidade
 from src.exporters.pdf_cartao import gerar_cartao_cnpj
 from src.exporters.pdf_documentos import gerar_contrato, gerar_ficha_cadastral
@@ -196,6 +197,15 @@ class ContratantePJIn(Estrito):
     inscricao_municipal: str = ""
     representante: RepresentanteIn = Field(default_factory=RepresentanteIn)
     regime: str = ""
+    # Tri-estado. Ausente no payload = None = "nenhuma base informou", que é
+    # diferente de `false`. Cliente antigo que não mandar os campos continua
+    # funcionando e cai no "não informado".
+    optante_simples: bool | None = None
+    optante_mei: bool | None = None
+    simples_desde: str = ""
+    simples_ate: str = ""
+    mei_desde: str = ""
+    mei_ate: str = ""
     data_abertura: str = ""
     natureza_juridica: str = ""
 
@@ -212,6 +222,12 @@ class ContratantePJIn(Estrito):
             inscricao_municipal=self.inscricao_municipal,
             representante=self.representante.para_dominio(),
             regime=self.regime,
+            optante_simples=self.optante_simples,
+            optante_mei=self.optante_mei,
+            simples_desde=self.simples_desde,
+            simples_ate=self.simples_ate,
+            mei_desde=self.mei_desde,
+            mei_ate=self.mei_ate,
             data_abertura=self.data_abertura,
             natureza_juridica=self.natureza_juridica,
         )
@@ -419,6 +435,21 @@ class PedidoTransicao(Estrito):
     sucessao: SucessaoIn = Field(default_factory=SucessaoIn)
 
 
+class SocioIn(Estrito):
+    """Sócio do QSA, para o quadro do Cartão CNPJ."""
+
+    nome: str = ""
+    qualificacao: str = ""
+    faixa_etaria: str = ""
+
+    def para_dominio(self) -> Socio:
+        return Socio(
+            nome=self.nome,
+            qualificacao=self.qualificacao or "Não informada",
+            faixa_etaria=self.faixa_etaria,
+        )
+
+
 class AtividadeIn(Estrito):
     codigo: str = ""
     descricao: str = ""
@@ -462,6 +493,20 @@ class PedidoCartaoCnpj(Estrito):
     endereco: EnderecoIn = Field(default_factory=EnderecoIn)
     atividade_principal: AtividadeIn | None = None
     atividades_secundarias: list[AtividadeIn] = Field(default_factory=list)
+    # ⚠️ Estes seis campos FALTAVAM no schema, e `extra="forbid"` fazia o
+    #    front nem poder mandá-los. O efeito: o cartão saía sempre com
+    #    "NÃO INFORMADO" na opção pelo Simples/MEI, mesmo quando os
+    #    provedores tinham a resposta — a informação morria aqui, na
+    #    fronteira, e o tri-estado reportava corretamente uma ausência que o
+    #    próprio contrato da API estava criando.
+    optante_simples: bool | None = None
+    optante_mei: bool | None = None
+    simples_desde: str = ""
+    simples_ate: str = ""
+    mei_desde: str = ""
+    mei_ate: str = ""
+    # O QSA também não vinha, por isso o quadro de sócios nunca aparecia.
+    socios: list[SocioIn] = Field(default_factory=list)
     fontes: list[str] = Field(default_factory=list)
 
     def para_dominio(self) -> Empresa:
@@ -488,6 +533,13 @@ class PedidoCartaoCnpj(Estrito):
             atividades_secundarias=tuple(
                 a.para_dominio() for a in self.atividades_secundarias
             ),
+            optante_simples=self.optante_simples,
+            optante_mei=self.optante_mei,
+            simples_desde=self.simples_desde,
+            simples_ate=self.simples_ate,
+            mei_desde=self.mei_desde,
+            mei_ate=self.mei_ate,
+            socios=tuple(s.para_dominio() for s in self.socios if s.nome),
             fontes=tuple(self.fontes),
         )
 
