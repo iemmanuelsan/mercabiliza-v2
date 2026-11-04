@@ -218,3 +218,73 @@ def test_item_longo_demais_e_cortado_e_nao_quebra_linha():
     pdf.caixa_lista(LARGURA, "TESTE", ["A" * 400], maximo=4)
 
     assert pdf.get_y() - y_inicial == pytest.approx(_Cartao.ROTULO + 3.6, abs=0.01)
+
+
+# --------------------------------------------------------------------------- #
+# Opção pelo Simples / MEI                                                     #
+# --------------------------------------------------------------------------- #
+# Estes campos NÃO constam do comprovante oficial da Receita — lá a opção pelo
+# Simples é consulta separada. Entram aqui para o fluxo interno, sob rótulo
+# próprio, e é isso que os testes abaixo travam.
+
+
+def test_optante_nao_informado_nao_vira_nao():
+    """``None`` é "ninguém informou", não "não é optante".
+
+    É a mesma confusão que já classificou MEI como Simples Nacional neste
+    sistema. Num documento que o cliente lê, "NÃO" é uma afirmação que a
+    Mercabiliza não tem base para fazer.
+    """
+    from src.exporters.pdf_cartao import _optante_br
+
+    assert _optante_br(True) == "SIM"
+    assert _optante_br(False) == "NÃO"
+    assert _optante_br(None) == "NÃO INFORMADO"
+    assert _optante_br(None) != _optante_br(False)
+
+
+def test_cartao_traz_opcao_e_datas_do_simples_e_do_mei():
+    pdf = gerar_cartao_cnpj(
+        _empresa(
+            optante_simples=True,
+            optante_mei=False,
+            simples_desde="2021-03-15",
+            simples_ate="",
+            mei_desde="2019-01-10",
+            mei_ate="2021-03-14",
+        )
+    )
+    texto = _texto(pdf)
+
+    assert "OPÇÃO PELO SIMPLES NACIONAL" in texto
+    assert "OPÇÃO PELO MEI" in texto
+    # Datas em formato brasileiro, não o ISO que a API devolve.
+    assert "15/03/2021" in texto
+    assert "10/01/2019" in texto
+    assert "14/03/2021" in texto
+    assert "2021-03-15" not in texto
+
+
+def test_cartao_avisa_que_esses_campos_nao_sao_do_comprovante_oficial():
+    """Sem este rótulo, quem comparar com um comprovante de verdade conclui
+    que o documento foi adulterado — ou pior, que o oficial está incompleto."""
+    texto = _texto(gerar_cartao_cnpj(_empresa(optante_simples=True)))
+
+    assert "NÃO CONSTAM DO COMPROVANTE OFICIAL" in texto
+
+
+def test_cartao_sem_data_nao_inventa_data():
+    """Provedor que não informou a data: o campo fica vazio, não com hoje."""
+    from datetime import date
+
+    texto = _texto(
+        gerar_cartao_cnpj(
+            _empresa(optante_simples=None, optante_mei=None, simples_desde="", mei_desde="")
+        )
+    )
+    hoje = date.today().strftime("%d/%m/%Y")
+
+    bloco = texto.split("NÃO CONSTAM DO COMPROVANTE OFICIAL", 1)[-1]
+    bloco = bloco.split("Documento gerado pela Mercabiliza", 1)[0]
+    assert hoje not in bloco, "data de hoje vazou para um campo sem informação"
+    assert "NÃO INFORMADO" in bloco

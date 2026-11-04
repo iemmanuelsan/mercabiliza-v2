@@ -59,6 +59,7 @@ MARGEM_RODAPE = 18 * mm
 LARGURA_UTIL = A4[0] - 2 * MARGEM
 
 MARCADOR_ASSINATURAS = "[[ASSINATURAS]]"
+MARCADOR_ASSINATURA_ANEXO = "[[ASSINATURA_ANEXO]]"
 MARCADOR_QUEBRA = "[[QUEBRA]]"
 
 
@@ -375,6 +376,7 @@ def markdown_para_flowables(
     texto: str,
     estilos: dict[str, ParagraphStyle],
     blocos_assinatura: Iterable | None = None,
+    assinatura_anexo: Iterable | None = None,
 ) -> list:
     """Converte a minuta renderizada em flowables do Platypus.
 
@@ -382,7 +384,8 @@ def markdown_para_flowables(
       ``## Título``      título de cláusula
       ``- item``         item de lista com marcador
       ``§ texto``        parágrafo com recuo
-      ``[[ASSINATURAS]]``insere os blocos de assinatura
+      ``[[ASSINATURAS]]``insere os blocos de assinatura das duas partes
+      ``[[ASSINATURA_ANEXO]]`` assinatura única, centralizada (anexos)
       ``[[QUEBRA]]``     quebra de página
     """
     flowables: list = []
@@ -400,6 +403,10 @@ def markdown_para_flowables(
 
         if linha == MARCADOR_ASSINATURAS:
             flowables.extend(blocos_assinatura or [])
+            continue
+
+        if linha == MARCADOR_ASSINATURA_ANEXO:
+            flowables.extend(assinatura_anexo or [])
             continue
 
         if linha.startswith("### "):
@@ -501,6 +508,58 @@ def bloco_assinatura_dupla(
         [[celula(esquerda), celula(direita)]],
         colWidths=[LARGURA_UTIL / 2, LARGURA_UTIL / 2],
         hAlign="CENTER",
+    )
+    tabela.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ]
+        )
+    )
+    return KeepTogether([Spacer(1, 10 * mm), tabela])
+
+
+def bloco_assinatura_unica(
+    nome: str,
+    papel: str,
+    estilos: dict[str, ParagraphStyle],
+) -> KeepTogether:
+    """Uma assinatura só, centralizada — usada nos anexos.
+
+    Existe porque o Anexo II é uma autorização UNILATERAL: quem assina é a
+    CONTRATANTE, autorizando o acesso. Não há duas partes a assinar ali.
+
+    O que isto conserta: antes, o anexo trazia a linha de assinatura escrita
+    à mão no template (``_________``). Como o renderizador trata linha solta
+    como parágrafo comum, ela saía alinhada à esquerda e **colada na data**,
+    sem o espaço vertical em que a pessoa de fato assina — enquanto a
+    assinatura do contrato principal, montada por código, tinha 10 mm de
+    respiro. Agora as duas usam o mesmo espaçamento.
+    """
+    tabela = Table(
+        [
+            [
+                [
+                    Paragraph("_" * 42, estilos["assinatura"]),
+                    Paragraph(escapar(nome or " "), estilos["assinatura_nome"]),
+                ]
+                + [
+                    Paragraph(escapar(linha), estilos["assinatura"])
+                    for linha in str(papel).split("\n")
+                    if linha
+                ]
+            ]
+        ],
+        # 65% da largura útil, não 50%: com metade, o rótulo
+        # "CONTRATANTE — responsável legal ou administrador de sistemas"
+        # (99 mm nesta fonte) não cabe em 85 mm e quebra no meio, deixando
+        # "de sistemas" sozinho e centralizado numa segunda linha. Medido,
+        # não estimado — ver test_assinatura_do_anexo_nao_quebra_o_rotulo.
+        colWidths=[LARGURA_UTIL * 0.65],
+        hAlign="LEFT",
     )
     tabela.setStyle(
         TableStyle(

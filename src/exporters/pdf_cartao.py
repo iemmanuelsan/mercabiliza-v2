@@ -67,6 +67,21 @@ def _data_br(iso: str) -> str:
     return texto
 
 
+def _optante_br(valor: bool | None) -> str:
+    """``True`` → SIM, ``False`` → NÃO, ``None`` → NÃO INFORMADO.
+
+    O terceiro caso é o que importa. Tratar ausência de informação como
+    "NÃO" é exatamente o erro que já classificou MEI como Simples Nacional
+    neste sistema — e num documento que o cliente lê, "NÃO" é uma afirmação
+    que ninguém fez.
+    """
+    if valor is True:
+        return "SIM"
+    if valor is False:
+        return "NÃO"
+    return "NÃO INFORMADO"
+
+
 def _telefone_br(texto: str) -> str:
     """``(19) 33270038`` → ``(19) 3327-0038``."""
     digitos = "".join(c for c in (texto or "") if c.isdigit())
@@ -339,6 +354,55 @@ def gerar_cartao_cnpj(empresa: Empresa) -> bytes:
         LARGURA * 0.62, "SITUAÇÃO ESPECIAL", VAZIO, fim_da_linha=False
     )
     pdf.caixa(LARGURA * 0.38, "DATA DA SITUAÇÃO ESPECIAL", VAZIO)
+
+    # ---- Opção pelo Simples / MEI --------------------------------------- #
+    # ⚠️ Estas quatro linhas NÃO constam do comprovante oficial da Receita:
+    #    lá, a opção pelo Simples é consulta separada. Elas entram aqui porque
+    #    o fluxo interno precisa cruzar regime e datas sem abrir outra tela —
+    #    mas vão sob um rótulo próprio, e não misturadas aos campos oficiais,
+    #    para que ninguém comparando com um comprovante de verdade conclua que
+    #    o documento foi adulterado ou que faltam campos.
+    pdf.ln(1)
+    pdf.fonte("", 6)
+    pdf.set_text_color(90, 90, 90)
+    pdf.linha(3.2, "INFORMAÇÕES COMPLEMENTARES — NÃO CONSTAM DO COMPROVANTE OFICIAL")
+    pdf.set_text_color(0, 0, 0)
+
+    pdf.caixa(
+        LARGURA * 0.44,
+        "OPÇÃO PELO SIMPLES NACIONAL",
+        _optante_br(empresa.optante_simples),
+        fim_da_linha=False,
+    )
+    pdf.caixa(
+        LARGURA * 0.28,
+        "DATA DE OPÇÃO PELO SIMPLES",
+        _data_br(empresa.simples_desde),
+        fim_da_linha=False,
+    )
+    pdf.caixa(
+        LARGURA * 0.28,
+        "DATA DE EXCLUSÃO DO SIMPLES",
+        _data_br(empresa.simples_ate),
+    )
+
+    pdf.caixa(
+        LARGURA * 0.44,
+        "OPÇÃO PELO MEI",
+        _optante_br(empresa.optante_mei),
+        fim_da_linha=False,
+    )
+    pdf.caixa(
+        LARGURA * 0.28,
+        "DATA DE OPÇÃO PELO MEI",
+        _data_br(empresa.mei_desde),
+        fim_da_linha=False,
+    )
+    pdf.caixa(
+        LARGURA * 0.28,
+        "DATA DE EXCLUSÃO DO MEI",
+        _data_br(empresa.mei_ate),
+    )
 
     # ---- Procedência --------------------------------------------------- #
     pdf.ln(3)

@@ -581,3 +581,78 @@ def test_faixas_de_honorario_saem_como_exemplo():
     assert "valores apresentados são exemplificativos" in texto
     assert "1 a 3 pessoas, R$ 50,00" in texto
     assert "uma nova unidade representará acréscimo de R$ 50,00" in texto
+
+
+# --------------------------------------------------------------------------- #
+# Assinatura do Anexo II                                                       #
+# --------------------------------------------------------------------------- #
+# O Anexo II é autorização UNILATERAL: só a CONTRATANTE assina. Antes, a linha
+# de assinatura era escrita à mão no template (`_________`). Como o
+# renderizador trata linha solta como parágrafo comum, ela saía alinhada à
+# esquerda e COLADA na data — sem o espaço em que a pessoa de fato assina,
+# enquanto a assinatura do contrato principal, montada por código, tinha 10 mm
+# de respiro. Estes testes travam as duas pontas do conserto.
+
+
+def test_assinatura_do_anexo_tem_o_mesmo_respiro_do_contrato():
+    """10 mm acima da linha, igual ao bloco das duas partes.
+
+    Sem o Spacer, a linha volta a encostar na data e não sobra onde assinar.
+    """
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Spacer
+
+    from src.exporters.pdf_juridico import bloco_assinatura_unica, construir_estilos
+
+    bloco = bloco_assinatura_unica("Fulano", "CONTRATANTE", construir_estilos())
+    primeiro = bloco._content[0]
+
+    assert isinstance(primeiro, Spacer), "o bloco precisa começar por um Spacer"
+    assert primeiro.height == pytest.approx(10 * mm)
+
+
+def test_assinatura_do_anexo_nao_quebra_o_rotulo():
+    """O rótulo tem que caber numa linha só.
+
+    Com metade da largura útil (85 mm) o rótulo de 99 mm quebrava, deixando
+    "de sistemas" sozinho e centralizado embaixo. Largura medida, não
+    estimada: se alguém estreitar a coluna, isto acusa.
+    """
+    from reportlab.pdfbase.pdfmetrics import stringWidth
+
+    from src.exporters.pdf_juridico import (
+        LARGURA_UTIL,
+        bloco_assinatura_unica,
+        construir_estilos,
+    )
+
+    estilos = construir_estilos()
+    rotulo = "CONTRATANTE — responsável legal ou administrador de sistemas"
+    largura_texto = stringWidth(rotulo, estilos["assinatura"].fontName, 8.5)
+
+    bloco = bloco_assinatura_unica("Fulano", rotulo, estilos)
+    tabela = bloco._content[1]
+    largura_coluna = tabela._colWidths[0]
+
+    assert largura_coluna >= largura_texto, (
+        f"coluna de {largura_coluna:.0f}pt para um rótulo de "
+        f"{largura_texto:.0f}pt — vai quebrar linha"
+    )
+    assert largura_coluna <= LARGURA_UTIL, "a coluna não pode passar da margem"
+
+
+def test_marcador_do_anexo_nao_vaza_para_o_pdf():
+    """O `[[ASSINATURA_ANEXO]]` tem que virar bloco, não sair como texto."""
+    texto = _texto_do_contrato()
+
+    assert "[[ASSINATURA_ANEXO]]" not in texto
+    assert "[[" not in texto, "sobrou marcador não processado no PDF"
+
+
+def test_anexo_traz_o_nome_de_quem_assina():
+    """Sem isto, o anexo sai com linha de assinatura e nenhum nome embaixo."""
+    texto = _texto_do_contrato()
+
+    trecho_anexo = texto.split("DO ACEITE", 1)[-1]
+    assert "CONTRATANTE" in trecho_anexo
+    assert "responsável legal ou administrador de sistemas" in trecho_anexo

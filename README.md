@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.61-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Tests](https://img.shields.io/badge/tests-206%20passing-success)](tests/)
+[![Tests](https://img.shields.io/badge/tests-489%20passing-success)](tests/)
 [![Ruff](https://img.shields.io/badge/lint-ruff-261230?logo=ruff)](https://docs.astral.sh/ruff/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -27,6 +27,8 @@ ficha cadastral, contrato em papel timbrado e formulário de abertura.
 | 📊 **Análise em lote** | Upload de planilha, validação e deduplicação de CNPJs, processamento concorrente com progresso real e relatório de falhas. |
 | 🛠️ **Calculadora MEI** | Estima o custo do desenquadramento retroativo, com Selic ao vivo do BACEN. |
 | 📝 **Ficha & contrato** | Ficha cadastral, contrato em papel timbrado e formulário DOCX de abertura/desenquadramento. Três modalidades: PJ, MEI e PF. |
+| 📄 **Carta de Responsabilidade** | Carta da Administração por exercício, com as 10 alíneas do modelo aprovado. Assinaturas invertidas em relação ao contrato: quem declara é o cliente. |
+| 🪪 **Cartão CNPJ** | Reproduz a grade do Comprovante de Inscrição com tarja de procedência, mais um bloco complementar com opção e datas de Simples/MEI. |
 | 🗃️ **CRM & leads** | Base de prospects com filtros, gráfico por UF, exportação e remoção individual (LGPD). |
 
 ---
@@ -89,7 +91,8 @@ gerador de PDF:
 ## TÍTULO          título de cláusula
 ### SUBTÍTULO      seção dentro da cláusula
 a) item            item alfabético (a letra é preservada — outras cláusulas a citam)
-[[ASSINATURAS]]    insere os blocos de assinatura
+[[ASSINATURAS]]    blocos de assinatura das duas partes (CONTRATADA | CONTRATANTE)
+[[ASSINATURA_ANEXO]]  assinatura única, centralizada — anexos unilaterais
 [[QUEBRA]]         força quebra de página
 ```
 
